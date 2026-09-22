@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dba5846baf3a7ea42ba965a07eef2f2c, type: 3}
+  m_Name: Leon
+  m_EditorClassIdentifier: 
+  ID: Leon
+  Name: "\u91CC\u6602"
+  Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
+  LeftIdle: {fileID: 463951968, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
+  BaseLevel: 4
+  BaseStats:
+    MaxHP: 150
+    MaxSP: 50
+    PAtk: 50
+    PDef: 50
+    MAtk: 0
+    MDef: 0
+    Speed: 20
+    Accuracy: 0
+    Evasion: 0
+  filedAnimator: {fileID: 22100000, guid: b2214d084f3ea414889ad9ea3ec9822b, type: 2}
+  battleAnimator: {fileID: 22100000, guid: d356795a59ac3994095b69b86ae5bfbb, type: 2}
+  job: 1
+  globalGrowthConfigSO: {fileID: 11400000, guid: d98136d756eb5f741aaa993a1dd6e576,
+    type: 2}
+  growProfile:
+    Hp: 0
+    SP: 0
+    PAtk: 0
+    PDef: 0
+    MAtk: 0
+    MDef: 0
+    speed: 0
+  EquipableweaqonTypes: 01000000
+  initialEquipments:
+  - slot: 0
+    item: {fileID: 11400000, guid: 575485a9c6350964d8a0b22af7b8ca9d, type: 2}

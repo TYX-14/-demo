@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dba5846baf3a7ea42ba965a07eef2f2c, type: 3}
+  m_Name: Lyra
+  m_EditorClassIdentifier: 
+  ID: lyra
+  Name: "\u83B1\u62C9"
+  Portrait: {fileID: 463951968, guid: 5d1b2675d5820476a9722a0edfc8ab33, type: 3}
+  LeftIdle: {fileID: 463951968, guid: 5d1b2675d5820476a9722a0edfc8ab33, type: 3}
+  BaseLevel: 0
+  BaseStats:
+    MaxHP: 200
+    MaxSP: 125
+    PAtk: 20
+    PDef: 30
+    MAtk: 50
+    MDef: 40
+    Speed: 30
+    Accuracy: 100
+    Evasion: 0
+  filedAnimator: {fileID: 22100000, guid: 057a438bf3e1b48479b15e68909b2c0d, type: 2}
+  battleAnimator: {fileID: 22100000, guid: c7bc12672665216479107b9c5a737cdf, type: 2}
+  job: 4
+  globalGrowthConfigSO: {fileID: 11400000, guid: d98136d756eb5f741aaa993a1dd6e576,
+    type: 2}
+  growProfile:
+    Hp: 3
+    SP: 0
+    PAtk: 4
+    PDef: 4
+    MAtk: 1
+    MDef: 2
+    speed: 1
+  EquipableweaqonTypes: 06000000
+  initialEquipments:
+  - slot: 7
+    item: {fileID: 11400000, guid: 15152d8a3b05e004a99737922abef82f, type: 2}
+  - slot: 5
+    item: {fileID: 11400000, guid: f01fdb26c1416654da7a2ad7778b6134, type: 2}

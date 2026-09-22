@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28fbc83b5e038994e85970b3966633b2, type: 3}
+  m_Name: ItemIcon Set SO
+  m_EditorClassIdentifier: 
+  itemIcons:
+  - itemIconKey: 0
+    icon: {fileID: 21300000, guid: 4174f084b43e349c185e1eddf69829df, type: 3}
+  - itemIconKey: 0
+    icon: {fileID: 21300000, guid: 4174f084b43e349c185e1eddf69829df, type: 3}
+  - itemIconKey: 2
+    icon: {fileID: 21300000, guid: 1d9c392e99f3541828a57e3e10d38eef, type: 3}
+  - itemIconKey: 3
+    icon: {fileID: 21300000, guid: 166399ebd156d4237b428aec07857d3b, type: 3}
+  - itemIconKey: 4
+    icon: {fileID: 21300000, guid: 4235e58ca8a51430e83fa4124ab3c5b5, type: 3}
+  - itemIconKey: 1
+    icon: {fileID: 21300000, guid: 4174f084b43e349c185e1eddf69829df, type: 3}
+  - itemIconKey: 6
+    icon: {fileID: 21300000, guid: a56ea9d68ec6d4507ba8932763ff69a2, type: 3}
+  - itemIconKey: 7
+    icon: {fileID: 21300000, guid: 0c23490f37305470bb9fe5cdba9de988, type: 3}

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 003fa66ade9cfc94098ad7db9ba1acfa, type: 3}
+  m_Name: "\u8D1D\u5229\u514B"
+  m_EditorClassIdentifier: 
+  ID: "\u8D1D\u5229\u514B"
+  Name: "\u8D1D\u5229\u514B"
+  Portrait: {fileID: 21300000, guid: 81dd73ab8dbf145498172ba8b8b7743a, type: 3}
+  LeftIdle: {fileID: 0}
+  BaseLevel: 1
+  BaseStats:
+    MaxHP: 500
+    MaxSP: 200
+    PAtk: 100
+    PDef: 100
+    MAtk: 100
+    MDef: 100
+    Speed: 30
+    Accuracy: 0
+    Evasion: 0
+  filedAnimator: {fileID: 0}
+  battleAnimator: {fileID: 22100000, guid: 37cc258520fcaeb45a04119fe5523224, type: 2}

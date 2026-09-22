@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4efb53a4a0a4e24cbb5c7b7d025ef5f, type: 3}
+  m_Name: "\u4E00\u628A\u751F\u9508\u7684\u5251"
+  m_EditorClassIdentifier: 
+  ItemName: "\u4E00\u628A\u751F\u9508\u7684\u5251"
+  ItemDescription: "\u7269\u7406\u653B\u51FB  <b><color=green>+20</color></b>\n\u884C\u52A8\u901F\u5EA6
+    <b><color=green>+5</color></b>"
+  ItemType: 0
+  ItemIconKey: 1
+  BuyPrice: 200
+  MaxStack: 1
+  RaritWeight: 80
+  category: 0
+  weaponType: 1
+  statBonus:
+    MaxHP: 0
+    MaxSP: 0
+    PActk: 20
+    PDef: 0
+    MAtk: 0
+    MDef: 0
+    Speed: 5
+    Accuracy: 0
+    Evasion: 0
