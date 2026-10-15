@@ -660,6 +660,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerDefinition: {fileID: 11400000, guid: 3b1a63c39d041de4d96c57d1c1b6387d, type: 2}
   partyMenbers: []
+  player: {fileID: 982494875}
 --- !u!4 &66354109
 Transform:
   m_ObjectHideFlags: 0

@@ -1,4 +1,7 @@
-
+/// <summary>
+/// 角色定义 ScriptableObject。
+/// 用于存储角色的基础属性、动画机等信息。
+/// </summary>
 public abstract class CharacterDefinitionSO : ScriptableObject
 {
     [Header("角色初始化")]

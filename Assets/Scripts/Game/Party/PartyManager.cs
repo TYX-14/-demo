@@ -1,3 +1,4 @@
+using System.Linq;
 using MFrameork.Event;
     
     // <summary>
@@ -12,12 +13,27 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
     [SerializeField] private CharacterDefinitionSO playerDefinition;
     [SerializeField] private List<CharacterRuntimeData> partyMenbers = new();
 
+    [Header("领头人")]
+    [SerializeField] private GameObject player;
+
     public List<CharacterRuntimeData> PartyMembers => partyMenbers;
     /// <summary>
     /// 用于标记队伍成员是否被隐藏
     /// </summary>
     private bool fieldActorsHidden;
 
+// 临时测试：按 F6 交换 1、2 号位
+private void Update()
+{
+    var keyboard = UnityEngine.InputSystem.Keyboard.current;
+
+    if (keyboard != null &&
+        keyboard.f6Key.wasPressedThisFrame)
+    {
+        SwapPosition(1, 2);
+        Debug.Log("已请求交换 1、2 号位");
+    }
+}
     protected override void Awake()
     {
         base.Awake();
@@ -43,16 +59,29 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
     {
         if (partyMenbers.Count == 0)
         {
-            partyMenbers.Add(new CharacterRuntimeData(playerDefinition));
+            CharacterRuntimeData player = new CharacterRuntimeData(playerDefinition);
+            player.Position = 1;
+            partyMenbers.Add(player); 
         }
     }
-
+/// <summary>
+/// 添加队伍成员——给予成员“位置”,并刷新跟随者数据
+/// </summary>
+/// <param name="characteDefinition"></param>
     private void AddMenbers(CharacterDefinitionSO characteDefinition)
     {
-        partyMenbers.Add(new CharacterRuntimeData(characteDefinition));
+        CharacterRuntimeData newMember = new CharacterRuntimeData(characteDefinition);
+
+        // 新成员放到当前队伍最后一个位置
+        newMember.Position = partyMenbers.Count + 1;
+        
+        partyMenbers.Add(newMember);
         RefreshFieldFollowers();
     }
-
+    /// <summary>
+    /// 招募队伍成员,并切换游戏模式
+    /// </summary>
+    /// <param name="characteDefinition"></param>
     public void RecuitMember(CharacterDefinitionSO characteDefinition)
     {
         FadeController.Instance.SetStyle(FadeStyle.PanelFade);
@@ -64,18 +93,108 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
         });            
     }
     /// <summary>
-    /// 刷新跟随者数据
+    /// 刷新跟随者数据——用于队伍成员位置变动后更新跟随者站位(暗黑地牢更新：按照position排列)
     /// </summary>
     private void RefreshFieldFollowers()
     {
+        // 按照成员的 Position 属性排序队列
+        List<CharacterRuntimeData> sortedMembers = partyMenbers.OrderBy(m => m.Position).ToList();
+
         List<CharacterDefinitionSO> def = new List<CharacterDefinitionSO>(partyMenbers.Count);
-        foreach (var member in partyMenbers)
+        foreach (var member in sortedMembers)
         {
             def.Add(member.Definition);
         }
         fieldController.UpdateFollowers(def);
 
     }
+
+    #region 队伍成员位置管理（暗黑地牢更新）
+    /// <summary>
+    /// 获取指定位置上的队伍成员。
+    /// Position 使用 1~4。
+    /// </summary>
+    public CharacterRuntimeData GetMemberAtPosition(int position)
+    {
+        foreach (var member in partyMenbers)
+        {
+            if (member.Position == position)
+                return member;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 交换两个队伍成员的位置。
+    /// </summary>
+    public void SwapPosition(int positionA, int positionB)
+    {
+        CharacterRuntimeData memberA = GetMemberAtPosition(positionA);
+        CharacterRuntimeData memberB = GetMemberAtPosition(positionB);
+
+        if (memberA == null || memberB == null)
+            return;
+
+        memberA.Position = positionB;
+        memberB.Position = positionA;
+
+        RefreshLeader();
+
+        RefreshFieldFollowers();
+    }
+
+    /// <summary>
+    /// 将指定成员移动到目标位置。
+    /// </summary>
+    public bool MoveMember(CharacterRuntimeData member, int targetPosition)
+    {
+        if (member == null)
+            return false;
+
+        if (targetPosition < 1 || targetPosition > 4)
+            return false;
+
+        CharacterRuntimeData targetMember = GetMemberAtPosition(targetPosition);
+
+        if (targetMember != null && targetMember != member)
+        {
+            int oldPosition = member.Position;
+
+            member.Position = targetPosition;
+            targetMember.Position = oldPosition;
+        }
+        else
+        {
+            member.Position = targetPosition;
+        }
+
+        RefreshFieldFollowers();
+        return true;
+    }
+    /// <summary>
+    /// 刷新领头人——用于队伍成员位置变动后更新领头人站位
+    /// </summary>
+    private void RefreshLeader()
+    {
+        CharacterRuntimeData leader =
+            partyMenbers.Find(member => member.Position == 1);
+
+        if (leader == null)
+        {
+            Debug.LogWarning("没有找到 1 号位队员。");
+            return;
+        }
+
+        // 更新 Player 的角色定义
+        CharacterIdentity identity = player.GetComponent<CharacterIdentity>();
+        identity.SetDefinition(leader.Definition);
+
+        // 更新 Player 的探索动画机
+        Animator animator = player.GetComponentInChildren<Animator>();
+        animator.runtimeAnimatorController = leader.Definition.filedAnimator;
+    }
+    #endregion
 
     #region 事件监听
 

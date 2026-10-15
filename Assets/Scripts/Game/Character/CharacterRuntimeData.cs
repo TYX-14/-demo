@@ -9,6 +9,7 @@ public class CharacterRuntimeData
     public int CurrentSP;
     public int CurrenBP;
     public int CurrenEXP;
+    public int Position;
 
     public string DisplayName => Definition.Name; 
 

@@ -1,5 +1,7 @@
 
 [CreateAssetMenu(menuName ="Character/Ally")]
+/// <summary>
+/// 友军定义 ScriptableObject。    
 public class AllyDefinitionSO : CharacterDefinitionSO
 {
     [Header("友军职业")]
