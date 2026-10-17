@@ -1,5 +1,5 @@
 /// <summary>
-/// ÓÃÓÚ´´½¨¸úËæÕßµ½³¡¾°ÖĞ
+/// ç”¨äºåˆ›å»ºè·Ÿéšè€…åˆ°åœºæ™¯ä¸­
 /// </summary>
 public class PartyFieldController : MonoBehaviour
 {
@@ -9,14 +9,14 @@ public class PartyFieldController : MonoBehaviour
     [SerializeField] private Transform playerTrans;
 
     [Header("Setting")]
-    [SerializeField] private float followDistance=1.2f;//ÏàÁÚµÄÁ½ÈËµÄ¾àÀë
+    [SerializeField] private float followDistance=1.2f;//ç›¸é‚»çš„ä¸¤äººçš„è·ç¦»
     [SerializeField] private float followSpeed = 5f;
 
     [SerializeField] private float z0ffset = 0.01f;
-    [SerializeField] private float sampleMinDistance = 0.1f;//×îĞ¡²ÉÑùÖµ
+    [SerializeField] private float sampleMinDistance = 0.1f;//æœ€å°é‡‡æ ·å€¼
 
-    private List<Vector3> trail = new List<Vector3>();//¼ÇÂ¼ÒÆ¶¯¹ì¼£
-    private List<FieldFollower> fieldFollowers = new();//¸úËæÕß
+    private List<Vector3> trail = new List<Vector3>();//è®°å½•ç§»åŠ¨è½¨è¿¹
+    private List<FieldFollower> fieldFollowers = new();//è·Ÿéšè€…
 
 
     private void LateUpdate()
@@ -34,7 +34,7 @@ public class PartyFieldController : MonoBehaviour
 
     }
     /// <summary>
-    /// ¸ù¾İ²ÎÊı£¨ºÍÁìÍ·ÈËµÄ¾àÀë£©µÃµ½ÔÚ¹ì¼£ÉÏµÄµã
+    /// æ ¹æ®å‚æ•°ï¼ˆå’Œé¢†å¤´äººçš„è·ç¦»ï¼‰å¾—åˆ°åœ¨è½¨è¿¹ä¸Šçš„ç‚¹
     /// </summary>
     /// <param name="distanceFromLeder"></param>
     /// <returns></returns>
@@ -48,12 +48,12 @@ public class PartyFieldController : MonoBehaviour
         float accumulated = 0f;
         for (int i = 0; i < trail.Count-1; i++)
         {
-            Vector3 a = trail[i];//µ±Ç°µã
-            Vector3 b = trail[i + 1];//ÏÂÒ»¸öµã
-            float dist = Vector3.Distance(a, b);//¼ÆËãÁ½µã¾àÀë
+            Vector3 a = trail[i];//å½“å‰ç‚¹
+            Vector3 b = trail[i + 1];//ä¸‹ä¸€ä¸ªç‚¹
+            float dist = Vector3.Distance(a, b);//è®¡ç®—ä¸¤ç‚¹è·ç¦»
 
 
-            //Èç¹û¡°ÒÑ×ßµÄÂ·³Ì + µ±Ç°Ïß¶ÎµÄ³¤¶È¡±´óÓÚ»òµÈÓÚ¡°Ä¿±ê¾àÀë¡±£¬ËµÃ÷ÎÒÃÇÒªÕÒµÄÄÇ¸öµã¾ÍÔÚÕâÌõÏß¶Î£¨a µ½ b£©Ö®¼ä¡£
+            //å¦‚æœâ€œå·²èµ°çš„è·¯ç¨‹ + å½“å‰çº¿æ®µçš„é•¿åº¦â€å¤§äºæˆ–ç­‰äºâ€œç›®æ ‡è·ç¦»â€ï¼Œè¯´æ˜æˆ‘ä»¬è¦æ‰¾çš„é‚£ä¸ªç‚¹å°±åœ¨è¿™æ¡çº¿æ®µï¼ˆa åˆ° bï¼‰ä¹‹é—´ã€‚
             if (dist + accumulated >= distanceFromLeder)
             {
                 
@@ -62,17 +62,17 @@ public class PartyFieldController : MonoBehaviour
             }
             accumulated += dist;
         }
-        //Èç¹ûËùÓĞµãµÄ¾àÀë×ÜºÍÈÎÈ»Ğ¡ÓÚÄ¿±ê¾àÀë£¬ÄÇÃ´·µ»Ø×îºóÒ»¸öµã
+        //å¦‚æœæ‰€æœ‰ç‚¹çš„è·ç¦»æ€»å’Œä»»ç„¶å°äºç›®æ ‡è·ç¦»ï¼Œé‚£ä¹ˆè¿”å›æœ€åä¸€ä¸ªç‚¹
         return trail[trail.Count - 1];
     }
 
     /// <summary>
-    /// °ÑÄ¿±ê¸úËæÕß¼ÓÈë´´½¨ÁĞ±í
+    /// æŠŠç›®æ ‡è·Ÿéšè€…åŠ å…¥åˆ›å»ºåˆ—è¡¨
     /// </summary>
     /// <param name="partyMembers"></param>
-    public void UpdateFollowers(List<CharacterDefinitionSO> partyMembers)
+    public void UpdateFollowers(List<CharacterDefinitionSO> partyMembers, bool resetPositions = true)
     {
-        int followerCount = partyMembers.Count - 1;//ÈËÊı¼õÈ¥Ö÷½Ç
+        int followerCount = partyMembers.Count - 1;//äººæ•°å‡å»ä¸»è§’
         while (fieldFollowers.Count < followerCount)
         {
             int index = fieldFollowers.Count;
@@ -87,21 +87,24 @@ public class PartyFieldController : MonoBehaviour
             fieldFollowers[i].SetupFollower(partyMembers[i + 1]);
         }
 
-        RebuildTrailAndSnapFollowers();
+        if (resetPositions)
+        {
+            RebuildTrailAndSnapFollowers();
+        }
     }
     /// <summary>
-    /// ´´½¨¸úËæÕßÊµÀıµ½Ö¸¶¨×ø±ê
+    /// åˆ›å»ºè·Ÿéšè€…å®ä¾‹åˆ°æŒ‡å®šåæ ‡
     /// </summary>
     /// <param name="position"></param>
     /// <param name="index"></param>
     /// <returns></returns>
     private Vector3 ApplyFollowerOffset(Vector3 position,int index)
     {
-        position.z = z0ffset * (index + 1);
+        position.z += z0ffset * (index + 1);
         return position;
     }
     /// <summary>
-    /// ÓÃÓÚ¼ÇÂ¼Íæ¼Ò£¨ÁìÍ·ÈË£©¹ì¼£
+    /// ç”¨äºè®°å½•ç©å®¶ï¼ˆé¢†å¤´äººï¼‰è½¨è¿¹
     /// </summary>
     private void UpdateLeaderTrail()
     {
@@ -111,12 +114,12 @@ public class PartyFieldController : MonoBehaviour
             trail.Add(leaderPos);
             return;
         }
-        //¼ÆËãÍæ¼Òµ±Ç°Î»ÖÃÓë¹ì¼£ÁĞ±íÖĞµÚÒ»¸öµã£¨Ò²¾ÍÊÇÉÏÒ»´Î¼ÇÂ¼µÄÎ»ÖÃ trail[0]£©Ö®¼äµÄÖ±Ïß¾àÀë
+        //è®¡ç®—ç©å®¶å½“å‰ä½ç½®ä¸è½¨è¿¹åˆ—è¡¨ä¸­ç¬¬ä¸€ä¸ªç‚¹ï¼ˆä¹Ÿå°±æ˜¯ä¸Šä¸€æ¬¡è®°å½•çš„ä½ç½® trail[0]ï¼‰ä¹‹é—´çš„ç›´çº¿è·ç¦»
         float dist = Vector3.Distance(leaderPos, trail[0]);
 
         if (dist > sampleMinDistance)
         {
-            //ÕâĞĞ´úÂëµÄÒâË¼ÊÇ£º°ÑĞÂ»ñÈ¡µÄÍæ¼ÒÎ»ÖÃ£¬Ç¿ĞĞ²åµ½ÁĞ±íµÄµÚ 1 Î»£¨¼´Ë÷Òı 0 µÄÎ»ÖÃ£©
+            //è¿™è¡Œä»£ç çš„æ„æ€æ˜¯ï¼šæŠŠæ–°è·å–çš„ç©å®¶ä½ç½®ï¼Œå¼ºè¡Œæ’åˆ°åˆ—è¡¨çš„ç¬¬ 1 ä½ï¼ˆå³ç´¢å¼• 0 çš„ä½ç½®ï¼‰
             trail.Insert(0, leaderPos);
             if (trail.Count > 100)
             {
@@ -125,7 +128,7 @@ public class PartyFieldController : MonoBehaviour
         }
     }
     /// <summary>
-    /// ÓÃÓÚÔÚË¢ĞÂ£¬½øÈëĞÂ³¡¾°Ê±£¬ÖØÖÃ¸úËæÕß£¨ÈÃËûÃÇ½ôÌùÔÚÒ»Æğ£©
+    /// ç”¨äºåœ¨åˆ·æ–°ï¼Œè¿›å…¥æ–°åœºæ™¯æ—¶ï¼Œé‡ç½®è·Ÿéšè€…ï¼ˆè®©ä»–ä»¬ç´§è´´åœ¨ä¸€èµ·ï¼‰
     /// </summary>
     private void RebuildTrailAndSnapFollowers()
     {
@@ -139,17 +142,17 @@ public class PartyFieldController : MonoBehaviour
     }
 
     /// <summary>
-    /// ÉèÖÃÍæ¼ÒÎïÌåµÄ¼¤»î£¨ÏÔÒş£©×´Ì¬¡£
-    /// Í¨³£ÓÃÓÚÕ½¶·Ä£Ê½ÓëÌ½Ë÷Ä£Ê½ÇĞ»»Ê±µÄ½ÇÉ«Òş²ØÓë»Ö¸´¡£
+    /// è®¾ç½®ç©å®¶ç‰©ä½“çš„æ¿€æ´»ï¼ˆæ˜¾éšï¼‰çŠ¶æ€ã€‚
+    /// é€šå¸¸ç”¨äºæˆ˜æ–—æ¨¡å¼ä¸æ¢ç´¢æ¨¡å¼åˆ‡æ¢æ—¶çš„è§’è‰²éšè—ä¸æ¢å¤ã€‚
     /// </summary>
-    /// <param name="active">True ±íÊ¾¼¤»îÏÔÊ¾£¬False ±íÊ¾Òş²Ø½ûÓÃ¡£</param>
+    /// <param name="active">True è¡¨ç¤ºæ¿€æ´»æ˜¾ç¤ºï¼ŒFalse è¡¨ç¤ºéšè—ç¦ç”¨ã€‚</param>
     public void SetPlayerActive(bool active)
     {
         playerTrans.gameObject.SetActive(active);
     }
 
     /// <summary>
-    /// Çå³ı³¡ÉÏËùÓĞµÄ¸úËæÕßµ¥Î»£¬²¢Çå¿Õ¶ÔÓ¦µÄ¹ì¼£»º´æ¡£
+    /// æ¸…é™¤åœºä¸Šæ‰€æœ‰çš„è·Ÿéšè€…å•ä½ï¼Œå¹¶æ¸…ç©ºå¯¹åº”çš„è½¨è¿¹ç¼“å­˜ã€‚
     /// </summary>
     public void ClearFollower()
     {

@@ -2,27 +2,27 @@ using System.Linq;
 using MFrameork.Event;
     
     // <summary>
-/// ÓÃÓÚ¶ÓÎé³ÉÔ±Êı¾İ³õÊ¼»¯£¬Ìí¼Ó£¬Ë¢ĞÂµÈ
+/// ç”¨äºé˜Ÿä¼æˆå‘˜æ•°æ®åˆå§‹åŒ–ï¼Œæ·»åŠ ï¼Œåˆ·æ–°ç­‰
 /// </summary>
 public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChangedEvent>
     
 {
     private PartyFieldController fieldController;
 
-    [Header("³õÊ¼»¯¶ÓÎé")]
+    [Header("åˆå§‹åŒ–é˜Ÿä¼")]
     [SerializeField] private CharacterDefinitionSO playerDefinition;
     [SerializeField] private List<CharacterRuntimeData> partyMenbers = new();
 
-    [Header("ÁìÍ·ÈË")]
+    [Header("é¢†å¤´äºº")]
     [SerializeField] private GameObject player;
 
     public List<CharacterRuntimeData> PartyMembers => partyMenbers;
     /// <summary>
-    /// ÓÃÓÚ±ê¼Ç¶ÓÎé³ÉÔ±ÊÇ·ñ±»Òş²Ø
+    /// ç”¨äºæ ‡è®°é˜Ÿä¼æˆå‘˜æ˜¯å¦è¢«éšè—
     /// </summary>
     private bool fieldActorsHidden;
 
-// ÁÙÊ±²âÊÔ£º°´ F6 ½»»» 1¡¢2 ºÅÎ»
+// ä¸´æ—¶æµ‹è¯•ï¼šæŒ‰ F6 äº¤æ¢ 1ã€2 å·ä½
 private void Update()
 {
     var keyboard = UnityEngine.InputSystem.Keyboard.current;
@@ -31,7 +31,7 @@ private void Update()
         keyboard.f6Key.wasPressedThisFrame)
     {
         SwapPosition(1, 2);
-        Debug.Log("ÒÑÇëÇó½»»» 1¡¢2 ºÅÎ»");
+        Debug.Log("å·²è¯·æ±‚äº¤æ¢ 1ã€2 å·ä½");
     }
 }
     protected override void Awake()
@@ -65,21 +65,21 @@ private void Update()
         }
     }
 /// <summary>
-/// Ìí¼Ó¶ÓÎé³ÉÔ±¡ª¡ª¸øÓè³ÉÔ±¡°Î»ÖÃ¡±,²¢Ë¢ĞÂ¸úËæÕßÊı¾İ
+/// æ·»åŠ é˜Ÿä¼æˆå‘˜â€”â€”ç»™äºˆæˆå‘˜â€œä½ç½®â€,å¹¶åˆ·æ–°è·Ÿéšè€…æ•°æ®
 /// </summary>
 /// <param name="characteDefinition"></param>
     private void AddMenbers(CharacterDefinitionSO characteDefinition)
     {
         CharacterRuntimeData newMember = new CharacterRuntimeData(characteDefinition);
 
-        // ĞÂ³ÉÔ±·Åµ½µ±Ç°¶ÓÎé×îºóÒ»¸öÎ»ÖÃ
+        // æ–°æˆå‘˜æ”¾åˆ°å½“å‰é˜Ÿä¼æœ€åä¸€ä¸ªä½ç½®
         newMember.Position = partyMenbers.Count + 1;
         
         partyMenbers.Add(newMember);
         RefreshFieldFollowers();
     }
     /// <summary>
-    /// ÕĞÄ¼¶ÓÎé³ÉÔ±,²¢ÇĞ»»ÓÎÏ·Ä£Ê½
+    /// æ‹›å‹Ÿé˜Ÿä¼æˆå‘˜,å¹¶åˆ‡æ¢æ¸¸æˆæ¨¡å¼
     /// </summary>
     /// <param name="characteDefinition"></param>
     public void RecuitMember(CharacterDefinitionSO characteDefinition)
@@ -93,11 +93,11 @@ private void Update()
         });            
     }
     /// <summary>
-    /// Ë¢ĞÂ¸úËæÕßÊı¾İ¡ª¡ªÓÃÓÚ¶ÓÎé³ÉÔ±Î»ÖÃ±ä¶¯ºó¸üĞÂ¸úËæÕßÕ¾Î»(°µºÚµØÀÎ¸üĞÂ£º°´ÕÕpositionÅÅÁĞ)
+    /// åˆ·æ–°è·Ÿéšè€…æ•°æ®â€”â€”ç”¨äºé˜Ÿä¼æˆå‘˜ä½ç½®å˜åŠ¨åæ›´æ–°è·Ÿéšè€…ç«™ä½(æš—é»‘åœ°ç‰¢æ›´æ–°ï¼šæŒ‰ç…§positionæ’åˆ—)
     /// </summary>
-    private void RefreshFieldFollowers()
+    private void RefreshFieldFollowers(bool resetPositions = true)
     {
-        // °´ÕÕ³ÉÔ±µÄ Position ÊôĞÔÅÅĞò¶ÓÁĞ
+        // æŒ‰ç…§æˆå‘˜çš„ Position å±æ€§æ’åºé˜Ÿåˆ—
         List<CharacterRuntimeData> sortedMembers = partyMenbers.OrderBy(m => m.Position).ToList();
 
         List<CharacterDefinitionSO> def = new List<CharacterDefinitionSO>(partyMenbers.Count);
@@ -105,14 +105,14 @@ private void Update()
         {
             def.Add(member.Definition);
         }
-        fieldController.UpdateFollowers(def);
+        fieldController.UpdateFollowers(def, resetPositions);
 
     }
 
-    #region ¶ÓÎé³ÉÔ±Î»ÖÃ¹ÜÀí£¨°µºÚµØÀÎ¸üĞÂ£©
+    #region é˜Ÿä¼æˆå‘˜ä½ç½®ç®¡ç†ï¼ˆæš—é»‘åœ°ç‰¢æ›´æ–°ï¼‰
     /// <summary>
-    /// »ñÈ¡Ö¸¶¨Î»ÖÃÉÏµÄ¶ÓÎé³ÉÔ±¡£
-    /// Position Ê¹ÓÃ 1~4¡£
+    /// è·å–æŒ‡å®šä½ç½®ä¸Šçš„é˜Ÿä¼æˆå‘˜ã€‚
+    /// Position ä½¿ç”¨ 1~4ã€‚
     /// </summary>
     public CharacterRuntimeData GetMemberAtPosition(int position)
     {
@@ -126,7 +126,7 @@ private void Update()
     }
 
     /// <summary>
-    /// ½»»»Á½¸ö¶ÓÎé³ÉÔ±µÄÎ»ÖÃ¡£
+    /// äº¤æ¢ä¸¤ä¸ªé˜Ÿä¼æˆå‘˜çš„ä½ç½®ã€‚
     /// </summary>
     public void SwapPosition(int positionA, int positionB)
     {
@@ -141,11 +141,11 @@ private void Update()
 
         RefreshLeader();
 
-        RefreshFieldFollowers();
+        RefreshFieldFollowers(false);
     }
 
     /// <summary>
-    /// ½«Ö¸¶¨³ÉÔ±ÒÆ¶¯µ½Ä¿±êÎ»ÖÃ¡£
+    /// å°†æŒ‡å®šæˆå‘˜ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®ã€‚
     /// </summary>
     public bool MoveMember(CharacterRuntimeData member, int targetPosition)
     {
@@ -169,11 +169,12 @@ private void Update()
             member.Position = targetPosition;
         }
 
-        RefreshFieldFollowers();
+        RefreshLeader();
+        RefreshFieldFollowers(false);
         return true;
     }
     /// <summary>
-    /// Ë¢ĞÂÁìÍ·ÈË¡ª¡ªÓÃÓÚ¶ÓÎé³ÉÔ±Î»ÖÃ±ä¶¯ºó¸üĞÂÁìÍ·ÈËÕ¾Î»
+    /// åˆ·æ–°é¢†å¤´äººâ€”â€”ç”¨äºé˜Ÿä¼æˆå‘˜ä½ç½®å˜åŠ¨åæ›´æ–°é¢†å¤´äººç«™ä½
     /// </summary>
     private void RefreshLeader()
     {
@@ -182,27 +183,27 @@ private void Update()
 
         if (leader == null)
         {
-            Debug.LogWarning("Ã»ÓĞÕÒµ½ 1 ºÅÎ»¶ÓÔ±¡£");
+            Debug.LogWarning("æ²¡æœ‰æ‰¾åˆ° 1 å·ä½é˜Ÿå‘˜ã€‚");
             return;
         }
 
-        // ¸üĞÂ Player µÄ½ÇÉ«¶¨Òå
+        // æ›´æ–° Player çš„è§’è‰²å®šä¹‰
         CharacterIdentity identity = player.GetComponent<CharacterIdentity>();
         identity.SetDefinition(leader.Definition);
 
-        // ¸üĞÂ Player µÄÌ½Ë÷¶¯»­»ú
+        // æ›´æ–° Player çš„æ¢ç´¢åŠ¨ç”»æœº
         Animator animator = player.GetComponentInChildren<Animator>();
         animator.runtimeAnimatorController = leader.Definition.filedAnimator;
     }
     #endregion
 
-    #region ÊÂ¼ş¼àÌı
+    #region äº‹ä»¶ç›‘å¬
 
     /// <summary>
-    /// ¼àÌıÓÎÏ·Ä£Ê½ÇĞ»»ÊÂ¼şµÄ»Øµ÷·½·¨¡£
-    /// ÒÀ¾İÇĞ»»µ½µÄÄ¿±êÄ£Ê½£¬¿ØÖÆµØÍ¼ÉÏÍæ¼Ò½ÇÉ«ºÍ¸úËæÕßµÄÏÔÒş×´Ì¬¡£
+    /// ç›‘å¬æ¸¸æˆæ¨¡å¼åˆ‡æ¢äº‹ä»¶çš„å›è°ƒæ–¹æ³•ã€‚
+    /// ä¾æ®åˆ‡æ¢åˆ°çš„ç›®æ ‡æ¨¡å¼ï¼Œæ§åˆ¶åœ°å›¾ä¸Šç©å®¶è§’è‰²å’Œè·Ÿéšè€…çš„æ˜¾éšçŠ¶æ€ã€‚
     /// </summary>
-    /// <param name="evt">°üº¬ĞÂ¾ÉÓÎÏ·Ä£Ê½×´Ì¬µÄÊÂ¼ş¶ÔÏó¡£</param>
+    /// <param name="evt">åŒ…å«æ–°æ—§æ¸¸æˆæ¨¡å¼çŠ¶æ€çš„äº‹ä»¶å¯¹è±¡ã€‚</param>
     public void OnEvent(GameModeChangedEvent evt)
     {
         if (evt.newMode == GameMode.Battle)
