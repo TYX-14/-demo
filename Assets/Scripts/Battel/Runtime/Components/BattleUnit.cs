@@ -34,6 +34,12 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     [SerializeField] private SpriteRenderer targetCursorRenderer;
 
+    [Header("状态图标")]
+    /// <summary>
+    /// 击退期间显示的眩晕图标（Star）。
+    /// </summary>
+    [SerializeField] private GameObject star;
+
     /// <summary>
     /// 组件初始化。
     /// 默认隐藏目标光标，并立即进行一次位置对齐更新。
@@ -41,6 +47,9 @@ public class BattleUnit : MonoBehaviour
     private void Awake()
     {
         targetCursorRenderer.enabled = false;
+        if (star != null)
+            star.SetActive(false);
+
         UpdateTargetCursorPosition();
     }
 
@@ -147,6 +156,8 @@ public class BattleUnit : MonoBehaviour
         float shakeFrequency = 32f)
     {
         animator.SetBool("isMoving", false);
+        if (star != null)
+            star.SetActive(true);
 
         Vector3 startPos = transform.position;
         Vector3 knockbackDirection = targetPos - startPos;
@@ -182,6 +193,10 @@ public class BattleUnit : MonoBehaviour
         }
 
         transform.position = targetPos;
+
+        // 击退位移与衰减震荡全部结束后，关闭眩晕图标。
+        if (star != null)
+            star.SetActive(false);
     }
 
 }
