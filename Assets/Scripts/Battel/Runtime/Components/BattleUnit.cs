@@ -136,22 +136,47 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// 强制位移协程：平滑移动到目标位置，但不触发跑步动画。
-    /// 可用于击退等受迫移动。受击/晕眩动画由角色自己的 Animator 配置负责。
+    /// 击退位移：快速抵达目标点，再沿击退方向做短暂衰减振荡。
+    /// 全程不触发跑步动画，结束时精确停在目标站位。
     /// </summary>
-    public IEnumerator ForcedMoveToPosition(Vector3 targetPos, float duration = 0.25f)
+    public IEnumerator ForcedMoveToPosition(
+        Vector3 targetPos,
+        float duration = 0.15f,
+        float shakeAmplitude = 0.12f,
+        float shakeDuration = 0.35f,
+        float shakeFrequency = 32f)
     {
-        // 确保强制位移期间不会因为 isMoving 而进入跑步状态。
         animator.SetBool("isMoving", false);
 
         Vector3 startPos = transform.position;
+        Vector3 knockbackDirection = targetPos - startPos;
+        if (knockbackDirection.sqrMagnitude > 0.0001f)
+            knockbackDirection.Normalize();
+
         float elapsedTime = 0f;
         duration = Mathf.Max(0.01f, duration);
 
+        // 击退阶段比正常补位更快，不播放跑步动画。
         while (elapsedTime < duration)
         {
             float t = elapsedTime / duration;
             transform.position = Vector3.Lerp(startPos, targetPos, t);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = targetPos;
+
+        // 到达后沿击退方向短暂震荡，振幅随时间衰减，避免角色一直抖动。
+        elapsedTime = 0f;
+        shakeDuration = Mathf.Max(0.01f, shakeDuration);
+        while (elapsedTime < shakeDuration)
+        {
+            float t = elapsedTime / shakeDuration;
+            float damping = 1f - t;
+            float offset = Mathf.Sin(elapsedTime * shakeFrequency) * shakeAmplitude * damping;
+            transform.position = targetPos + knockbackDirection * offset;
+
             elapsedTime += Time.deltaTime;
             yield return null;
         }
