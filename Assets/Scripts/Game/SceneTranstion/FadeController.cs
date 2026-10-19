@@ -62,7 +62,7 @@ public class FadeController : singleton<FadeController>
         _nextFadeInDurationOverride = fadeInDuration > 0f ? fadeInDuration : -1f;
         _nextFadeOutDurationOverride = fadeOutDuration > 0f ? fadeOutDuration : -1f;
     }
-
+#region 核心
     /// <summary>
     /// 执行淡出效果（画面逐渐变黑/不透明，常用于切场景前遮挡画面）
     /// </summary>
@@ -83,6 +83,7 @@ public class FadeController : singleton<FadeController>
         StartFade(0, ResolveDuration(false), onDone);
     }
 
+
     /// <summary>
     /// 启动淡入淡出动画的通用核心方法，负责处理新旧动画协程的平滑交替
     /// </summary>
@@ -100,7 +101,7 @@ public class FadeController : singleton<FadeController>
         // 开启新的渐变协程并记录引用
         _fadeRoutine = StartCoroutine(FadeRoutine(target, duration, onDone));
     }
-
+#endregion
     /// <summary>
     /// 逐帧插值计算并刷新透明度的主要协同程序
     /// </summary>
