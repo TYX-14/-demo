@@ -255,9 +255,14 @@ public class BattleFieldManager : MonoBehaviour
             _homePos[unit] = targetPos;
 
             if (unit == knockedBackUnit)
+            {
                 StartCoroutine(unit.ForcedMoveToPosition(targetPos, duration));
-            else
+            }
+            else if ((unit.transform.position - targetPos).sqrMagnitude > 0.0001f)
+            {
+                // 只有实际需要补位的队友才播放跑步动画，原地不动的队友保持当前动画。
                 StartCoroutine(unit.MoveToPosition(targetPos, duration));
+            }
         }
 
         yield return new WaitForSeconds(duration);
