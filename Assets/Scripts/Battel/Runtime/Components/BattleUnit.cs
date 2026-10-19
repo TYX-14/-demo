@@ -1,42 +1,42 @@
 using UnityEngine;
 
 /// <summary>
-/// Õ½¶·µ¥Î»µÄ»ù´¡Àà¡£
-/// ¸ºÔğ¹ÜÀíµ¥Î»ÔÚÕ½³¡µÄÊÓ¾õ±íÏÖ£¬°üÀ¨ºËĞÄ×é¼şÒıÓÃ¡¢Ä¿±êÑ¡Ôñ¹â±êµÄÏÔÒş¼°Î»ÖÃÍ¬²½¡£
+/// æˆ˜æ–—å•ä½çš„åŸºç¡€ç±»ã€‚
+/// è´Ÿè´£ç®¡ç†å•ä½åœ¨æˆ˜åœºçš„è§†è§‰è¡¨ç°ï¼ŒåŒ…æ‹¬æ ¸å¿ƒç»„ä»¶å¼•ç”¨ã€ç›®æ ‡é€‰æ‹©å…‰æ ‡çš„æ˜¾éšåŠä½ç½®åŒæ­¥ã€‚
 /// </summary>
 public class BattleUnit : MonoBehaviour
 {
     /// <summary>
-    /// µ±Ç°°ó¶¨µÄ½ÇÉ«Êı¾İ
+    /// å½“å‰ç»‘å®šçš„è§’è‰²æ•°æ®
     /// </summary>
     public BattleEntity Entity {  get; private set; }
     [Header("Base Components")]
     /// <summary>
-    /// µ¥Î»µÄ¶¯»­¿ØÖÆÆ÷¡£
+    /// å•ä½çš„åŠ¨ç”»æ§åˆ¶å™¨ã€‚
     /// </summary>
     [SerializeField] private Animator animator;
 
     /// <summary>
-    /// µ¥Î»µÄ¾«ÁéäÖÈ¾Æ÷¡£
-    /// ÓÃÓÚ»ñÈ¡µ¥Î»µÄÎïÀí±ß½çºÍÊÓ¾õÖĞĞÄµã¡£
+    /// å•ä½çš„ç²¾çµæ¸²æŸ“å™¨ã€‚
+    /// ç”¨äºè·å–å•ä½çš„ç‰©ç†è¾¹ç•Œå’Œè§†è§‰ä¸­å¿ƒç‚¹ã€‚
     /// </summary>
     [SerializeField] private SpriteRenderer spriteRenderer;
 
-    [Header("Ä¿±êÑ¡Ôñ¹â±ê")]
+    [Header("ç›®æ ‡é€‰æ‹©å…‰æ ‡")]
     /// <summary>
-    /// ÃüÖĞÌØĞ§/¹â±êµÄ¹ÒÔØµã¡£
+    /// å‘½ä¸­ç‰¹æ•ˆ/å…‰æ ‡çš„æŒ‚è½½ç‚¹ã€‚
     /// </summary>
     [SerializeField] private Transform hitPoint;
 
     /// <summary>
-    /// Ä¿±êÑ¡Ôñ¹â±êµÄ¾«ÁéäÖÈ¾Æ÷¡£
-    /// ÓÃÓÚ¿ØÖÆÑ¡ÖĞ×´Ì¬ÏÂµÄ¿É¼ûĞÔºÍÎ»ÖÃ¡£
+    /// ç›®æ ‡é€‰æ‹©å…‰æ ‡çš„ç²¾çµæ¸²æŸ“å™¨ã€‚
+    /// ç”¨äºæ§åˆ¶é€‰ä¸­çŠ¶æ€ä¸‹çš„å¯è§æ€§å’Œä½ç½®ã€‚
     /// </summary>
     [SerializeField] private SpriteRenderer targetCursorRenderer;
 
     /// <summary>
-    /// ×é¼ş³õÊ¼»¯¡£
-    /// Ä¬ÈÏÒş²ØÄ¿±ê¹â±ê£¬²¢Á¢¼´½øĞĞÒ»´ÎÎ»ÖÃ¶ÔÆë¸üĞÂ¡£
+    /// ç»„ä»¶åˆå§‹åŒ–ã€‚
+    /// é»˜è®¤éšè—ç›®æ ‡å…‰æ ‡ï¼Œå¹¶ç«‹å³è¿›è¡Œä¸€æ¬¡ä½ç½®å¯¹é½æ›´æ–°ã€‚
     /// </summary>
     private void Awake()
     {
@@ -45,32 +45,32 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// ¸üĞÂÄ¿±ê¹â±êºÍÃüÖĞµãµÄÎ»ÖÃ¡£
-    /// ¼ÆËãµ¥Î»Îª±¾µØ×ø±êÏµÏÂµÄÖĞĞÄYÖá¸ß¶È£¬²¢Í¬²½Ó¦ÓÃµ½¹â±êºÍ¹ÒÔØµãÉÏ¡£
+    /// æ›´æ–°ç›®æ ‡å…‰æ ‡å’Œå‘½ä¸­ç‚¹çš„ä½ç½®ã€‚
+    /// è®¡ç®—å•ä½ä¸ºæœ¬åœ°åæ ‡ç³»ä¸‹çš„ä¸­å¿ƒYè½´é«˜åº¦ï¼Œå¹¶åŒæ­¥åº”ç”¨åˆ°å…‰æ ‡å’ŒæŒ‚è½½ç‚¹ä¸Šã€‚
     /// </summary>
     private void UpdateTargetCursorPosition()
     {
-        // 1. »ñÈ¡ Sprite ±ß½çµÄÈ«¾ÖÊÀ½çÖĞĞÄµã
+        // 1. è·å– Sprite è¾¹ç•Œçš„å…¨å±€ä¸–ç•Œä¸­å¿ƒç‚¹
         Vector3 worldCenter = spriteRenderer.bounds.center;
 
-        // 2. ½«ÊÀ½çÖĞĞÄµã×ª»»Îªµ±Ç°µ¥Î»µÄ¾Ö²¿×ø±ê
+        // 2. å°†ä¸–ç•Œä¸­å¿ƒç‚¹è½¬æ¢ä¸ºå½“å‰å•ä½çš„å±€éƒ¨åæ ‡
         Vector3 localCenter = transform.InverseTransformPoint(worldCenter);
 
-        // 3. ¶ÁÈ¡¹â±êµ±Ç°µÄ¾Ö²¿×ø±ê£¨±£ÁôXÖáºÍZÖáÔ­Ê¼Êı¾İ£©
+        // 3. è¯»å–å…‰æ ‡å½“å‰çš„å±€éƒ¨åæ ‡ï¼ˆä¿ç•™Xè½´å’ŒZè½´åŸå§‹æ•°æ®ï¼‰
         Vector3 localPos = targetCursorRenderer.transform.localPosition;
 
-        // 4. ½ö¸üĞÂYÖá¸ß¶È£¬Ê¹ÆäÓëµ¥Î»ÖĞĞÄ¶ÔÆë
+        // 4. ä»…æ›´æ–°Yè½´é«˜åº¦ï¼Œä½¿å…¶ä¸å•ä½ä¸­å¿ƒå¯¹é½
         localPos.y = localCenter.y;
 
-        // 5. ½«×ø±êÓ¦ÓÃµ½Ä¿±ê¹â±êºÍÃüÖĞµã
+        // 5. å°†åæ ‡åº”ç”¨åˆ°ç›®æ ‡å…‰æ ‡å’Œå‘½ä¸­ç‚¹
         targetCursorRenderer.transform.localPosition = localPos;
         hitPoint.localPosition = localPos;
     }
 
     /// <summary>
-    /// ÉèÖÃÄ¿±êÑ¡Ôñ¹â±êµÄÏÔÒş×´Ì¬¡£
+    /// è®¾ç½®ç›®æ ‡é€‰æ‹©å…‰æ ‡çš„æ˜¾éšçŠ¶æ€ã€‚
     /// </summary>
-    /// <param name="visible">True ±íÊ¾ÏÔÊ¾²¢Ë¢ĞÂÎ»ÖÃ£¬False ±íÊ¾Òş²Ø¡£</param>
+    /// <param name="visible">True è¡¨ç¤ºæ˜¾ç¤ºå¹¶åˆ·æ–°ä½ç½®ï¼ŒFalse è¡¨ç¤ºéšè—ã€‚</param>
     public void SetTargetSelection(bool visible)
     {
         if (visible)
@@ -80,13 +80,13 @@ public class BattleUnit : MonoBehaviour
         targetCursorRenderer.enabled = visible;
     }
     /// <summary>
-    /// °ó¶¨½ÇÉ«Êı¾İÌå
+    /// ç»‘å®šè§’è‰²æ•°æ®ä½“
     /// </summary>
     /// <param name="entity"></param>
     public void Bind(BattleEntity entity)
     {
         Entity = entity;
-        //ÄÃµ½¶¯»­
+        //æ‹¿åˆ°åŠ¨ç”»
         if(entity.Definition.battleAnimator!= null)
             animator.runtimeAnimatorController = entity.Definition.battleAnimator;
 
@@ -94,18 +94,18 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// ¸ù¾İÊµÌå×´Ì¬¸üĞÂ¶¯»­¿ØÖÆÆ÷µÄ²ÎÊı£¬ÒÔ±íÏÖÑªÁ¿ºÍÉú´æ×´Ì¬¡£
+    /// æ ¹æ®å®ä½“çŠ¶æ€æ›´æ–°åŠ¨ç”»æ§åˆ¶å™¨çš„å‚æ•°ï¼Œä»¥è¡¨ç°è¡€é‡å’Œç”Ÿå­˜çŠ¶æ€ã€‚
     /// </summary>
     public void UpdateVisuals()
     {
-        // ËÀÍö×´Ì¬´¦Àí
+        // æ­»äº¡çŠ¶æ€å¤„ç†
         if (!Entity.IsAlive)
         {
             animator.SetBool("isDead", true);
             return;
         }
 
-        // ´æ»î×´Ì¬¸üĞÂÑªÁ¿±íÏÖ
+        // å­˜æ´»çŠ¶æ€æ›´æ–°è¡€é‡è¡¨ç°
         animator.SetBool("isDead", false);
         float maxHP = Entity.TotalStats.MaxHP;
         float hpRatio = Mathf.Clamp01(Entity.CurrentHP / maxHP);
@@ -113,31 +113,50 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// ÒÆ¶¯Ğ­³Ì£ºÈÃµ¥Î»Æ½»¬ÒÆ¶¯µ½Ä¿±êÎ»ÖÃ¡£
+    /// ä¸»åŠ¨ç§»åŠ¨åç¨‹ï¼šå¹³æ»‘ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®ï¼Œå¹¶æ’­æ”¾ç°æœ‰çš„ç§»åŠ¨åŠ¨ç”»ã€‚
     /// </summary>
-    /// <param name="targetPos">Ä¿±êÎ»ÖÃ¡£</param>
-    /// <param name="duration">ÒÆ¶¯ºÄÊ±£¨Ä¬ÈÏ0.5Ãë£©¡£</param>
     public IEnumerator MoveToPosition(Vector3 targetPos, float duration = 0.5f)
     {
-        // ¿ªÊ¼ÒÆ¶¯Ç°£¬¿ªÆôÒÆ¶¯¶¯»­×´Ì¬
         animator.SetBool("isMoving", true);
 
         Vector3 startPos = transform.position;
         float elapsedTime = 0f;
+        duration = Mathf.Max(0.01f, duration);
 
-        // ÔÚ³ÖĞøÊ±¼äÄÚ£¬ÖğÖ¡½øĞĞ²åÖµÒÆ¶¯
         while (elapsedTime < duration)
         {
-            float t = elapsedTime / duration; // ¼ÆËã²åÖµ½ø¶È t (0~1)
+            float t = elapsedTime / duration;
             transform.position = Vector3.Lerp(startPos, targetPos, t);
-            elapsedTime += Time.deltaTime;    // ÀÛ¼ÓÒÑ¾­¹ıµÄÊ±¼ä
-            yield return null;                // µÈ´ıÏÂÒ»Ö¡¼ÌĞøÑ­»·
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
 
-        // Ñ­»·½áÊøºó£¬Ç¿ÖÆ¶ÔÆëµ½Ä¿±êµã£¨·ÀÖ¹¸¡µãÔËËãÔì³ÉµÄÎ¢Ğ¡Îó²î£©
         transform.position = targetPos;
-        // ÒÆ¶¯Íê³É£¬¹Ø±ÕÒÆ¶¯¶¯»­×´Ì¬
         animator.SetBool("isMoving", false);
+    }
+
+    /// <summary>
+    /// å¼ºåˆ¶ä½ç§»åç¨‹ï¼šå¹³æ»‘ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®ï¼Œä½†ä¸è§¦å‘è·‘æ­¥åŠ¨ç”»ã€‚
+    /// å¯ç”¨äºå‡»é€€ç­‰å—è¿«ç§»åŠ¨ã€‚å—å‡»/æ™•çœ©åŠ¨ç”»ç”±è§’è‰²è‡ªå·±çš„ Animator é…ç½®è´Ÿè´£ã€‚
+    /// </summary>
+    public IEnumerator ForcedMoveToPosition(Vector3 targetPos, float duration = 0.25f)
+    {
+        // ç¡®ä¿å¼ºåˆ¶ä½ç§»æœŸé—´ä¸ä¼šå› ä¸º isMoving è€Œè¿›å…¥è·‘æ­¥çŠ¶æ€ã€‚
+        animator.SetBool("isMoving", false);
+
+        Vector3 startPos = transform.position;
+        float elapsedTime = 0f;
+        duration = Mathf.Max(0.01f, duration);
+
+        while (elapsedTime < duration)
+        {
+            float t = elapsedTime / duration;
+            transform.position = Vector3.Lerp(startPos, targetPos, t);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = targetPos;
     }
 
 }

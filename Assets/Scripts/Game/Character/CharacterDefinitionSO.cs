@@ -1,20 +1,25 @@
 /// <summary>
-/// ½ÇÉ«¶¨Òå ScriptableObject¡£
-/// ÓÃÓÚ´æ´¢½ÇÉ«µÄ»ù´¡ÊôĞÔ¡¢¶¯»­»úµÈĞÅÏ¢¡£
+/// è§’è‰²å®šä¹‰ ScriptableObjectã€‚
+/// ç”¨äºå­˜å‚¨è§’è‰²çš„åŸºç¡€å±æ€§ã€åŠ¨ç”»æœºç­‰ä¿¡æ¯ã€‚
 /// </summary>
 public abstract class CharacterDefinitionSO : ScriptableObject
 {
-    [Header("½ÇÉ«³õÊ¼»¯")]
+    [Header("è§’è‰²åˆå§‹åŒ–")]
     public string ID;
     public string Name;
     public Sprite Portrait;
     public Sprite LeftIdle;
 
-    [Header("ÊôĞÔ")]
+    [Header("å±æ€§")]
     public int BaseLevel = 1;
     public StatBlock BaseStats;
 
-    [Header("¶¯»­»ú")]
+    [Header("æˆ˜æ–—æœºåŠ¨æ€§")]
+    [Min(0)]
+    [Tooltip("ä¸»åŠ¨æˆ˜æ–—æ¢ä½æ—¶ï¼Œè§’è‰²ä¸€æ¬¡æœ€å¤šè·¨è¶Šçš„é˜µå‹æ ¼æ•°ã€‚")]
+    public int maxSwapDistance = 1;
+
+    [Header("åŠ¨ç”»æœº")]
     public AnimatorOverrideController filedAnimator;
     public AnimatorOverrideController battleAnimator;
 }
@@ -53,22 +58,22 @@ public struct StatBlock
 
     }
 
-    // ÖØÔØ³Ë·¨ÔËËã·û£ºÔÊĞí StatBlock Ö±½ÓÓë float Ïà³Ë (ÀıÈç£ºstatBlock * -1f)
+    // é‡è½½ä¹˜æ³•è¿ç®—ç¬¦ï¼šå…è®¸ StatBlock ç›´æ¥ä¸ float ç›¸ä¹˜ (ä¾‹å¦‚ï¼šstatBlock * -1f)
     public static StatBlock operator *(StatBlock a, float multiplier)
     {
-        // ÊµÀı»¯²¢·µ»ØÒ»¸öĞÂµÄ StatBlock ¶ÔÏó£¬Ã¿¸öÊôĞÔ×Ö¶Î¶¼³ËÒÔÏµÊı²¢ËÄÉáÎåÈëÈ¡Õû
+        // å®ä¾‹åŒ–å¹¶è¿”å›ä¸€ä¸ªæ–°çš„ StatBlock å¯¹è±¡ï¼Œæ¯ä¸ªå±æ€§å­—æ®µéƒ½ä¹˜ä»¥ç³»æ•°å¹¶å››èˆäº”å…¥å–æ•´
         return new StatBlock
         {
-            // Mathf.RoundToInt »á½« float ½á¹ûËÄÉáÎåÈëÎª×î½Ó½üµÄÕûÊı (int)
-            MaxHP = Mathf.RoundToInt(a.MaxHP * multiplier),    // ×î´óÉúÃüÖµ
-            MaxSP = Mathf.RoundToInt(a.MaxSP * multiplier),    // ×î´ó¼¼ÄÜÖµ/Ä§·¨Öµ
-            PAtk = Mathf.RoundToInt(a.PAtk * multiplier),     // ÎïÀí¹¥»÷Á¦
-            PDef = Mathf.RoundToInt(a.PDef * multiplier),     // ÎïÀí·ÀÓùÁ¦
-            MAtk = Mathf.RoundToInt(a.MAtk * multiplier),     // Ä§·¨¹¥»÷Á¦
-            MDef = Mathf.RoundToInt(a.MDef * multiplier),     // Ä§·¨·ÀÓùÁ¦
-            Speed = Mathf.RoundToInt(a.Speed * multiplier),    // ËÙ¶ÈÖµ
-            Accuracy = Mathf.RoundToInt(a.Accuracy * multiplier), // ÃüÖĞÂÊ/¾«×¼¶È
-            Evasion = Mathf.RoundToInt(a.Evasion * multiplier)   // ÉÁ±ÜÂÊ
+            // Mathf.RoundToInt ä¼šå°† float ç»“æœå››èˆäº”å…¥ä¸ºæœ€æ¥è¿‘çš„æ•´æ•° (int)
+            MaxHP = Mathf.RoundToInt(a.MaxHP * multiplier),    // æœ€å¤§ç”Ÿå‘½å€¼
+            MaxSP = Mathf.RoundToInt(a.MaxSP * multiplier),    // æœ€å¤§æŠ€èƒ½å€¼/é­”æ³•å€¼
+            PAtk = Mathf.RoundToInt(a.PAtk * multiplier),     // ç‰©ç†æ”»å‡»åŠ›
+            PDef = Mathf.RoundToInt(a.PDef * multiplier),     // ç‰©ç†é˜²å¾¡åŠ›
+            MAtk = Mathf.RoundToInt(a.MAtk * multiplier),     // é­”æ³•æ”»å‡»åŠ›
+            MDef = Mathf.RoundToInt(a.MDef * multiplier),     // é­”æ³•é˜²å¾¡åŠ›
+            Speed = Mathf.RoundToInt(a.Speed * multiplier),    // é€Ÿåº¦å€¼
+            Accuracy = Mathf.RoundToInt(a.Accuracy * multiplier), // å‘½ä¸­ç‡/ç²¾å‡†åº¦
+            Evasion = Mathf.RoundToInt(a.Evasion * multiplier)   // é—ªé¿ç‡
         };
     }
 }

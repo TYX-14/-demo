@@ -37,6 +37,9 @@ public class BattleFieldManager : MonoBehaviour
     /// </summary>
     private readonly Dictionary<BattleUnit, Vector3> _homePos = new();
 
+    // 防止换位/击退动画尚未结束时再次触发阵型位移。
+    private bool _formationMovementInProgress;
+
     /// <summary>
     /// 当前已生成的友方单位列表。
     /// </summary>
@@ -149,6 +152,116 @@ public class BattleFieldManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// 主动交换指定友军与目标位置上的队友。
+    /// 距离限制由主动发起者的 CharacterDefinitionSO.maxSwapDistance 决定。
+    /// 注意：当前项目尚无完整回合行动系统，本方法暂不扣除行动机会。
+    /// </summary>
+    public bool TrySwapAllyPositions(BattleEntity actor, int targetPosition, float duration = 0.35f)
+    {
+        if (_formationMovementInProgress || actor == null || !actor.IsPlayer ||
+            actor.Unit == null || actor.RuntimeData == null ||
+            PartyManager.Instance == null || layout == null ||
+            !_spawnedAllyUnits.Contains(actor.Unit))
+            return false;
+
+        int currentPosition = actor.RuntimeData.Position;
+        if (targetPosition < 1 || targetPosition > 4 || targetPosition == currentPosition)
+            return false;
+
+        int maxDistance = Mathf.Max(0, actor.Definition.maxSwapDistance);
+        if (Mathf.Abs(targetPosition - currentPosition) > maxDistance)
+        {
+            Debug.Log($"换位失败：{actor.Definition.Name} 最多只能跨越 {maxDistance} 格。", actor.Unit);
+            return false;
+        }
+
+        CharacterRuntimeData targetMember = PartyManager.Instance.GetMemberAtPosition(targetPosition);
+        if (targetMember == null)
+            return false;
+
+        BattleUnit targetUnit = null;
+        foreach (BattleUnit unit in _spawnedAllyUnits)
+        {
+            if (unit != null && unit.Entity != null && unit.Entity.RuntimeData == targetMember)
+            {
+                targetUnit = unit;
+                break;
+            }
+        }
+
+        if (targetUnit == null || targetUnit == actor.Unit)
+            return false;
+
+        // 数据层只交换两名角色的位置，其他队员不动。
+        PartyManager.Instance.SwapPosition(currentPosition, targetPosition);
+
+        Vector3 actorTarget = layout.GetAllySlotPos(targetPosition);
+        Vector3 targetTarget = layout.GetAllySlotPos(currentPosition);
+        _homePos[actor.Unit] = actorTarget;
+        _homePos[targetUnit] = targetTarget;
+
+        duration = Mathf.Max(0.01f, duration);
+        _formationMovementInProgress = true;
+        StartCoroutine(AnimateAllySwap(actor.Unit, targetUnit, actorTarget, targetTarget, duration));
+        return true;
+    }
+
+    private System.Collections.IEnumerator AnimateAllySwap(
+        BattleUnit actor, BattleUnit target, Vector3 actorTarget, Vector3 targetTarget, float duration)
+    {
+        StartCoroutine(actor.MoveToPosition(actorTarget, duration));
+        StartCoroutine(target.MoveToPosition(targetTarget, duration));
+        yield return new WaitForSeconds(duration);
+        _formationMovementInProgress = false;
+    }
+
+    /// <summary>
+    /// 将友军强制击退到更靠后的槽位。被击退者保持非跑步状态平滑位移，
+    /// 因补位而改变位置的其他友军则播放正常移动动画。
+    /// 注意：当前项目尚无完整回合行动系统，本方法不消耗行动机会。
+    /// </summary>
+    public bool TryKnockbackAllyToPosition(BattleEntity target, int targetPosition, float duration = 0.25f)
+    {
+        if (_formationMovementInProgress || target == null || !target.IsPlayer ||
+            target.Unit == null || target.RuntimeData == null ||
+            PartyManager.Instance == null || layout == null ||
+            !_spawnedAllyUnits.Contains(target.Unit))
+            return false;
+
+        int oldPosition = target.RuntimeData.Position;
+        if (targetPosition < 1 || targetPosition > 4 || targetPosition <= oldPosition)
+            return false;
+
+        if (!PartyManager.Instance.MoveMemberToPosition(target.RuntimeData, targetPosition))
+            return false;
+
+        duration = Mathf.Max(0.01f, duration);
+        _formationMovementInProgress = true;
+        StartCoroutine(AnimateAllyKnockback(target.Unit, duration));
+        return true;
+    }
+
+    private System.Collections.IEnumerator AnimateAllyKnockback(BattleUnit knockedBackUnit, float duration)
+    {
+        foreach (BattleUnit unit in _spawnedAllyUnits)
+        {
+            if (unit == null || unit.Entity == null)
+                continue;
+
+            Vector3 targetPos = layout.GetAllySlotPos(unit.Entity.RuntimeData.Position);
+            _homePos[unit] = targetPos;
+
+            if (unit == knockedBackUnit)
+                StartCoroutine(unit.ForcedMoveToPosition(targetPos, duration));
+            else
+                StartCoroutine(unit.MoveToPosition(targetPos, duration));
+        }
+
+        yield return new WaitForSeconds(duration);
+        _formationMovementInProgress = false;
     }
 
     /// <summary>
