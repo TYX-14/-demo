@@ -141,7 +141,56 @@ private void Update()
 
         RefreshLeader();
 
-        RefreshFieldFollowers(false);
+        if (!fieldActorsHidden)
+            RefreshFieldFollowers(false);
+    }
+
+    /// <summary>
+    /// 将成员移动到目标位置。目标位置被占据时，中间成员向原位置方向补位。
+    /// 例如 2 号移动到 4 号时，原 3、4 号分别移动到 2、3 号。
+    /// </summary>
+    public bool MoveMemberToPosition(CharacterRuntimeData member, int targetPosition)
+    {
+        if (member == null || !partyMenbers.Contains(member))
+            return false;
+
+        if (targetPosition < 1 || targetPosition > 4)
+            return false;
+
+        int oldPosition = member.Position;
+        if (oldPosition < 1 || oldPosition > 4)
+            return false;
+
+        if (oldPosition == targetPosition)
+            return true;
+
+        if (targetPosition > oldPosition)
+        {
+            for (int position = oldPosition + 1; position <= targetPosition; position++)
+            {
+                CharacterRuntimeData shifted = GetMemberAtPosition(position);
+                if (shifted != null && shifted != member)
+                    shifted.Position = position - 1;
+            }
+        }
+        else
+        {
+            for (int position = oldPosition - 1; position >= targetPosition; position--)
+            {
+                CharacterRuntimeData shifted = GetMemberAtPosition(position);
+                if (shifted != null && shifted != member)
+                    shifted.Position = position + 1;
+            }
+        }
+
+        member.Position = targetPosition;
+        RefreshLeader();
+
+        // 战斗中探索队员已隐藏；回到探索模式时会按新位置重建队伍。
+        if (!fieldActorsHidden)
+            RefreshFieldFollowers(false);
+
+        return true;
     }
 
     /// <summary>
@@ -170,7 +219,8 @@ private void Update()
         }
 
         RefreshLeader();
-        RefreshFieldFollowers(false);
+        if (!fieldActorsHidden)
+            RefreshFieldFollowers(false);
         return true;
     }
     /// <summary>

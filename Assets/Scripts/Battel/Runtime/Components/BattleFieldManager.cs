@@ -2,75 +2,77 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Õ½³¡¹ÜÀíÆ÷£¨¸üĞÂ°æ£©¡£
-/// ¸ºÔğ¹ÜÀíÕ½³¡µÄÉú³É¡¢²¼¾Ö¡¢µ¥Î»¼¯ºÏÒÔ¼°µĞ¶Ôµ¥Î»µÄÕóĞÍ¡£
-/// ÊµÏÖÁËÕ½¶·µ¥Î»µÄ¶¯Ì¬´´½¨¡¢Ïú»Ù¼°³õÊ¼Î»ÖÃÓ³Éä¡£
+/// æˆ˜åœºç®¡ç†å™¨ï¼ˆæ›´æ–°ç‰ˆï¼‰ã€‚
+/// è´Ÿè´£ç®¡ç†æˆ˜åœºçš„ç”Ÿæˆã€å¸ƒå±€ã€å•ä½é›†åˆä»¥åŠæ•Œå¯¹å•ä½çš„é˜µå‹ã€‚
+/// å®ç°äº†æˆ˜æ–—å•ä½çš„åŠ¨æ€åˆ›å»ºã€é”€æ¯åŠåˆå§‹ä½ç½®æ˜ å°„ã€‚
 /// </summary>
 public class BattleFieldManager : MonoBehaviour
 {
     [Header("Prefab")]
     /// <summary>
-    /// Õ½¶·µ¥Î»µÄÔ¤ÖÆÌåÒıÓÃ¡£
-    /// ÓÃÓÚÔÚÊµÀı»¯Éú³Éµ¥Î»Ê±×÷Îª¶ÔÏóÀ¶Í¼¡£
+    /// æˆ˜æ–—å•ä½çš„é¢„åˆ¶ä½“å¼•ç”¨ã€‚
+    /// ç”¨äºåœ¨å®ä¾‹åŒ–ç”Ÿæˆå•ä½æ—¶ä½œä¸ºå¯¹è±¡è“å›¾ã€‚
     /// </summary>
     [SerializeField] private BattleUnit battleUnitPrefab;
 
     /// <summary>
-    /// Õ½³¡²¼¾Ö¼ÆËãÆ÷µÄÒıÓÃ¡£
-    /// ¸ºÔğÌá¹©Õ¾Î»×ø±êµÄ¼ÆËã¡£
+    /// æˆ˜åœºå¸ƒå±€è®¡ç®—å™¨çš„å¼•ç”¨ã€‚
+    /// è´Ÿè´£æä¾›ç«™ä½åæ ‡çš„è®¡ç®—ã€‚
     /// </summary>
     private BattleFieldLayout layout;
 
     /// <summary>
-    /// ËùÓĞÓÑ·½µ¥Î»µÄ¸ù½Úµã£¨ÓÃÓÚ±£³Ö Hierarchy Õû½à¼°Ïà¶Ô×ø±ê¹ÜÀí£©¡£
+    /// æ‰€æœ‰å‹æ–¹å•ä½çš„æ ¹èŠ‚ç‚¹ï¼ˆç”¨äºä¿æŒ Hierarchy æ•´æ´åŠç›¸å¯¹åæ ‡ç®¡ç†ï¼‰ã€‚
     /// </summary>
     private Transform allyRoot;
 
     /// <summary>
-    /// ËùÓĞµĞ·½µ¥Î»µÄ¸ù½Úµã£¨ÓÃÓÚ±£³Ö Hierarchy Õû½à¼°Ïà¶Ô×ø±ê¹ÜÀí£©¡£
+    /// æ‰€æœ‰æ•Œæ–¹å•ä½çš„æ ¹èŠ‚ç‚¹ï¼ˆç”¨äºä¿æŒ Hierarchy æ•´æ´åŠç›¸å¯¹åæ ‡ç®¡ç†ï¼‰ã€‚
     /// </summary>
     private Transform enemyRoot;
 
     /// <summary>
-    /// ¼ÇÂ¼Ã¿¸öÕ½¶·µ¥Î»£¨BattleUnit£©¶ÔÓ¦µÄ×îÖÕÕ½¶·ÕóĞÍÕ¾Î»£¨Home Position£©¡£
-    /// ÓÃÓÚÔÚºóĞø×´Ì¬£¨Èç BattleSetupState£©¿ØÖÆµ¥Î»Ö´ĞĞ¡°ÅÜ½ø³¡¡±¶¯»­¡£
+    /// è®°å½•æ¯ä¸ªæˆ˜æ–—å•ä½ï¼ˆBattleUnitï¼‰å¯¹åº”çš„æœ€ç»ˆæˆ˜æ–—é˜µå‹ç«™ä½ï¼ˆHome Positionï¼‰ã€‚
+    /// ç”¨äºåœ¨åç»­çŠ¶æ€ï¼ˆå¦‚ BattleSetupStateï¼‰æ§åˆ¶å•ä½æ‰§è¡Œâ€œè·‘è¿›åœºâ€åŠ¨ç”»ã€‚
     /// </summary>
     private readonly Dictionary<BattleUnit, Vector3> _homePos = new();
 
     /// <summary>
-    /// µ±Ç°ÒÑÉú³ÉµÄÓÑ·½µ¥Î»ÁĞ±í¡£
+    /// å½“å‰å·²ç”Ÿæˆçš„å‹æ–¹å•ä½åˆ—è¡¨ã€‚
     /// </summary>
     private readonly List<BattleUnit> _spawnedAllyUnits = new();
 
     /// <summary>
-    /// µ±Ç°ÒÑÉú³ÉµÄµĞ·½µ¥Î»ÁĞ±í¡£
+    /// å½“å‰å·²ç”Ÿæˆçš„æ•Œæ–¹å•ä½åˆ—è¡¨ã€‚
     /// </summary>
     private readonly List<BattleUnit> _spawnedEnemyUnits = new();
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°ËùÓĞÒÑÉú³ÉµÄÓÑ·½µ¥Î»µÄÖ»¶Á¼¯ºÏ¡£
+    /// è·å–å½“å‰æ‰€æœ‰å·²ç”Ÿæˆçš„å‹æ–¹å•ä½çš„åªè¯»é›†åˆã€‚
     /// </summary>
     public IReadOnlyList<BattleUnit> SpawnedAllyUnits => _spawnedAllyUnits;
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°ËùÓĞÒÑÉú³ÉµÄµĞ·½µ¥Î»µÄÖ»¶Á¼¯ºÏ¡£
+    /// è·å–å½“å‰æ‰€æœ‰å·²ç”Ÿæˆçš„æ•Œæ–¹å•ä½çš„åªè¯»é›†åˆã€‚
     /// </summary>
     public IReadOnlyList<BattleUnit> SpawnedEnemyUnits => _spawnedEnemyUnits;
 
     /// <summary>
-    /// µ±Ç°µĞ·½µ¥Î»ËùÊ¹ÓÃµÄÕóĞÍÄ£Ê½£¨Ä¬ÈÏÒÔÏßĞÔÕóĞÍÆğ²½£©¡£
+    /// å½“å‰æ•Œæ–¹å•ä½æ‰€ä½¿ç”¨çš„é˜µå‹æ¨¡å¼ï¼ˆé»˜è®¤ä»¥çº¿æ€§é˜µå‹èµ·æ­¥ï¼‰ã€‚
     /// </summary>
     private EnemyLayoutFormation _currentFormation = EnemyLayoutFormation.Line;
 
     /// <summary>
-    /// ¸ù¾İ´«ÈëµÄÕ½¶·Êı¾İÔØºÉ£¨BattleStartPayload£©£¬Éú³ÉÕ½¶·Ë«·½µÄËùÓĞµ¥Î»¡£
+    /// æ ¹æ®ä¼ å…¥çš„æˆ˜æ–—æ•°æ®è½½è·ï¼ˆBattleStartPayloadï¼‰ï¼Œç”Ÿæˆæˆ˜æ–—åŒæ–¹çš„æ‰€æœ‰å•ä½ã€‚
     /// </summary>
-    /// <param name="payload">°üº¬Ë«·½ÈËÊı¼°ÕóĞÍĞÅÏ¢µÄÕ½¶·ÆğÊ¼ÔØºÉ¡£</param>
+    /// <param name="payload">åŒ…å«åŒæ–¹äººæ•°åŠé˜µå‹ä¿¡æ¯çš„æˆ˜æ–—èµ·å§‹è½½è·ã€‚</param>
     public void SpawnAll(BattleStartPayload payload)
     {
         layout = FindAnyObjectByType<BattleFieldLayout>();
 
-        // ´´½¨²¢¹ÒÔØË«·½µ¥Î»µÄ¸¸½Úµã
+        // å…ˆæ¸…ç©ºä¸Šä¸€æ¬¡ç”Ÿæˆçš„å•ä½ï¼Œå†åˆ›å»ºæœ¬æ¬¡æˆ˜æ–—çš„æ ¹èŠ‚ç‚¹ã€‚
+        ClearAllUnits();
+
         allyRoot = new GameObject("Ally Root").transform;
         allyRoot.SetParent(layout.transform, false);
 
@@ -79,37 +81,34 @@ public class BattleFieldManager : MonoBehaviour
 
         _currentFormation = payload.Formation;
 
-        // ÒªÏÈÇå¿ÕÒÑÉú³ÉµÄ
-        ClearAllUnits();
-
-        // Éú³Éµ¥Î»²¢Ìí¼Óµ½¶ÔÓ¦µÄ¼¯ºÏÖĞ
-        _spawnedAllyUnits.AddRange(SpawnSide(payload.Allies.Count, true));
-        _spawnedEnemyUnits.AddRange(SpawnSide(payload.Enemies.Count, false));
+        // ä¿ç•™æ•°æ®åˆ—è¡¨é¡ºåºï¼Œç¡®ä¿åç»­ RuntimeData ä¸ BattleUnit æŒ‰ç´¢å¼•æ­£ç¡®ç»‘å®šã€‚
+        _spawnedAllyUnits.AddRange(SpawnSide(payload.Allies, true));
+        _spawnedEnemyUnits.AddRange(SpawnSide(payload.Enemies, false));
     }
 
     /// <summary>
-    /// °´ÕóÓªÉú³ÉÒ»²àµÄ¶à¸öµ¥Î»£¬²¢¼ÇÂ¼ËûÃÇµÄ³öÉúµãÓëÕóĞÍ¹éÎ»µã¡£
+    /// æŒ‰é˜µè¥ç”Ÿæˆä¸€ä¾§çš„å¤šä¸ªå•ä½ï¼Œå¹¶è®°å½•ä»–ä»¬çš„å‡ºç”Ÿç‚¹ä¸é˜µå‹å½’ä½ç‚¹ã€‚
     /// </summary>
-    /// <param name="count">¸ÃÕóÓªÒªÉú³ÉµÄµ¥Î»ÊıÁ¿¡£</param>
-    /// <param name="isAlly">ÊÇ·ñÎªÓÑ·½ÕóÓª£¨trueÎªÓÑ·½£¬falseÎªµĞ·½£©¡£</param>
-    /// <returns>¸ÃÕóÓªÉú³ÉµÄËùÓĞ BattleUnit ÁĞ±í¡£</returns>
-    private List<BattleUnit> SpawnSide(int count, bool isAlly)
+    /// <param name="count">è¯¥é˜µè¥è¦ç”Ÿæˆçš„å•ä½æ•°é‡ã€‚</param>
+    /// <param name="isAlly">æ˜¯å¦ä¸ºå‹æ–¹é˜µè¥ï¼ˆtrueä¸ºå‹æ–¹ï¼Œfalseä¸ºæ•Œæ–¹ï¼‰ã€‚</param>
+    /// <returns>è¯¥é˜µè¥ç”Ÿæˆçš„æ‰€æœ‰ BattleUnit åˆ—è¡¨ã€‚</returns>
+    private List<BattleUnit> SpawnSide(List<CharacterRuntimeData> members, bool isAlly)
     {
         List<BattleUnit> units = new List<BattleUnit>();
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < members.Count; i++)
         {
-            // 1. ¼ÆËã×îÖÕÕ½¶·Õ¾Î» (Home Position)
+            // å‹æ–¹ä½¿ç”¨æŒä¹…åŒ–çš„ Positionï¼›æ•Œæ–¹ç»§ç»­æ²¿ç”¨ç°æœ‰çš„é˜µå‹è®¡ç®—ã€‚
             Vector3 targetSlotPos = isAlly
-                ? layout.GetAllySlotPos(i, count)
-                : layout.GetEnemySlotPos(i, count, _currentFormation);
+                ? layout.GetAllySlotPos(members[i].Position)
+                : layout.GetEnemySlotPos(i, members.Count, _currentFormation);
 
-            // 2. ¾ö¶¨³öÉúµã (Spawn Position)
-            // ÓÑ·½´ÓÍ³Ò»Èë³¡µãÉú³É£¬µĞ·½Ö±½Ó´Ó×îÖÕÕ¾Î»Éú³É£¨»òÕßÄãÒ²¿ÉÒÔÈÃµĞÈËÒ²ÓĞÈë³¡¶¯»­£©
+            // 2. å†³å®šå‡ºç”Ÿç‚¹ (Spawn Position)
+            // å‹æ–¹ä»ç»Ÿä¸€å…¥åœºç‚¹ç”Ÿæˆï¼Œæ•Œæ–¹ç›´æ¥ä»æœ€ç»ˆç«™ä½ç”Ÿæˆï¼ˆæˆ–è€…ä½ ä¹Ÿå¯ä»¥è®©æ•Œäººä¹Ÿæœ‰å…¥åœºåŠ¨ç”»ï¼‰
             Vector3 spawnPos = isAlly
                 ? layout.initTrans.position
                 : targetSlotPos;
 
-            // 3. Éú³Éµ¥Î»
+            // 3. ç”Ÿæˆå•ä½
             BattleUnit unitObj = Instantiate(
                 battleUnitPrefab,
                 spawnPos,
@@ -117,11 +116,11 @@ public class BattleFieldManager : MonoBehaviour
                 isAlly ? allyRoot : enemyRoot
             );
 
-            // 4. ¼ÇÂ¼»º´æ
+            // 4. è®°å½•ç¼“å­˜
             units.Add(unitObj);
 
-            // [¹Ø¼ü] ÕâÀï¼ÇÂ¼µÄÊÇ targetSlotPos(×îÖÕÕ¾Î»), ²»ÊÇ spawnPos(³öÉúµã).
-            // ºóĞø BattleSetupState »áÓÃÕâ¸ö Home Î»ÖÃÀ´Ö´ĞĞ"ÅÜ½ø³¡"¶¯»­¡£
+            // [å…³é”®] è¿™é‡Œè®°å½•çš„æ˜¯ targetSlotPos(æœ€ç»ˆç«™ä½), ä¸æ˜¯ spawnPos(å‡ºç”Ÿç‚¹).
+            // åç»­ BattleSetupState ä¼šç”¨è¿™ä¸ª Home ä½ç½®æ¥æ‰§è¡Œ"è·‘è¿›åœº"åŠ¨ç”»ã€‚
             _homePos[unitObj] = targetSlotPos;
         }
 
@@ -129,29 +128,53 @@ public class BattleFieldManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇåÀíÕ½³¡ÉÏËùÓĞÒÑÉú³ÉµÄµ¥Î»£¬²¢ÖØÖÃ¼ÇÂ¼µÄÊı¾İ¡£
+    /// å°†æˆ‘æ–¹å•ä½ç§»åŠ¨åˆ°ç›®æ ‡æ§½ä½ï¼Œå¹¶æŠŠè¡¥ä½åçš„ç»“æœå†™å›é˜Ÿä¼æ•°æ®ã€‚
+    /// </summary>
+    public bool MoveAllyToPosition(BattleEntity entity, int targetPosition, float duration = 0.35f)
+    {
+        if (entity == null || !entity.IsPlayer || layout == null || PartyManager.Instance == null)
+            return false;
+
+        if (!PartyManager.Instance.MoveMemberToPosition(entity.RuntimeData, targetPosition))
+            return false;
+
+        foreach (BattleUnit unit in _spawnedAllyUnits)
+        {
+            if (unit == null || unit.Entity == null)
+                continue;
+
+            Vector3 targetPos = layout.GetAllySlotPos(unit.Entity.RuntimeData.Position);
+            _homePos[unit] = targetPos;
+            StartCoroutine(unit.MoveToPosition(targetPos, duration));
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// æ¸…ç†æˆ˜åœºä¸Šæ‰€æœ‰å·²ç”Ÿæˆçš„å•ä½ï¼Œå¹¶é‡ç½®è®°å½•çš„æ•°æ®ã€‚
     /// </summary>
     public void ClearAllUnits()
     {
-        // ÇåÀíÓÑ·½µ¥Î»
+        // æ¸…ç†å‹æ–¹å•ä½
         foreach (var unit in _spawnedAllyUnits)
         {
             Destroy(unit.gameObject);
         }
         _spawnedAllyUnits.Clear();
 
-        // ÇåÀíµĞ·½µ¥Î»
+        // æ¸…ç†æ•Œæ–¹å•ä½
         foreach (var unit in _spawnedEnemyUnits)
         {
             Destroy(unit.gameObject);
         }
         _spawnedEnemyUnits.Clear();
 
-        // Çå¿ÕÎ»ÖÃÓ³Éä±í
+        // æ¸…ç©ºä½ç½®æ˜ å°„è¡¨
         _homePos.Clear();
     }
     /// <summary>
-    /// Íâ²¿½Ó¿Ú£¬ÄÃµ½_homePos
+    /// å¤–éƒ¨æ¥å£ï¼Œæ‹¿åˆ°_homePos
     /// </summary>
     /// <param name="unit"></param>
     /// <returns></returns>

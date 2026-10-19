@@ -1,77 +1,90 @@
 
 
 /// <summary>
-/// Õ½³¡²¼¾ÖÅäÖÃÀà£¬¹ÜÀíÓÑ·½ºÍµĞ·½µ¥Î»ÔÚ³¡¾°ÖĞµÄÕ¾Î»¼°ÕóĞÍÂß¼­¡£
+/// æˆ˜åœºå¸ƒå±€é…ç½®ç±»ï¼Œç®¡ç†å‹æ–¹å’Œæ•Œæ–¹å•ä½åœ¨åœºæ™¯ä¸­çš„ç«™ä½åŠé˜µå‹é€»è¾‘ã€‚
 /// </summary>
 public class BattleFieldLayout : MonoBehaviour
 {
     [Header("Scene References")]
     /// <summary>
-    /// ĞĞ¶¯ÕßÕ¾Î» (ºìÉ« Action Position)£¬ÂÖµ½ĞĞ¶¯ÕßÊ±ÒÆ¶¯µ½ÕâÀï¡£
+    /// è¡ŒåŠ¨è€…ç«™ä½ (çº¢è‰² Action Position)ï¼Œè½®åˆ°è¡ŒåŠ¨è€…æ—¶ç§»åŠ¨åˆ°è¿™é‡Œã€‚
     /// </summary>
     public Transform actionTrans;
 
     /// <summary>
-    /// ³õÊ¼Õ¾Î»¡£
+    /// åˆå§‹ç«™ä½ã€‚
     /// </summary>
     public Transform initTrans;
 
-    [Header("Ally Slot Segment")]
-    /// <summary>
-    /// ÓÑ·½Õ¾Î»Ïß¶ÎÆğµã£¨¶¥²¿£©¡£
-    /// </summary>
-    [SerializeField] private Transform allyTopTrans;
-
-    /// <summary>
-    /// ÓÑ·½Õ¾Î»Ïß¶ÎÖÕµã£¨µ×²¿£©¡£
-    /// </summary>
-    [SerializeField] private Transform allyBottomTrans;
+    [Header("Ally Fixed Slots")]
+    [SerializeField] private Transform allySlot1;
+    [SerializeField] private Transform allySlot2;
+    [SerializeField] private Transform allySlot3;
+    [SerializeField] private Transform allySlot4;
 
     [Header("Enemy Slot Segment (Normal)")]
     /// <summary>
-    /// µĞ·½ÆÕÍ¨ÕóĞÍÕ¾Î»Ïß¶ÎÆğµã£¨¶¥²¿£©¡£
+    /// æ•Œæ–¹æ™®é€šé˜µå‹ç«™ä½çº¿æ®µèµ·ç‚¹ï¼ˆé¡¶éƒ¨ï¼‰ã€‚
     /// </summary>
     [SerializeField] private Transform enemyTopTrans;
 
     /// <summary>
-    /// µĞ·½ÆÕÍ¨ÕóĞÍÕ¾Î»Ïß¶ÎÖÕµã£¨µ×²¿£©¡£
+    /// æ•Œæ–¹æ™®é€šé˜µå‹ç«™ä½çº¿æ®µç»ˆç‚¹ï¼ˆåº•éƒ¨ï¼‰ã€‚
     /// </summary>
     [SerializeField] private Transform enemyBottomTrans;
 
     [Header("Enemy Formation (BossTriangle)")]
     /// <summary>
-    /// BOSS Õ¾Î»£¨Èı½ÇĞÎÕóĞÍÖĞĞÄµã£©¡£
+    /// BOSS ç«™ä½ï¼ˆä¸‰è§’å½¢é˜µå‹ä¸­å¿ƒç‚¹ï¼‰ã€‚
     /// </summary>
     [SerializeField] private Transform bossCenterTrans;
 
     /// <summary>
-    /// BOSS Èı½ÇĞÎÕóĞÍÖĞ£¬Ğ¡¹ÖµÄÕ¾Î»Ïß¶ÎÆğµã£¨¶¥²¿£©¡£
+    /// BOSS ä¸‰è§’å½¢é˜µå‹ä¸­ï¼Œå°æ€ªçš„ç«™ä½çº¿æ®µèµ·ç‚¹ï¼ˆé¡¶éƒ¨ï¼‰ã€‚
     /// </summary>
     [SerializeField] private Transform minionTopTrans;
 
     /// <summary>
-    /// BOSS Èı½ÇĞÎÕóĞÍÖĞ£¬Ğ¡¹ÖµÄÕ¾Î»Ïß¶ÎÖÕµã£¨µ×²¿£©¡£
+    /// BOSS ä¸‰è§’å½¢é˜µå‹ä¸­ï¼Œå°æ€ªçš„ç«™ä½çº¿æ®µç»ˆç‚¹ï¼ˆåº•éƒ¨ï¼‰ã€‚
     /// </summary>
     [SerializeField] private Transform minionBottomTrans;
 
     /// <summary>
-    /// »ñÈ¡ÓÑ·½µ¥Î»µÄÄ¿±êÕ¾Á¢Î»ÖÃ¡£
+    /// æ ¹æ®é€»è¾‘ä½ç½®è·å–å‹æ–¹å•ä½çš„å›ºå®šç«™ä½ã€‚ä½ç½®ç¼–å·ä¸º 1~4ï¼Œä¸é˜Ÿä¼äººæ•°æ— å…³ã€‚
     /// </summary>
-    /// <param name="index">µ¥Î»ÔÚ¶ÓÁĞÖĞµÄË÷Òı£¨0¿ªÊ¼£©¡£</param>
-    /// <param name="count">¶ÓÁĞ×ÜÈËÊı¡£</param>
-    /// <returns>¼ÆËãºóµÄÊÀ½ç×ø±ê¡£</returns>
-    public Vector3 GetAllySlotPos(int index, int count)
+    /// <param name="position">è§’è‰²çš„é€»è¾‘ä½ç½®ï¼ˆ1~4ï¼‰ã€‚</param>
+    /// <returns>å¯¹åº”æ§½ä½çš„ä¸–ç•Œåæ ‡ã€‚</returns>
+    public Vector3 GetAllySlotPos(int position)
     {
-        return LerpByMidpointRule(allyTopTrans.position, allyBottomTrans.position, index, count);
+        Transform slot = null;
+
+        switch (position)
+        {
+            case 1: slot = allySlot1; break;
+            case 2: slot = allySlot2; break;
+            case 3: slot = allySlot3; break;
+            case 4: slot = allySlot4; break;
+            default:
+                Debug.LogError($"å‹æ–¹ç«™ä½ç¼–å·æ— æ•ˆï¼š{position}ï¼Œæœ‰æ•ˆèŒƒå›´ä¸º 1~4ã€‚", this);
+                return transform.position;
+        }
+
+        if (slot == null)
+        {
+            Debug.LogError($"BattleFieldLayout å°šæœªé…ç½® AllySlot{position}ã€‚", this);
+            return transform.position;
+        }
+
+        return slot.position;
     }
 
     /// <summary>
-    /// »ñÈ¡µĞ·½µ¥Î»µÄÄ¿±êÕ¾Á¢Î»ÖÃ£¬¸ù¾İÕóĞÍ²»Í¬¼ÆËã·½Ê½²»Í¬¡£
+    /// è·å–æ•Œæ–¹å•ä½çš„ç›®æ ‡ç«™ç«‹ä½ç½®ï¼Œæ ¹æ®é˜µå‹ä¸åŒè®¡ç®—æ–¹å¼ä¸åŒã€‚
     /// </summary>
-    /// <param name="index">µ¥Î»ÔÚ¶ÓÁĞÖĞµÄË÷Òı£¨0¿ªÊ¼£©¡£</param>
-    /// <param name="count">¶ÓÁĞ×ÜÈËÊı¡£</param>
-    /// <param name="formation">Ö¸¶¨µÄµĞ·½ÕóĞÍÃ¶¾Ù¡£</param>
-    /// <returns>¼ÆËãºóµÄÊÀ½ç×ø±ê¡£</returns>
+    /// <param name="index">å•ä½åœ¨é˜Ÿåˆ—ä¸­çš„ç´¢å¼•ï¼ˆ0å¼€å§‹ï¼‰ã€‚</param>
+    /// <param name="count">é˜Ÿåˆ—æ€»äººæ•°ã€‚</param>
+    /// <param name="formation">æŒ‡å®šçš„æ•Œæ–¹é˜µå‹æšä¸¾ã€‚</param>
+    /// <returns>è®¡ç®—åçš„ä¸–ç•Œåæ ‡ã€‚</returns>
     public Vector3 GetEnemySlotPos(int index, int count, EnemyLayoutFormation formation)
     {
         switch (formation)
@@ -85,15 +98,15 @@ public class BattleFieldLayout : MonoBehaviour
         }
     }
 
-    #region Ïß¶ÎµÈ·ÖËã·¨
+    #region çº¿æ®µç­‰åˆ†ç®—æ³•
     /// <summary>
-    /// Ïß¶ÎµÈ·ÖËã·¨£º¼ÆËãÏß¶Î [0, 1] Çø¼äÄÚ£¬ÅÅ³ıÁ½¶ËµãºóµÄµÈ·ÖµãÎ»ÖÃ¡£
+    /// çº¿æ®µç­‰åˆ†ç®—æ³•ï¼šè®¡ç®—çº¿æ®µ [0, 1] åŒºé—´å†…ï¼Œæ’é™¤ä¸¤ç«¯ç‚¹åçš„ç­‰åˆ†ç‚¹ä½ç½®ã€‚
     /// </summary>
-    /// <param name="start">Ïß¶ÎÆğµã¡£</param>
-    /// <param name="end">Ïß¶ÎÖÕµã¡£</param>
-    /// <param name="index">µÚ¼¸¸öµÈ·Öµã¡£</param>
-    /// <param name="count">×Ü·Ö¶ÎÊı¡£</param>
-    /// <returns>¼ÆËãºóµÄÊÀ½ç×ø±ê¡£</returns>
+    /// <param name="start">çº¿æ®µèµ·ç‚¹ã€‚</param>
+    /// <param name="end">çº¿æ®µç»ˆç‚¹ã€‚</param>
+    /// <param name="index">ç¬¬å‡ ä¸ªç­‰åˆ†ç‚¹ã€‚</param>
+    /// <param name="count">æ€»åˆ†æ®µæ•°ã€‚</param>
+    /// <returns>è®¡ç®—åçš„ä¸–ç•Œåæ ‡ã€‚</returns>
     private Vector3 LerpByMidpointRule(Vector3 start, Vector3 end, int index, int count)
     {
         float t = (index + 0.5f) / count;
@@ -101,11 +114,11 @@ public class BattleFieldLayout : MonoBehaviour
     }
 
     /// <summary>
-    /// »ñÈ¡ BOSS Èı½ÇĞÎÕóĞÍÏÂµÄ¾ßÌåÕ¾Á¢Î»ÖÃ¡£
+    /// è·å– BOSS ä¸‰è§’å½¢é˜µå‹ä¸‹çš„å…·ä½“ç«™ç«‹ä½ç½®ã€‚
     /// </summary>
-    /// <param name="index">µ¥Î»ÔÚ¶ÓÁĞÖĞµÄË÷Òı£¨0¿ªÊ¼£©¡£</param>
-    /// <param name="count">¶ÓÁĞ×ÜÈËÊı¡£</param>
-    /// <returns>¼ÆËãºóµÄÊÀ½ç×ø±ê¡£</returns>
+    /// <param name="index">å•ä½åœ¨é˜Ÿåˆ—ä¸­çš„ç´¢å¼•ï¼ˆ0å¼€å§‹ï¼‰ã€‚</param>
+    /// <param name="count">é˜Ÿåˆ—æ€»äººæ•°ã€‚</param>
+    /// <returns>è®¡ç®—åçš„ä¸–ç•Œåæ ‡ã€‚</returns>
     private Vector3 GetEnemyBossTrianglePos(int index, int count)
     {
         if (index == 0)
