@@ -256,7 +256,7 @@ public class BattleFieldManager : MonoBehaviour
 
             if (unit == knockedBackUnit)
             {
-                StartCoroutine(unit.ForcedMoveToPosition(targetPos, duration));
+                StartCoroutine(unit.ForcedMoveToPosition(targetPos, duration * 0.55f));
             }
             else if ((unit.transform.position - targetPos).sqrMagnitude > 0.0001f)
             {
