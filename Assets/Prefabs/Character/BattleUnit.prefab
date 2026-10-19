@@ -165,6 +165,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 5766690173362908828}
   hitPoint: {fileID: 5682452667192819058}
   targetCursorRenderer: {fileID: 3829843980078710185}
+  star: {fileID: 2556182002852635844}
 --- !u!1 &4297984649204407528
 GameObject:
   m_ObjectHideFlags: 0
