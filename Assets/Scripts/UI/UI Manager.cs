@@ -27,7 +27,7 @@ public class UIManager : MonoBehaviour,
 
     /// <summary>
     /// 由主菜单中的“队列”按钮调用，显示编队面板。
-    /// 面板启用时会通过自身的 OnEnable 刷新队伍与英雄名册。
+    /// 打开前先关闭其他由 UIManager 管理的面板，避免面板相互叠加。
     /// </summary>
     public void OpenPartyFormationPanel()
     {
@@ -40,6 +40,7 @@ public class UIManager : MonoBehaviour,
             return;
         }
 
+        CloseAllPanels();
         partyFormationPanel.gameObject.SetActive(true);
     }
 
@@ -78,14 +79,11 @@ public class UIManager : MonoBehaviour,
 
     #region 事件相关
     /// <summary>
-    /// 该事件启动各个面板，并且设置面板
+    /// 打开 ActionBase 对应的面板前，先关闭其他面板，确保同一时间只显示一个主功能面板。
     /// </summary>
-    /// <param name="evt"></param>
     public void OnEvent(PanelRequestEvent evt)
     {
-        // 打开其他 ActionBase 面板时，先关闭独立的编队面板。
-        if (partyFormationPanel != null)
-            partyFormationPanel.gameObject.SetActive(false);
+        CloseAllPanels();
 
         var panelType = evt.actionBase.GetType();
 
@@ -97,7 +95,6 @@ public class UIManager : MonoBehaviour,
     /// <summary>
     /// 如果游戏模式切换，该事件关闭面板
     /// </summary>
-    /// <param name="evt"></param>
     public void OnEvent(GameModeChangedEvent evt)
     {
         if (evt.newMode != GameMode.InteractionMenu)
@@ -111,51 +108,23 @@ public class UIManager : MonoBehaviour,
     /// <summary>
     /// 把所有三级菜单控制器获取并添加到字典
     /// </summary>
-    /// <param name="root"></param>
     private void GetPanelFromRoot(Transform root)
     {
-        var panels = root.GetComponentsInChildren<PanelController>(true);//panels将会被自动识别为数组
+        var panels = root.GetComponentsInChildren<PanelController>(true);
         foreach (var panel in panels)
         {
             _allPanelList.Add(panel);
             if (panel.panelActionType is null)
-            {      
-               continue;
-            }
+                continue;
+
             _PanelControllerDict.Add(panel.panelActionType, panel);
         }
     }
 
     /// <summary>
-    /// 遍历所有在字典的三级菜单，如果它属于激活状态，则关闭它
+    /// 遍历所有已登记的三级菜单并关闭。
+    /// 编队面板不继承 PanelController，因此需要单独关闭。
     /// </summary>
-    private void TryHandCancelByActivePanel()
-    {
-        foreach (var panel in _allPanelList)
-        {
-            if (panel.gameObject.activeSelf)
-            {
-                panel.gameObject.SetActive(false);
-                return;
-            }
-        }
-    }
-    /// <summary>
-    /// 检查是否有三级菜单处于激活状态
-    /// </summary>
-    /// <returns></returns>
-    private bool InAnyPanelActive()
-    {
-        foreach (var panel in _allPanelList)
-        {
-            if (panel.gameObject.activeSelf)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void CloseAllPanels()
     {
         foreach (var panel in _allPanelList)
@@ -163,7 +132,6 @@ public class UIManager : MonoBehaviour,
             panel.gameObject?.SetActive(false);
         }
 
-        // 编队面板不在 _allPanelList 中，需要单独关闭。
         if (partyFormationPanel != null)
             partyFormationPanel.gameObject.SetActive(false);
     }
