@@ -298,8 +298,9 @@ public class PartyFormationPanelController : MonoBehaviour
 
         // 队伍位置必须连续：新角色最多只能放到当前人数 + 1 的位置。
         // 满员替换仍然允许，因为会先移除目标槽位的旧成员。
-        if (!alreadyInParty && partyManager.PartyMembers.Count < 4 &&
-            targetPosition > partyManager.PartyMembers.Count + 1)
+        if ((alreadyInParty && targetPosition > partyManager.PartyMembers.Count) ||
+            (!alreadyInParty && partyManager.PartyMembers.Count < 4 &&
+             targetPosition > partyManager.PartyMembers.Count + 1))
         {
             SetStatus("无效位置：队伍不能留下空位，请拖到现有队员或紧邻队伍末尾的空槽。");
             RefreshView();
