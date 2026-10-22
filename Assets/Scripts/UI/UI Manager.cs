@@ -26,8 +26,7 @@ public class UIManager : MonoBehaviour,
     }
 
     /// <summary>
-    /// 由主菜单中的“队列”按钮调用，显示编队面板。
-    /// 打开前先关闭其他由 UIManager 管理的面板，避免面板相互叠加。
+    /// 由主菜单中的“队列”按钮调用。只关闭功能面板，不关闭主菜单。
     /// </summary>
     public void OpenPartyFormationPanel()
     {
@@ -79,7 +78,7 @@ public class UIManager : MonoBehaviour,
 
     #region 事件相关
     /// <summary>
-    /// 打开 ActionBase 对应的面板前，先关闭其他面板，确保同一时间只显示一个主功能面板。
+    /// 打开 ActionBase 对应的功能面板前，先关闭其他功能面板。
     /// </summary>
     public void OnEvent(PanelRequestEvent evt)
     {
@@ -106,24 +105,26 @@ public class UIManager : MonoBehaviour,
 
     #region 面板控制相关
     /// <summary>
-    /// 把所有三级菜单控制器获取并添加到字典
+    /// 只登记带有具体 Action 类型的三级功能面板。
+    /// 没有 panelActionType 的对象（例如 Main Panel）不属于功能面板，
+    /// 不能加入关闭列表，否则切换功能时会把整个主菜单一起关闭。
     /// </summary>
     private void GetPanelFromRoot(Transform root)
     {
         var panels = root.GetComponentsInChildren<PanelController>(true);
         foreach (var panel in panels)
         {
-            _allPanelList.Add(panel);
             if (panel.panelActionType is null)
                 continue;
 
+            _allPanelList.Add(panel);
             _PanelControllerDict.Add(panel.panelActionType, panel);
         }
     }
 
     /// <summary>
-    /// 遍历所有已登记的三级菜单并关闭。
-    /// 编队面板不继承 PanelController，因此需要单独关闭。
+    /// 关闭所有三级功能面板。编队面板不继承 PanelController，因此单独关闭。
+    /// 主菜单不在功能面板列表中，会保持打开。
     /// </summary>
     private void CloseAllPanels()
     {
