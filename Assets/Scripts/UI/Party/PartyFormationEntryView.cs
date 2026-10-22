@@ -1,4 +1,3 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,7 +9,7 @@ using UnityEngine.UI;
 /// 可用于四个固定队伍槽位，也可用于英雄名册预制体。
 /// </summary>
 [RequireComponent(typeof(Button))]
-public class PartyFormationEntryView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+public class PartyFormationEntryView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("可分别拖拽绑定的 UI")]
     [SerializeField] private TMP_Text positionText;
@@ -23,8 +22,6 @@ public class PartyFormationEntryView : MonoBehaviour, IBeginDragHandler, IDragHa
     private CharacterRuntimeData currentMember;
     private PartyFormationPanelController panelController;
     private int configuredSlotPosition;
-    private Image clickFlashOverlay;
-    private Coroutine clickFlashRoutine;
 
     public int ConfiguredSlotPosition => configuredSlotPosition;
     public CharacterRuntimeData CurrentMember => currentMember;
@@ -127,53 +124,5 @@ public class PartyFormationEntryView : MonoBehaviour, IBeginDragHandler, IDragHa
             panelController.EndCharacterDrag(this, eventData.position);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        PlayClickFlash();
-    }
-
-    private void PlayClickFlash()
-    {
-        if (clickFlashOverlay == null)
-        {
-            GameObject overlayObject = new GameObject("ClickFlashOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            overlayObject.transform.SetParent(transform, false);
-            overlayObject.transform.SetAsLastSibling();
-
-            RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
-            overlayRect.anchorMin = Vector2.zero;
-            overlayRect.anchorMax = Vector2.one;
-            overlayRect.offsetMin = Vector2.zero;
-            overlayRect.offsetMax = Vector2.zero;
-
-            clickFlashOverlay = overlayObject.GetComponent<Image>();
-            clickFlashOverlay.color = new Color(1f, 1f, 1f, 0f);
-            clickFlashOverlay.raycastTarget = false;
-        }
-
-        if (clickFlashRoutine != null)
-            StopCoroutine(clickFlashRoutine);
-
-        clickFlashRoutine = StartCoroutine(ClickFlashCoroutine());
-    }
-
-    private IEnumerator ClickFlashCoroutine()
-    {
-        const float flashDuration = 0.18f;
-        const float peakAlpha = 0.55f;
-        float elapsed = 0f;
-
-        while (elapsed < flashDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float progress = Mathf.Clamp01(elapsed / flashDuration);
-            float alpha = Mathf.Sin(progress * Mathf.PI) * peakAlpha;
-            clickFlashOverlay.color = new Color(1f, 1f, 1f, alpha);
-            yield return null;
-        }
-
-        clickFlashOverlay.color = new Color(1f, 1f, 1f, 0f);
-        clickFlashRoutine = null;
-    }
 
 }
