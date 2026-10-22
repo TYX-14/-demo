@@ -109,7 +109,9 @@ public class PartyFormationPanelController : MonoBehaviour
             spawnedRosterEntries.Add(entry.gameObject);
         }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(rosterContent as RectTransform);
+        RectTransform rosterContentRect = rosterContent as RectTransform;
+        if (rosterContentRect != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rosterContentRect);
 
         SetStatus(isBattleMode
             ? $"战斗中不可编队。当前队伍：{party.Count}/4 人"
