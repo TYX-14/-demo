@@ -73,6 +73,7 @@
     <Compile Include="Assets\Scripts\Game\Path Acton\InquireAction.cs" />
     <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleFieldManager.cs" />
     <Compile Include="Assets\Scripts\Game\SceneTranstion\SceneLoadCompleteEvent.cs" />
+    <Compile Include="Assets\Scripts\Game\Party\CharacterRosterManager.cs" />
     <Compile Include="Assets\Scripts\Game\Character\AllyDefinitionSO.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
@@ -134,6 +135,7 @@
     <Compile Include="Assets\Scripts\Game\Inventory\ItemDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\UI\Field Panel\ItemPanelControl.cs" />
     <Compile Include="Assets\Scripts\Game\SceneTranstion\FadeController.cs" />
+    <Compile Include="Assets\Scripts\UI\Party\PartyFormationPanelController.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
