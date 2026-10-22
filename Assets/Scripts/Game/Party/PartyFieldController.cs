@@ -72,7 +72,19 @@ public class PartyFieldController : MonoBehaviour
     /// <param name="partyMembers"></param>
     public void UpdateFollowers(List<CharacterDefinitionSO> partyMembers, bool resetPositions = true)
     {
-        int followerCount = partyMembers.Count - 1;//人数减去主角
+        int followerCount = Mathf.Max(0, partyMembers.Count - 1);//人数减去主角
+
+        // 队伍人数减少时，销毁多余的场景跟随者，避免离队角色继续留在地图上。
+        while (fieldFollowers.Count > followerCount)
+        {
+            int lastIndex = fieldFollowers.Count - 1;
+            FieldFollower follower = fieldFollowers[lastIndex];
+            fieldFollowers.RemoveAt(lastIndex);
+
+            if (follower != null)
+                Destroy(follower.gameObject);
+        }
+
         while (fieldFollowers.Count < followerCount)
         {
             int index = fieldFollowers.Count;
