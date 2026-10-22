@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -28,9 +30,19 @@ public class PartyFormationPanelController : MonoBehaviour
 
     private readonly List<GameObject> spawnedRosterEntries = new();
 
+    private Canvas dragCanvas;
+    private RectTransform dragPreviewRect;
+    private Image dragPreviewImage;
+    private CharacterRuntimeData draggedMember;
+
     private void OnEnable()
     {
         RefreshView();
+    }
+
+    private void OnDisable()
+    {
+        HideDragPreview();
     }
 
     /// <summary>
@@ -72,6 +84,7 @@ public class PartyFormationPanelController : MonoBehaviour
 
             Button slotButton = slotView.EntryButton;
             int position = i + 1;
+            slotView.ConfigureInteraction(this, position);
             CharacterRuntimeData member = partyManager.GetMemberAtPosition(position);
 
             slotButton.onClick.RemoveAllListeners();
@@ -90,15 +103,22 @@ public class PartyFormationPanelController : MonoBehaviour
             slotButton.interactable = !isBattleMode && party.Count > 1;
         }
 
-        for (int i = 0; i < roster.Count; i++)
+        List<CharacterRuntimeData> sortedRoster = roster
+            .Where(member => member != null && party.Contains(member))
+            .OrderBy(member => member.Position)
+            .Concat(roster.Where(member => member != null && !party.Contains(member)))
+            .ToList();
+
+        for (int i = 0; i < sortedRoster.Count; i++)
         {
-            CharacterRuntimeData member = roster[i];
+            CharacterRuntimeData member = sortedRoster[i];
             if (member == null)
                 continue;
 
             bool isInParty = party.Contains(member);
             PartyFormationEntryView entry = Instantiate(rosterEntryPrefab, rosterContent);
-            entry.SetMember(member, isInParty ? "在队" : string.Empty);
+            entry.ConfigureInteraction(this);
+            entry.SetMember(member, string.Empty, isInParty);
 
             Button entryButton = entry.EntryButton;
             entryButton.onClick.RemoveAllListeners();
@@ -164,6 +184,159 @@ public class PartyFormationPanelController : MonoBehaviour
         }
 
         layoutElement.flexibleHeight = 0f;
+    }
+
+
+    /// <summary>
+    /// 创建独立的半透明 Left Idle 拖拽预览，不改变列表中原图的透明度。
+    /// </summary>
+    public void BeginCharacterDrag(PartyFormationEntryView sourceView, CharacterRuntimeData member, Vector2 screenPosition)
+    {
+        if (member == null || member.Definition == null || member.Definition.LeftIdle == null)
+            return;
+
+        bool isBattleMode = GameModeManager.Instance != null &&
+                            GameModeManager.Instance.CurrentGameMode == GameMode.Battle;
+        if (isBattleMode)
+            return;
+
+        draggedMember = member;
+
+        if (dragCanvas == null)
+        {
+            dragCanvas = sourceView.GetComponentInParent<Canvas>();
+            if (dragCanvas != null && dragCanvas.rootCanvas != null)
+                dragCanvas = dragCanvas.rootCanvas;
+        }
+
+        if (dragCanvas == null)
+        {
+            Debug.LogWarning("无法开始角色拖拽：找不到父级 Canvas。", this);
+            draggedMember = null;
+            return;
+        }
+
+        if (dragPreviewRect == null)
+        {
+            GameObject previewObject = new GameObject("PartyDragPreview", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            previewObject.transform.SetParent(dragCanvas.transform, false);
+            dragPreviewRect = previewObject.GetComponent<RectTransform>();
+            dragPreviewImage = previewObject.GetComponent<Image>();
+            dragPreviewImage.raycastTarget = false;
+            dragPreviewImage.preserveAspect = true;
+        }
+
+        dragPreviewRect.gameObject.SetActive(true);
+        dragPreviewImage.sprite = member.Definition.LeftIdle;
+        dragPreviewImage.color = new Color(1f, 1f, 1f, 0.58f);
+
+        RectTransform sourceImageRect = sourceView.GetCharacterImageRect();
+        Vector2 previewSize = sourceImageRect != null ? sourceImageRect.rect.size : new Vector2(96f, 96f);
+        if (previewSize.x < 8f || previewSize.y < 8f)
+            previewSize = new Vector2(96f, 96f);
+
+        dragPreviewRect.sizeDelta = previewSize;
+        dragPreviewRect.SetAsLastSibling();
+        UpdateCharacterDrag(screenPosition);
+    }
+
+    public void UpdateCharacterDrag(Vector2 screenPosition)
+    {
+        if (dragPreviewRect == null || !dragPreviewRect.gameObject.activeSelf || dragCanvas == null)
+            return;
+
+        RectTransform canvasRect = dragCanvas.transform as RectTransform;
+        Camera eventCamera = dragCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : dragCanvas.worldCamera;
+
+        if (canvasRect != null &&
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, eventCamera, out Vector2 localPoint))
+        {
+            dragPreviewRect.anchoredPosition = localPoint;
+        }
+    }
+
+    public void EndCharacterDrag(PartyFormationEntryView sourceView, Vector2 screenPosition)
+    {
+        if (draggedMember == null)
+        {
+            HideDragPreview();
+            return;
+        }
+
+        CharacterRuntimeData member = draggedMember;
+        HideDragPreview();
+
+        bool isBattleMode = GameModeManager.Instance != null &&
+                            GameModeManager.Instance.CurrentGameMode == GameMode.Battle;
+        if (isBattleMode || EventSystem.current == null)
+            return;
+
+        PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = screenPosition };
+        List<RaycastResult> hits = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, hits);
+
+        PartyFormationEntryView targetView = null;
+        for (int i = 0; i < hits.Count; i++)
+        {
+            PartyFormationEntryView candidate = hits[i].gameObject.GetComponentInParent<PartyFormationEntryView>();
+            if (candidate != null && candidate.ConfiguredSlotPosition > 0)
+            {
+                targetView = candidate;
+                break;
+            }
+        }
+
+        if (targetView == null)
+            return;
+
+        PartyManager partyManager = PartyManager.Instance;
+        if (partyManager == null)
+            return;
+
+        int targetPosition = targetView.ConfiguredSlotPosition;
+        bool alreadyInParty = partyManager.PartyMembers.Contains(member);
+
+        if (alreadyInParty)
+        {
+            // 队伍内拖动使用交换，保留两名角色各自的槽位。
+            partyManager.MoveMember(member, targetPosition);
+            SetStatus($"已将 {member.DisplayName} 调整至 {targetPosition} 号位。");
+        }
+        else
+        {
+            CharacterRuntimeData occupant = partyManager.GetMemberAtPosition(targetPosition);
+            if (partyManager.PartyMembers.Count >= 4 && occupant != null)
+            {
+                // 满员时拖入新角色会替换目标槽位成员，原成员仍保留在英雄名册。
+                if (!partyManager.TryRemoveMemberFromParty(occupant))
+                {
+                    SetStatus("无法替换该位置的角色。");
+                    return;
+                }
+            }
+
+            if (!partyManager.TryAddMemberToParty(member))
+            {
+                SetStatus("无法入队：队伍可能已满。");
+                RefreshView();
+                return;
+            }
+
+            // 新入队角色按目标位置插入，其余队员依序补位。
+            partyManager.MoveMemberToPosition(member, targetPosition);
+            SetStatus($"已将 {member.DisplayName} 安排至 {targetPosition} 号位。");
+        }
+
+        RefreshView();
+        ShowCharacterDetails(member);
+    }
+
+    private void HideDragPreview()
+    {
+        if (dragPreviewRect != null)
+            dragPreviewRect.gameObject.SetActive(false);
+
+        draggedMember = null;
     }
 
     private void SelectRosterMember(PartyManager partyManager, CharacterRuntimeData member)
