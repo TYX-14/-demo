@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class MainPaneController : PanelController
@@ -71,6 +72,11 @@ public class MainPaneController : PanelController
 
         if (leftCanvas != null)
             leftCanvas.gameObject.SetActive(true);
+
+        // 保留当前菜单标签的键盘/手柄焦点。
+        sourceButton.Select();
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(sourceButton.gameObject);
     }
 
     private void UpdateCurrencyDisplayer()
