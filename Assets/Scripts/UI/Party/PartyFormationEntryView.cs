@@ -60,7 +60,7 @@ public class PartyFormationEntryView : MonoBehaviour
 
         if (characterImage != null)
         {
-            Sprite portrait = member.Definition != null ? member.Definition.Portrait : null;
+            Sprite portrait = member.Definition != null ? member.Definition.LeftIdle : null;
             characterImage.sprite = portrait;
             characterImage.enabled = portrait != null;
         }
