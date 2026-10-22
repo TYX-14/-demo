@@ -108,7 +108,29 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
         {
             CharacterRuntimeData player = new CharacterRuntimeData(playerDefinition);
             player.Position = 1;
-            partyMenbers.Add(player); 
+            partyMenbers.Add(player);
+        }
+
+        // 将已存在的队伍成员登记到英雄名册，兼容 Inspector 中预先配置的队伍。
+        RegisterPartyMembersInRoster();
+    }
+
+    /// <summary>
+    /// 将当前队伍中已有的角色实例登记到英雄名册。
+    /// 不重新创建角色数据，也不会重新初始化装备。
+    /// </summary>
+    private void RegisterPartyMembersInRoster()
+    {
+        CharacterRosterManager roster = CharacterRosterManager.Instance;
+        if (roster == null)
+        {
+            Debug.LogError("找不到 CharacterRosterManager，队伍成员无法登记到英雄名册。", this);
+            return;
+        }
+
+        foreach (CharacterRuntimeData member in partyMenbers)
+        {
+            roster.AddCharacter(member);
         }
     }
 /// <summary>
@@ -123,6 +145,17 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
         newMember.Position = partyMenbers.Count + 1;
         
         partyMenbers.Add(newMember);
+
+        CharacterRosterManager roster = CharacterRosterManager.Instance;
+        if (roster == null)
+        {
+            Debug.LogError("找不到 CharacterRosterManager，新招募的英雄未能登记到英雄名册。", this);
+        }
+        else
+        {
+            roster.AddCharacter(newMember);
+        }
+
         RefreshFieldFollowers();
     }
     /// <summary>
