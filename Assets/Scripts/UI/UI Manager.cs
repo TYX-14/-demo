@@ -12,12 +12,8 @@ public class UIManager : MonoBehaviour,
     // 编队面板不属于 ActionBase 驱动的三级菜单，单独通过队列按钮打开。
     private PartyFormationPanelController partyFormationPanel;
    
-
     private readonly Dictionary<Type, PanelController> _PanelControllerDict = new();
     private readonly List<PanelController> _allPanelList = new();
-
-    
-    
 
     #region 周期函数
     private void Awake()
@@ -87,6 +83,10 @@ public class UIManager : MonoBehaviour,
     /// <param name="evt"></param>
     public void OnEvent(PanelRequestEvent evt)
     {
+        // 打开其他 ActionBase 面板时，先关闭独立的编队面板。
+        if (partyFormationPanel != null)
+            partyFormationPanel.gameObject.SetActive(false);
+
         var panelType = evt.actionBase.GetType();
 
         _PanelControllerDict.TryGetValue(panelType, out var panelController);
@@ -98,7 +98,6 @@ public class UIManager : MonoBehaviour,
     /// 如果游戏模式切换，该事件关闭面板
     /// </summary>
     /// <param name="evt"></param>
-    /// <exception cref="System.NotImplementedException"></exception>
     public void OnEvent(GameModeChangedEvent evt)
     {
         if (evt.newMode != GameMode.InteractionMenu)
@@ -163,6 +162,10 @@ public class UIManager : MonoBehaviour,
         {
             panel.gameObject?.SetActive(false);
         }
+
+        // 编队面板不在 _allPanelList 中，需要单独关闭。
+        if (partyFormationPanel != null)
+            partyFormationPanel.gameObject.SetActive(false);
     }
     #endregion
 }
