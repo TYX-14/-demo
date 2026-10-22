@@ -12,7 +12,7 @@ using UnityEngine.UI;
 public class PartyFormationPanelController : MonoBehaviour
 {
     [Header("四个固定队伍槽位，按 1 至 4 号位排列")]
-    [SerializeField] private PartyFormationEntryView[] partySlots = new PartyFormationEntryView[4];
+    [SerializeField] private Button[] partySlots = new Button[4];
 
     [Header("英雄名册滚动列表")]
     [SerializeField] private Transform rosterContent;
@@ -66,11 +66,14 @@ public class PartyFormationPanelController : MonoBehaviour
 
         for (int i = 0; i < partySlots.Length; i++)
         {
-            PartyFormationEntryView slotView = partySlots[i];
-            if (slotView == null)
+            Button slotButton = partySlots[i];
+            if (slotButton == null)
                 continue;
 
-            Button slotButton = slotView.EntryButton;
+            // 固定槽位继续使用原有 Button 引用；显示组件为可选项。
+            PartyFormationEntryView slotView = slotButton.GetComponent<PartyFormationEntryView>();
+            if (slotView == null)
+                slotView = slotButton.GetComponentInChildren<PartyFormationEntryView>(true);
             int position = i + 1;
             CharacterRuntimeData member = partyManager.GetMemberAtPosition(position);
 
@@ -78,12 +81,14 @@ public class PartyFormationPanelController : MonoBehaviour
 
             if (member == null)
             {
-                slotView.SetEmpty($"位置 {position}");
+                if (slotView != null)
+                    slotView.SetEmpty($"位置 {position}");
                 slotButton.interactable = false;
                 continue;
             }
 
-            slotView.SetMember(member, $"位置 {position}");
+            if (slotView != null)
+                slotView.SetMember(member, $"位置 {position}");
 
             CharacterRuntimeData capturedMember = member;
             slotButton.onClick.AddListener(() => RemoveFromParty(partyManager, capturedMember));
@@ -234,13 +239,19 @@ public class PartyFormationPanelController : MonoBehaviour
 
         for (int i = 0; i < partySlots.Length; i++)
         {
-            PartyFormationEntryView slotView = partySlots[i];
-            if (slotView == null)
+            Button slotButton = partySlots[i];
+            if (slotButton == null)
                 continue;
 
-            slotView.SetEmpty($"位置 {i + 1}");
-            slotView.EntryButton.onClick.RemoveAllListeners();
-            slotView.EntryButton.interactable = false;
+            PartyFormationEntryView slotView = slotButton.GetComponent<PartyFormationEntryView>();
+            if (slotView == null)
+                slotView = slotButton.GetComponentInChildren<PartyFormationEntryView>(true);
+
+            if (slotView != null)
+                slotView.SetEmpty($"位置 {i + 1}");
+
+            slotButton.onClick.RemoveAllListeners();
+            slotButton.interactable = false;
         }
     }
 
