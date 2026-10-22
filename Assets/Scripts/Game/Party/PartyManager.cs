@@ -189,6 +189,75 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
 
     }
 
+    /// <summary>
+    /// 将名册中已有的角色加入当前队伍。
+    /// 只接收已有运行时数据，不创建新角色，也不重新初始化装备。
+    /// </summary>
+    public bool TryAddMemberToParty(CharacterRuntimeData member)
+    {
+        if (member == null || partyMenbers.Contains(member) || partyMenbers.Count >= 4)
+            return false;
+
+        CharacterRosterManager roster = CharacterRosterManager.Instance;
+        if (roster == null || !roster.ContainsCharacter(member))
+        {
+            Debug.LogWarning("只能将英雄名册中已拥有的角色加入队伍。", this);
+            return false;
+        }
+
+        NormalizePartyPositions();
+        member.Position = partyMenbers.Count + 1;
+        partyMenbers.Add(member);
+
+        if (!fieldActorsHidden)
+            RefreshFieldFollowers();
+
+        return true;
+    }
+
+    /// <summary>
+    /// 将角色移出当前队伍，但保留在英雄名册中。
+    /// 队伍至少保留一名成员；离队角色的运行时数据和装备不会被删除。
+    /// </summary>
+    public bool TryRemoveMemberFromParty(CharacterRuntimeData member)
+    {
+        if (member == null || !partyMenbers.Contains(member) || partyMenbers.Count <= 1)
+            return false;
+
+        int removedPosition = member.Position;
+        if (!partyMenbers.Remove(member))
+            return false;
+
+        foreach (CharacterRuntimeData remainingMember in partyMenbers)
+        {
+            if (remainingMember.Position > removedPosition)
+                remainingMember.Position--;
+        }
+
+        NormalizePartyPositions();
+        RefreshLeader();
+
+        if (!fieldActorsHidden)
+            RefreshFieldFollowers();
+
+        return true;
+    }
+
+    /// <summary>
+    /// 规范化当前队伍站位，确保成员从 1 号位开始连续排列。
+    /// </summary>
+    private void NormalizePartyPositions()
+    {
+        List<CharacterRuntimeData> sortedMembers = partyMenbers
+            .OrderBy(member => member.Position)
+            .ToList();
+
+        for (int i = 0; i < sortedMembers.Count; i++)
+        {
+            sortedMembers[i].Position = i + 1;
+        }
+    }
+
     #region 队伍成员位置管理（暗黑地牢更新）
     /// <summary>
     /// 获取指定位置上的队伍成员。
