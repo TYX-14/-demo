@@ -1,29 +1,32 @@
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 编队面板的第一阶段控制器。
-/// 负责展示当前队伍与英雄名册，并调用 PartyManager 的入队/离队接口。
-/// UI 不持有或创建角色运行时数据。
+/// 编队面板控制器。
+/// 队伍区域使用四个固定槽位，英雄名册使用可滚动列表。
+/// UI 只读取角色运行时数据，并通过 PartyManager 修改队伍成员。
 /// </summary>
 public class PartyFormationPanelController : MonoBehaviour
 {
-    [Header("当前队伍")]
-    [SerializeField] private Transform partyContent;
+    [Header("四个固定队伍槽位，按 1 至 4 号位排列")]
+    [SerializeField] private Button[] partySlots = new Button[4];
 
-    [Header("英雄名册")]
+    [Header("英雄名册滚动列表")]
     [SerializeField] private Transform rosterContent;
 
-    [Header("通用条目")]
     [Tooltip("需要包含 Button 组件，并在子物体中放置一个 TMP_Text。")]
-    [SerializeField] private Button entryButtonPrefab;
+    [SerializeField] private Button rosterEntryButtonPrefab;
+
+    [Header("英雄详情")]
+    [SerializeField] private TMP_Text characterDetailsText;
 
     [Header("可选状态提示")]
     [SerializeField] private TMP_Text statusText;
 
-    private readonly List<GameObject> spawnedEntries = new();
+    private readonly List<GameObject> spawnedRosterEntries = new();
 
     private void OnEnable()
     {
@@ -31,12 +34,11 @@ public class PartyFormationPanelController : MonoBehaviour
     }
 
     /// <summary>
-    /// 重新读取管理器中的数据并刷新两列显示。
-    /// 当入队、离队或角色状态改变后可再次调用。
+    /// 重新读取管理器中的数据并刷新固定槽位、英雄名册和详情。
     /// </summary>
     public void RefreshView()
     {
-        ClearEntries();
+        ClearRosterEntries();
 
         PartyManager partyManager = PartyManager.Instance;
         CharacterRosterManager rosterManager = CharacterRosterManager.Instance;
@@ -44,31 +46,54 @@ public class PartyFormationPanelController : MonoBehaviour
         if (partyManager == null || rosterManager == null)
         {
             SetStatus("无法读取队伍或英雄名册，请检查场景中的管理器。");
+            ClearPartySlots();
             return;
         }
 
-        if (partyContent == null || rosterContent == null || entryButtonPrefab == null)
+        if (partySlots == null || partySlots.Length != 4 ||
+            rosterContent == null || rosterEntryButtonPrefab == null)
         {
-            SetStatus("编队面板尚未绑定队伍列表、名册列表或条目预制体。");
+            SetStatus("请绑定 4 个队伍槽位、英雄名册内容区域和名册条目预制体。");
             return;
         }
 
-        IReadOnlyList<CharacterRuntimeData> roster = rosterManager.OwnedCharacters;
         List<CharacterRuntimeData> party = partyManager.PartyMembers;
+        IReadOnlyList<CharacterRuntimeData> roster = rosterManager.OwnedCharacters;
         bool isBattleMode = GameModeManager.Instance != null &&
                             GameModeManager.Instance.CurrentGameMode == GameMode.Battle;
 
-        for (int i = 0; i < party.Count; i++)
+        for (int i = 0; i < partySlots.Length; i++)
         {
-            CharacterRuntimeData member = party[i];
-            if (member == null)
+            Button slotButton = partySlots[i];
+            if (slotButton == null)
                 continue;
 
-            Button entry = CreateEntry(
-                partyContent,
-                $"[{member.Position}号位] {member.DisplayName}  Lv.{member.Level}  HP {member.CurrentHP}/{member.GetTotalStats().MaxHP}",
-                () => RemoveFromParty(partyManager, member));
-            entry.interactable = !isBattleMode;
+            int position = i + 1;
+            CharacterRuntimeData member = partyManager.GetMemberAtPosition(position);
+            TMP_Text slotText = slotButton.GetComponentInChildren<TMP_Text>(true);
+
+            slotButton.onClick.RemoveAllListeners();
+
+            if (member == null)
+            {
+                if (slotText != null)
+                    slotText.text = $"位置 {position}\n空槽";
+
+                slotButton.interactable = false;
+                continue;
+            }
+
+            if (slotText != null)
+            {
+                StatBlock stats = member.GetTotalStats();
+                slotText.text =
+                    $"位置 {position}\n{member.DisplayName}  Lv.{member.Level}\n" +
+                    $"HP {member.CurrentHP}/{stats.MaxHP}  SP {member.CurrentSP}/{stats.MaxSP}";
+            }
+
+            CharacterRuntimeData capturedMember = member;
+            slotButton.onClick.AddListener(() => RemoveFromParty(partyManager, capturedMember));
+            slotButton.interactable = !isBattleMode && party.Count > 1;
         }
 
         for (int i = 0; i < roster.Count; i++)
@@ -78,12 +103,13 @@ public class PartyFormationPanelController : MonoBehaviour
                 continue;
 
             bool isInParty = party.Contains(member);
+            StatBlock stats = member.GetTotalStats();
             string label = isInParty
-                ? $"[在队] {member.DisplayName}  Lv.{member.Level}  HP {member.CurrentHP}/{member.GetTotalStats().MaxHP}"
-                : $"{member.DisplayName}  Lv.{member.Level}  HP {member.CurrentHP}/{member.GetTotalStats().MaxHP}";
+                ? $"[在队] {member.DisplayName}  Lv.{member.Level}\nHP {member.CurrentHP}/{stats.MaxHP}"
+                : $"{member.DisplayName}  Lv.{member.Level}\nHP {member.CurrentHP}/{stats.MaxHP}";
 
-            Button entry = CreateEntry(rosterContent, label, () => AddToParty(partyManager, member));
-            entry.interactable = !isBattleMode && !isInParty && party.Count < 4;
+            Button entry = CreateRosterEntry(label, () => SelectRosterMember(partyManager, member));
+            entry.interactable = !isBattleMode;
         }
 
         SetStatus(isBattleMode
@@ -91,9 +117,9 @@ public class PartyFormationPanelController : MonoBehaviour
             : $"当前队伍：{party.Count}/4 人    英雄名册：{roster.Count} 人");
     }
 
-    private Button CreateEntry(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
+    private Button CreateRosterEntry(string label, UnityEngine.Events.UnityAction onClick)
     {
-        Button entry = Instantiate(entryButtonPrefab, parent);
+        Button entry = Instantiate(rosterEntryButtonPrefab, rosterContent);
         TMP_Text text = entry.GetComponentInChildren<TMP_Text>(true);
 
         if (text != null)
@@ -101,33 +127,98 @@ public class PartyFormationPanelController : MonoBehaviour
 
         entry.onClick.RemoveAllListeners();
         entry.onClick.AddListener(onClick);
-        spawnedEntries.Add(entry.gameObject);
+        spawnedRosterEntries.Add(entry.gameObject);
         return entry;
     }
 
-    private void AddToParty(PartyManager partyManager, CharacterRuntimeData member)
+    private void SelectRosterMember(PartyManager partyManager, CharacterRuntimeData member)
     {
+        ShowCharacterDetails(member);
+
+        if (partyManager.PartyMembers.Contains(member))
+        {
+            SetStatus($"{member.DisplayName} 已在当前队伍中。");
+            return;
+        }
+
         bool success = partyManager.TryAddMemberToParty(member);
-        SetStatus(success ? $"已将 {member.DisplayName} 加入队伍。" : "无法入队：请检查队伍人数及英雄名册。");
+        SetStatus(success
+            ? $"已将 {member.DisplayName} 加入队伍。"
+            : "无法入队：队伍可能已满，或该角色不在英雄名册中。");
         RefreshView();
+        ShowCharacterDetails(member);
     }
 
     private void RemoveFromParty(PartyManager partyManager, CharacterRuntimeData member)
     {
         bool success = partyManager.TryRemoveMemberFromParty(member);
-        SetStatus(success ? $"已将 {member.DisplayName} 移出队伍，角色数据仍保留在名册中。" : "无法离队：队伍至少需要保留一名成员。");
+        SetStatus(success
+            ? $"已将 {member.DisplayName} 移出队伍，角色数据仍保留在名册中。"
+            : "无法离队：队伍至少需要保留一名成员。");
         RefreshView();
     }
 
-    private void ClearEntries()
+    private void ShowCharacterDetails(CharacterRuntimeData member)
     {
-        for (int i = 0; i < spawnedEntries.Count; i++)
+        if (characterDetailsText == null || member == null)
+            return;
+
+        StatBlock stats = member.GetTotalStats();
+        StringBuilder details = new StringBuilder();
+        details.AppendLine(member.DisplayName);
+        details.AppendLine($"等级：{member.Level}");
+        details.AppendLine($"HP：{member.CurrentHP}/{stats.MaxHP}");
+        details.AppendLine($"SP：{member.CurrentSP}/{stats.MaxSP}");
+        details.AppendLine($"BP：{member.CurrenBP}");
+        details.AppendLine($"物理攻击：{stats.PAtk}");
+        details.AppendLine($"魔法攻击：{stats.MAtk}");
+        details.AppendLine($"物理防御：{stats.PDef}");
+        details.AppendLine($"魔法防御：{stats.MDef}");
+        details.AppendLine($"速度：{stats.Speed}");
+
+        List<string> equipmentNames = new();
+        if (member.EquipedItems != null)
         {
-            if (spawnedEntries[i] != null)
-                Destroy(spawnedEntries[i]);
+            foreach (CharacterRuntimeData.EquipedItemEntry itemEntry in member.EquipedItems)
+            {
+                if (itemEntry != null && itemEntry.item != null)
+                    equipmentNames.Add($"{itemEntry.slot}：{itemEntry.item.name}");
+            }
         }
 
-        spawnedEntries.Clear();
+        details.Append("装备：");
+        details.Append(equipmentNames.Count > 0 ? string.Join("、", equipmentNames) : "无");
+        characterDetailsText.text = details.ToString();
+    }
+
+    private void ClearPartySlots()
+    {
+        if (partySlots == null)
+            return;
+
+        for (int i = 0; i < partySlots.Length; i++)
+        {
+            if (partySlots[i] == null)
+                continue;
+
+            TMP_Text slotText = partySlots[i].GetComponentInChildren<TMP_Text>(true);
+            if (slotText != null)
+                slotText.text = $"位置 {i + 1}\n空槽";
+
+            partySlots[i].onClick.RemoveAllListeners();
+            partySlots[i].interactable = false;
+        }
+    }
+
+    private void ClearRosterEntries()
+    {
+        for (int i = 0; i < spawnedRosterEntries.Count; i++)
+        {
+            if (spawnedRosterEntries[i] != null)
+                Destroy(spawnedRosterEntries[i]);
+        }
+
+        spawnedRosterEntries.Clear();
     }
 
     private void SetStatus(string message)
