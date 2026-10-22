@@ -355,6 +355,10 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
         if (targetPosition < 1 || targetPosition > 4)
             return false;
 
+        // 队伍位置必须从 1 开始连续排列，不允许把队员移动到当前队伍末尾之外。
+        if (targetPosition > partyMenbers.Count)
+            return false;
+
         CharacterRuntimeData targetMember = GetMemberAtPosition(targetPosition);
 
         if (targetMember != null && targetMember != member)
