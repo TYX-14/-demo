@@ -11,7 +11,7 @@ using UnityEngine.UI;
 /// 队伍区域使用四个固定槽位，英雄名册使用可滚动列表。
 /// 角色条目的名字、等级、血量和头像由 PartyFormationEntryView 分别绑定。
 /// </summary>
-public class PartyFormationPanelController : MonoBehaviour
+public class PartyFormationPanelController : PanelController
 {
     [Header("四个固定队伍槽位，按 1 至 4 号位排列")]
     [SerializeField] private PartyFormationEntryView[] partySlots = new PartyFormationEntryView[4];
