@@ -141,22 +141,24 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
     {
         CharacterRuntimeData newMember = new CharacterRuntimeData(characteDefinition);
 
-        // 新成员放到当前队伍最后一个位置
-        newMember.Position = partyMenbers.Count + 1;
-        
-        partyMenbers.Add(newMember);
-
         CharacterRosterManager roster = CharacterRosterManager.Instance;
         if (roster == null)
         {
-            Debug.LogError("找不到 CharacterRosterManager，新招募的英雄未能登记到英雄名册。", this);
+            Debug.LogError("找不到 CharacterRosterManager，新招募的英雄无法登记到英雄名册。", this);
+            return;
+        }
+
+        // 招募首先进入英雄名册，是否加入当前队伍由队伍人数上限决定。
+        roster.AddCharacter(newMember);
+
+        if (partyMenbers.Count < 4)
+        {
+            TryAddMemberToParty(newMember);
         }
         else
         {
-            roster.AddCharacter(newMember);
+            Debug.Log("新英雄已加入名册。当前队伍已满，可在编队界面安排其入队。", this);
         }
-
-        RefreshFieldFollowers();
     }
     /// <summary>
     /// 招募队伍成员,并切换游戏模式
