@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: Zed
   Name: Zed
-  Portrait: {fileID: -1365205660, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
+  Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftIdle: {fileID: 463951968, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
   BaseLevel: 5
   BaseStats:
@@ -27,6 +27,7 @@ MonoBehaviour:
     Speed: 50
     Accuracy: 0
     Evasion: 0
+  maxSwapDistance: 1
   filedAnimator: {fileID: 22100000, guid: 15b95794c8a2bc7438a1ad6aa9f0c2a9, type: 2}
   battleAnimator: {fileID: 22100000, guid: 8e7f8d6e6651a6842b1bc051b0652066, type: 2}
   job: 8

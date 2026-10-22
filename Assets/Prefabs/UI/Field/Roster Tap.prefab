@@ -391,6 +391,7 @@ GameObject:
   - component: {fileID: 6066030171565155642}
   - component: {fileID: 3454217751836828149}
   - component: {fileID: 6443318922908021454}
+  - component: {fileID: 7956566073860022200}
   m_Layer: 5
   m_HasEditorInfo: 1
   m_Name: Roster Tap
@@ -406,7 +407,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6302664920810742388}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -474,6 +475,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6302664920810742388}
   m_CullTransparentMesh: 1
+--- !u!114 &7956566073860022200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6302664920810742388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7d4e8216c5a4f3b9e2d7a1c8f6b5034, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  positionText: {fileID: 0}
+  characterNameText: {fileID: 8221485272878638250}
+  levelText: {fileID: 0}
+  hpText: {fileID: 0}
+  characterImage: {fileID: 5574015092475846376}
 --- !u!1 &7993995184072220521
 GameObject:
   m_ObjectHideFlags: 0
