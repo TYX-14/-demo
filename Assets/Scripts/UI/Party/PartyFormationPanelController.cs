@@ -55,6 +55,8 @@ public class PartyFormationPanelController : MonoBehaviour
 
         IReadOnlyList<CharacterRuntimeData> roster = rosterManager.OwnedCharacters;
         List<CharacterRuntimeData> party = partyManager.PartyMembers;
+        bool isBattleMode = GameModeManager.Instance != null &&
+                            GameModeManager.Instance.CurrentGameMode == GameMode.Battle;
 
         for (int i = 0; i < party.Count; i++)
         {
@@ -62,10 +64,11 @@ public class PartyFormationPanelController : MonoBehaviour
             if (member == null)
                 continue;
 
-            CreateEntry(
+            Button entry = CreateEntry(
                 partyContent,
                 $"[{member.Position}号位] {member.DisplayName}  Lv.{member.Level}  HP {member.CurrentHP}/{member.GetTotalStats().MaxHP}",
                 () => RemoveFromParty(partyManager, member));
+            entry.interactable = !isBattleMode;
         }
 
         for (int i = 0; i < roster.Count; i++)
@@ -80,10 +83,12 @@ public class PartyFormationPanelController : MonoBehaviour
                 : $"{member.DisplayName}  Lv.{member.Level}  HP {member.CurrentHP}/{member.GetTotalStats().MaxHP}";
 
             Button entry = CreateEntry(rosterContent, label, () => AddToParty(partyManager, member));
-            entry.interactable = !isInParty && party.Count < 4;
+            entry.interactable = !isBattleMode && !isInParty && party.Count < 4;
         }
 
-        SetStatus($"当前队伍：{party.Count}/4 人    英雄名册：{roster.Count} 人");
+        SetStatus(isBattleMode
+            ? $"战斗中不可编队。当前队伍：{party.Count}/4 人"
+            : $"当前队伍：{party.Count}/4 人    英雄名册：{roster.Count} 人");
     }
 
     private Button CreateEntry(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
