@@ -16,6 +16,9 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
     [SerializeField, Tooltip("技能二级面板根物体，建议放在攻击按钮下作为子物体")]
     private GameObject panelRoot;
 
+    [SerializeField, Tooltip("战斗控制器，用于在每次打开技能面板时读取真正的当前行动者")]
+    private BattleController battleController;
+
     [SerializeField, Tooltip("动态技能条目的父节点，通常是列表 Content")]
     private Transform skillListContent;
 
@@ -25,17 +28,11 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
     [SerializeField, Tooltip("没有技能或缺少数据时显示的提示文本")]
     private TMP_Text statusText;
 
-    [SerializeField, Tooltip("返回战斗指令面板的按钮")]
-    private Button closeButton;
-
     private readonly List<BattleSkillEntryUI> spawnedEntries = new();
     private BattleEntity currentEntity;
 
     private void Awake()
     {
-        if (closeButton != null)
-            closeButton.onClick.AddListener(HidePanel);
-
         if (panelRoot != null)
             panelRoot.SetActive(false);
     }
@@ -67,6 +64,12 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
         }
 
         bool shouldShow = !panelRoot.activeSelf;
+
+        if (shouldShow)
+        {
+            SyncCurrentEntity();
+        }
+
         panelRoot.SetActive(shouldShow);
 
         if (shouldShow)
@@ -81,6 +84,7 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
             return;
         }
 
+        SyncCurrentEntity();
         panelRoot.SetActive(true);
         RefreshSkills();
     }
@@ -89,6 +93,21 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
     {
         if (panelRoot != null)
             panelRoot.SetActive(false);
+    }
+
+    /// <summary>
+    /// 从战斗控制器读取当前行动者，避免技能面板显示上一次缓存角色的技能。
+    /// </summary>
+    private void SyncCurrentEntity()
+    {
+        if (battleController == null)
+        {
+            currentEntity = null;
+            Debug.LogWarning("BattleSkillPanelController 未绑定 BattleController，请在 Inspector 中指定战斗控制器。", this);
+            return;
+        }
+
+        currentEntity = battleController.CurrentEntity;
     }
 
     private void RefreshSkills()
