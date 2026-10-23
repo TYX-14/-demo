@@ -242,6 +242,12 @@ public class BattleCommandUI : singleton<BattleCommandUI>
             return;
         }
 
+        // 其他指令都与技能面板互斥，先关闭技能面板，再执行对应指令逻辑。
+        if (skillPanelController != null)
+        {
+            skillPanelController.HidePanel();
+        }
+
         Debug.Log($"选择了战斗指令：{commandType}", this);
     }
 }
