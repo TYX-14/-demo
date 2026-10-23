@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using UnityEngine;
+
 /// <summary>
 /// 角色定义 ScriptableObject。
 /// 用于存储角色的基础属性、动画机等信息。
@@ -18,6 +21,11 @@ public abstract class CharacterDefinitionSO : ScriptableObject
     [Min(0)]
     [Tooltip("主动战斗换位时，角色一次最多跨越的阵型格数。")]
     public int maxSwapDistance = 1;
+
+
+    [Header("技能配置")]
+    [Tooltip("角色初始拥有的技能。当前阶段用于技能面板展示，后续可扩展为运行时学习与升级。")]
+    public List<SkillDefinitionSO> initialSkills = new();
 
     [Header("动画机")]
     public AnimatorOverrideController filedAnimator;

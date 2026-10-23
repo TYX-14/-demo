@@ -23,6 +23,9 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     [SerializeField, Tooltip("攻击按钮")]
     private Button attackButton;
 
+    [SerializeField, Tooltip("点击攻击后打开的二级技能面板控制器")]
+    private BattleSkillPanelController skillPanelController;
+
     [SerializeField, Tooltip("交换位置按钮")]
     private Button swapPositionButton;
 
@@ -225,6 +228,19 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     /// </summary>
     private void OnCommandButtonClicked(BattleCommandType commandType)
     {
+        if (commandType == BattleCommandType.Attack)
+        {
+            if (skillPanelController == null)
+            {
+                Debug.LogWarning("尚未绑定 BattleSkillPanelController，请在 Inspector 中设置技能二级面板控制器。", this);
+                return;
+            }
+
+            ClosePanel();
+            skillPanelController.ShowPanel();
+            return;
+        }
+
         Debug.Log($"选择了战斗指令：{commandType}", this);
     }
 }
