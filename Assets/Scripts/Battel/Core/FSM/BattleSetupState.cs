@@ -1,48 +1,49 @@
-using UnityEngine; // °üº¬ Debug
-using System.Collections; // °üº¬ IEnumerator
+using MFrameork.Event;
+using UnityEngine; // åŒ…å« Debug
+using System.Collections; // åŒ…å« IEnumerator
 
 /// <summary>
-/// Õ½¶·³õÊ¼ÉèÖÃ×´Ì¬¡£
-/// ÊôÓÚÕ½¶·×´Ì¬»úµÄÒ»²¿·Ö£¬¸ºÔğÔÚÕ½¶·ÕıÊ½¿ªÊ¼Ç°ÔØÈë³õÊ¼µÄÊı¾İÔØºÉ¡£
-/// µ±Ç°´úÂëÖĞ½öÓÃÈÕÖ¾Õ¼Î»£¬ºóĞøĞèÔÚ´Ë½×¶ÎÍê³ÉÉú³É²ÎÕ½µ¥Î»µÈ³õÊ¼»¯¹¤×÷¡£
+/// æˆ˜æ–—åˆå§‹è®¾ç½®çŠ¶æ€ã€‚
+/// å±äºæˆ˜æ–—çŠ¶æ€æœºçš„ä¸€éƒ¨åˆ†ï¼Œè´Ÿè´£åœ¨æˆ˜æ–—æ­£å¼å¼€å§‹å‰è½½å…¥åˆå§‹çš„æ•°æ®è½½è·ã€‚
+/// å½“å‰ä»£ç ä¸­ä»…ç”¨æ—¥å¿—å ä½ï¼Œåç»­éœ€åœ¨æ­¤é˜¶æ®µå®Œæˆç”Ÿæˆå‚æˆ˜å•ä½ç­‰åˆå§‹åŒ–å·¥ä½œã€‚
 /// </summary>
 public class BattleSetupState : BattleState
 {
     /// <summary>
-    /// Õ½¶·¿ªÊ¼µÄÊı¾İÔØºÉ¡£
-    /// °üº¬²ÎÓëÕ½¶·µÄË«·½ÕóÈİ¡¢ÅäÖÃµÈÆğ²½Êı¾İ¡£
+    /// æˆ˜æ–—å¼€å§‹çš„æ•°æ®è½½è·ã€‚
+    /// åŒ…å«å‚ä¸æˆ˜æ–—çš„åŒæ–¹é˜µå®¹ã€é…ç½®ç­‰èµ·æ­¥æ•°æ®ã€‚
     /// </summary>
     private readonly BattleStartPayload _startPayload;
 
     /// <summary>
-    /// ³õÊ¼»¯Õ½¶·ÉèÖÃ×´Ì¬¡£
+    /// åˆå§‹åŒ–æˆ˜æ–—è®¾ç½®çŠ¶æ€ã€‚
     /// </summary>
-    /// <param name="controller">Õ½¶·¿ØÖÆÆ÷ÊµÀı¡£</param>
-    /// <param name="startPayload">ÓÃÓÚÆô¶¯Õ½¶·µÄÔØºÉÊı¾İ¡£</param>
+    /// <param name="controller">æˆ˜æ–—æ§åˆ¶å™¨å®ä¾‹ã€‚</param>
+    /// <param name="startPayload">ç”¨äºå¯åŠ¨æˆ˜æ–—çš„è½½è·æ•°æ®ã€‚</param>
     public BattleSetupState(BattleController controller, BattleStartPayload startPayload) : base(controller)
     {
         _startPayload = startPayload;
     }
 
     /// <summary>
-    /// Ö´ĞĞÕ½¶·×¼±¸×´Ì¬µÄºËĞÄÂß¼­¡£
-    /// 1. µ÷ÓÃÕ½³¡¹ÜÀíÆ÷Éú³ÉµĞÎÒË«·½µÄ 3D ÊÓ¾õµ¥Î» (BattleUnit)¡£
-    /// 2. ½«ÔËĞĞÊ±Êı¾İ (RuntimeData)¡¢ÊÓ¾õµ¥Î» (BattleUnit) ÓëÕ½¶·ÊµÌåÂß¼­ (BattleEntity) ½øĞĞÕıÊ½°ó¶¨¡£
-    /// 3. µ±Ç°´¦ÓÚÑİÊ¾½×¶Î£¬Ö´ĞĞÍêºóÁ¢¼´½áÊøĞ­³Ì¡£
+    /// æ‰§è¡Œæˆ˜æ–—å‡†å¤‡çŠ¶æ€çš„æ ¸å¿ƒé€»è¾‘ã€‚
+    /// 1. è°ƒç”¨æˆ˜åœºç®¡ç†å™¨ç”Ÿæˆæ•Œæˆ‘åŒæ–¹çš„ 3D è§†è§‰å•ä½ (BattleUnit)ã€‚
+    /// 2. å°†è¿è¡Œæ—¶æ•°æ® (RuntimeData)ã€è§†è§‰å•ä½ (BattleUnit) ä¸æˆ˜æ–—å®ä½“é€»è¾‘ (BattleEntity) è¿›è¡Œæ­£å¼ç»‘å®šã€‚
+    /// 3. å½“å‰å¤„äºæ¼”ç¤ºé˜¶æ®µï¼Œæ‰§è¡Œå®Œåç«‹å³ç»“æŸåç¨‹ã€‚
     /// </summary>
     public override IEnumerator Execute()
     {
-        // 1. ÏÈ°´ payload ÔÚÕ½¶·³¡¾°ÀïÉú³ÉµĞÎÒË«·½µÄ BattleUnit¡£
+        // 1. å…ˆæŒ‰ payload åœ¨æˆ˜æ–—åœºæ™¯é‡Œç”Ÿæˆæ•Œæˆ‘åŒæ–¹çš„ BattleUnitã€‚
         _controller.FieldManager.SpawnAll(_startPayload);
 
-        // 2. ÔÙ°Ñ RuntimeData¡¢BattleUnit ºÍ BattleEntity ÕıÊ½°óÆğÀ´¡£
+        // 2. å†æŠŠ RuntimeDataã€BattleUnit å’Œ BattleEntity æ­£å¼ç»‘èµ·æ¥ã€‚
         _controller.AllEntities.Clear();
         var allyEntities = CreateEntities(_startPayload.Allies, _controller.FieldManager.SpawnedAllyUnits, true);
         _controller.AllEntities.AddRange(allyEntities);
         _controller.AllEntities.AddRange(CreateEntities(_startPayload.Enemies, _controller.FieldManager.SpawnedEnemyUnits, false));
 
-        //3.Õ½¶·¿ªÊ¼Ê±£¬ÓÑ·½ÅÜÎ»
-        float runtime = 1f;//TODO ÒÔºóÍ³Ò»¹ÜÀí
+        //3.æˆ˜æ–—å¼€å§‹æ—¶ï¼Œå‹æ–¹è·‘ä½
+        float runtime = 1f;//TODO ä»¥åç»Ÿä¸€ç®¡ç†
         if (runtime > 0f)
         {
             yield return new WaitForSeconds(runtime);
@@ -55,42 +56,45 @@ public class BattleSetupState : BattleState
             yield return new WaitForSeconds(runtime);
         }
 
-        //TODO ÑİÊ¾Ğ§¹û
+        // å‹å†›å®Œæˆå…¥åœºè·‘ä½åï¼Œé€šçŸ¥è®¢é˜…è€…æˆ˜æ–—æ­£å¼å¼€å§‹ã€‚
+        EventBus.Publish(new BattleStartedEvent());
+
+        //TODO æ¼”ç¤ºæ•ˆæœ
         _controller.StopBattle();
         yield break;
     }
 
     /// <summary>
-    /// ´´½¨ÌØ¶¨ÕóÓªµÄÕ½¶·ÊµÌå¼¯ºÏ¡£
-    /// ±éÀúÔËĞĞÊ±Êı¾İÁĞ±í£¬½«¶ÔÓ¦µÄÊı¾İ¡¢ÓÎÏ·ÎïÌåºÍÊµÀı»¯³öµÄµ¥Î»Ò»Ò»¶ÔÓ¦²¢°ó¶¨£¬Éú³ÉÎ¨Ò»Ê¶±ğ ID¡£
+    /// åˆ›å»ºç‰¹å®šé˜µè¥çš„æˆ˜æ–—å®ä½“é›†åˆã€‚
+    /// éå†è¿è¡Œæ—¶æ•°æ®åˆ—è¡¨ï¼Œå°†å¯¹åº”çš„æ•°æ®ã€æ¸¸æˆç‰©ä½“å’Œå®ä¾‹åŒ–å‡ºçš„å•ä½ä¸€ä¸€å¯¹åº”å¹¶ç»‘å®šï¼Œç”Ÿæˆå”¯ä¸€è¯†åˆ« IDã€‚
     /// </summary>
-    /// <param name="runtimeList">¸ÃÕóÓªµÄ½ÇÉ«ÔËĞĞÊ±Êı¾İÁĞ±í¡£</param>
-    /// <param name="units">¸ÃÕóÓªÒÑ¾­Éú³ÉÔÚ³¡¾°ÖĞµÄ BattleUnit ÁĞ±í¡£</param>
-    /// <param name="isPlayer">±ê¼ÇÊÇ·ñÎªÍæ¼ÒÕóÓª (Player / Enemy)¡£</param>
-    /// <returns>°ó¶¨Íê³ÉµÄ BattleEntity ¼¯ºÏ¡£</returns>
+    /// <param name="runtimeList">è¯¥é˜µè¥çš„è§’è‰²è¿è¡Œæ—¶æ•°æ®åˆ—è¡¨ã€‚</param>
+    /// <param name="units">è¯¥é˜µè¥å·²ç»ç”Ÿæˆåœ¨åœºæ™¯ä¸­çš„ BattleUnit åˆ—è¡¨ã€‚</param>
+    /// <param name="isPlayer">æ ‡è®°æ˜¯å¦ä¸ºç©å®¶é˜µè¥ (Player / Enemy)ã€‚</param>
+    /// <returns>ç»‘å®šå®Œæˆçš„ BattleEntity é›†åˆã€‚</returns>
     private List<BattleEntity> CreateEntities(List<CharacterRuntimeData> runtimeList, IReadOnlyList<BattleUnit> units, bool isPlayer)
     {
-        // ¡¾¹Ø¼ü¡¿Ô¤·ÖÅäÁĞ±íÈİÁ¿£¬Ö±½ÓÌîÈë runtimeList µÄÊıÁ¿¡£
-        // ÕâÑù×öÄÜÓĞĞ§±ÜÃâ List ÔÚ¶¯Ì¬Ôö¼ÓÔªËØÊ±¶à´Î´¥·¢µ×²ãÊı×éÀ©Èİ£¬½ÚÊ¡ĞÔÄÜ¿ªÏú¡£
+        // ã€å…³é”®ã€‘é¢„åˆ†é…åˆ—è¡¨å®¹é‡ï¼Œç›´æ¥å¡«å…¥ runtimeList çš„æ•°é‡ã€‚
+        // è¿™æ ·åšèƒ½æœ‰æ•ˆé¿å… List åœ¨åŠ¨æ€å¢åŠ å…ƒç´ æ—¶å¤šæ¬¡è§¦å‘åº•å±‚æ•°ç»„æ‰©å®¹ï¼ŒèŠ‚çœæ€§èƒ½å¼€é”€ã€‚
         var entities = new List<BattleEntity>(runtimeList.Count);
 
-        // ¸ù¾İÕóÓª¾ö¶¨Î¨Ò» ID µÄÇ°×º£¬P ´ú±í Player (Íæ¼Ò)£¬E ´ú±í Enemy (µĞÈË)
+        // æ ¹æ®é˜µè¥å†³å®šå”¯ä¸€ ID çš„å‰ç¼€ï¼ŒP ä»£è¡¨ Player (ç©å®¶)ï¼ŒE ä»£è¡¨ Enemy (æ•Œäºº)
         string side = isPlayer ? "P" : "E";
 
         for (var i = 0; i < runtimeList.Count; i++)
         {
-            // ¡¾¹Ø¼ü¡¿Í¨¹ıÏÂ±ê i Ç¿ÖÆ¶ÔÆëÊı¾İÓë³¡¾°ÎïÌå¡£
-            // ÕâÖÖĞ´·¨Ç¿ÒÀÀµ List µÄË³Ğò±ØĞëÑÏ¸ñÒ»ÖÂ¡£
-            var runtimeData = runtimeList[i]; // È¡µÚ i ¸ö½ÇÉ«µÄÊıÖµÊı¾İ£¨ÑªÁ¿¡¢¹¥»÷Á¦µÈ£©
-            BattleUnit unit = units[i];       // È¡µÚ i ¸ö½ÇÉ«ÔÚ³¡¾°ÀïµÄÔ¤ÖÆÌå£¨¿ØÖÆ¶¯»­¡¢¹â±êµÈ£©
+            // ã€å…³é”®ã€‘é€šè¿‡ä¸‹æ ‡ i å¼ºåˆ¶å¯¹é½æ•°æ®ä¸åœºæ™¯ç‰©ä½“ã€‚
+            // è¿™ç§å†™æ³•å¼ºä¾èµ– List çš„é¡ºåºå¿…é¡»ä¸¥æ ¼ä¸€è‡´ã€‚
+            var runtimeData = runtimeList[i]; // å–ç¬¬ i ä¸ªè§’è‰²çš„æ•°å€¼æ•°æ®ï¼ˆè¡€é‡ã€æ”»å‡»åŠ›ç­‰ï¼‰
+            BattleUnit unit = units[i];       // å–ç¬¬ i ä¸ªè§’è‰²åœ¨åœºæ™¯é‡Œçš„é¢„åˆ¶ä½“ï¼ˆæ§åˆ¶åŠ¨ç”»ã€å…‰æ ‡ç­‰ï¼‰
 
-            // ¡¾ºËĞÄ¡¿Éú³ÉÎ¨Ò»ÊµÌå ID£¬¸ñÊ½Èç£ºP_00_Õ½Ê¿ID¡£
-            // ¸ñÊ½ [ÕóÓª]_[Á½Î»Ë÷Òı]_[ÅäÖÃID]£¬ÕâÖÖ½á¹¹ÔÚºóÆÚÈÕÖ¾ÅÅ´í·Ç³£Ö±¹Û¡£
+            // ã€æ ¸å¿ƒã€‘ç”Ÿæˆå”¯ä¸€å®ä½“ IDï¼Œæ ¼å¼å¦‚ï¼šP_00_æˆ˜å£«IDã€‚
+            // æ ¼å¼ [é˜µè¥]_[ä¸¤ä½ç´¢å¼•]_[é…ç½®ID]ï¼Œè¿™ç§ç»“æ„åœ¨åæœŸæ—¥å¿—æ’é”™éå¸¸ç›´è§‚ã€‚
             var entity = new BattleEntity(runtimeData, unit, isPlayer, $"{side}_{i:D2}_{runtimeData.Definition.ID}");
 
-            // ¡¾¹Ø¼ü¡¿Ë«Ïò°ó¶¨£º
-            // Âß¼­²ã(BattleEntity)ÓµÓĞÁË¶ÔÓ¦³¡¾°ÎïÌå(unit)£¬¶ø³¡¾°ÎïÌå(unit)Ò²±ØĞëÓµÓĞÂß¼­²ã¡£
-            // ÕâÑù£¬µ±Âß¼­²ã¿ÛÑªÊ±£¬ÄÜÁ¢¿Ìµ÷ÓÃ unit ²¥·ÅÊÜÉË¶¯»­£»Í¬Ñù£¬Èç¹û³¡¾°ÎïÌåËÀÁË£¬Ò²ÄÜÍ¨ÖªÂß¼­²ã×´Ì¬¸üĞÂ¡£
+            // ã€å…³é”®ã€‘åŒå‘ç»‘å®šï¼š
+            // é€»è¾‘å±‚(BattleEntity)æ‹¥æœ‰äº†å¯¹åº”åœºæ™¯ç‰©ä½“(unit)ï¼Œè€Œåœºæ™¯ç‰©ä½“(unit)ä¹Ÿå¿…é¡»æ‹¥æœ‰é€»è¾‘å±‚ã€‚
+            // è¿™æ ·ï¼Œå½“é€»è¾‘å±‚æ‰£è¡€æ—¶ï¼Œèƒ½ç«‹åˆ»è°ƒç”¨ unit æ’­æ”¾å—ä¼¤åŠ¨ç”»ï¼›åŒæ ·ï¼Œå¦‚æœåœºæ™¯ç‰©ä½“æ­»äº†ï¼Œä¹Ÿèƒ½é€šçŸ¥é€»è¾‘å±‚çŠ¶æ€æ›´æ–°ã€‚
             unit.Bind(entity);
 
             entities.Add(entity);
