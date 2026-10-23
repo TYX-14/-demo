@@ -3,61 +3,65 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-
 /// <summary>
-/// Õ½¶·ÏµÍ³¿ØÖÆÆ÷¡£
-/// ¸ºÔğ¹ÜÀíÕ½¶·×´Ì¬µÄÁ÷×ª¡¢ÊµÌåµÄ¼¯ºÏ£¬²¢Í¨¹ı×´Ì¬»úÄ£Ê½Çı¶¯ÕûÌåÕ½¶·Ñ­»·µÄÔËĞĞÓëÍ£Ö¹¡£
+/// æˆ˜æ–—ç³»ç»Ÿæ§åˆ¶å™¨ã€‚
+/// è´Ÿè´£ç®¡ç†æˆ˜æ–—çŠ¶æ€çš„æµè½¬ã€å®ä½“çš„é›†åˆï¼Œå¹¶é€šè¿‡çŠ¶æ€æœºæ¨¡å¼é©±åŠ¨æ•´ä½“æˆ˜æ–—å¾ªç¯çš„è¿è¡Œä¸åœæ­¢ã€‚
 /// </summary>
 public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEvent>
 {
-    [Header("³¡µØ¹ÜÀí")]
+    [Header("åœºåœ°ç®¡ç†")]
     /// <summary>
-    /// Õ½³¡¹ÜÀíÆ÷ÒıÓÃ£¨Í¨¹ı Inspector ĞòÁĞ»¯¸³Öµ£©¡£
+    /// æˆ˜åœºç®¡ç†å™¨å¼•ç”¨ï¼ˆé€šè¿‡ Inspector åºåˆ—åŒ–èµ‹å€¼ï¼‰ã€‚
     /// </summary>
     [SerializeField] private BattleFieldManager fieldManager;
 
     /// <summary>
-    /// Íâ²¿»ñÈ¡Õ½³¡¹ÜÀíÆ÷µÄ¹«¹²Ö»¶ÁÊôĞÔ¡£
+    /// å¤–éƒ¨è·å–æˆ˜åœºç®¡ç†å™¨çš„å…¬å…±åªè¯»å±æ€§ã€‚
     /// </summary>
     public BattleFieldManager FieldManager => fieldManager;
 
     /// <summary>
-    /// ´æ·Åµ±Ç°Õ½¶·ÖĞËùÓĞÊµÌåµÄÁĞ±í¼¯ºÏ¡£
+    /// å­˜æ”¾å½“å‰æˆ˜æ–—ä¸­æ‰€æœ‰å®ä½“çš„åˆ—è¡¨é›†åˆã€‚
     /// </summary>
     private readonly List<BattleEntity> _allEntities = new();
 
     /// <summary>
-    /// Íâ²¿»ñÈ¡ËùÓĞÕ½¶·ÊµÌåµÄ¹«¹²Ö»¶ÁÊôĞÔ¡£
+    /// å¤–éƒ¨è·å–æ‰€æœ‰æˆ˜æ–—å®ä½“çš„å…¬å…±åªè¯»å±æ€§ã€‚
     /// </summary>
     public List<BattleEntity> AllEntities => _allEntities;
 
     /// <summary>
-    /// µ±Ç°ÕıÔÚĞĞ¶¯»ò´¦ÀíµÄÕ½¶·ÊµÌå¡£
+    /// å½“å‰æ­£åœ¨è¡ŒåŠ¨æˆ–å¤„ç†çš„æˆ˜æ–—å®ä½“ã€‚
     /// </summary>
     public BattleEntity CurrentEntity { get; set; }
 
     /// <summary>
-    /// µ±Ç°Õ½¶·ÔËĞĞËù´¦µÄ×´Ì¬¡£
+    /// å½“å‰æˆ˜æ–—è¿è¡Œæ‰€å¤„çš„çŠ¶æ€ã€‚
     /// </summary>
     private BattleState _currentState;
 
     /// <summary>
-    /// ±ê¼ÇÕ½¶·Ñ­»·ÊÇ·ñÕıÔÚÔËĞĞµÄºóÌ¨²¼¶ûÖµ¡£
+    /// å¤–éƒ¨è¯»å–å½“å‰çŠ¶æ€ï¼Œç”¨äºè®©ç­‰å¾…ç©å®¶è¾“å…¥æˆ– AI è¡Œä¸ºçš„çŠ¶æ€æ„ŸçŸ¥çŠ¶æ€åˆ‡æ¢å¹¶ç»“æŸæ‰§è¡Œåç¨‹ã€‚
+    /// </summary>
+    public BattleState CurrentState => _currentState;
+
+    /// <summary>
+    /// æ ‡è®°æˆ˜æ–—å¾ªç¯æ˜¯å¦æ­£åœ¨è¿è¡Œçš„åå°å¸ƒå°”å€¼ã€‚
     /// </summary>
     private bool _battleRunning;
 
     /// <summary>
-    /// Íâ²¿ÅĞ¶ÏÕ½¶·ÊÇ·ñÕıÔÚÔËĞĞµÄ¹«¹²Ö»¶ÁÊôĞÔ¡£
+    /// å¤–éƒ¨åˆ¤æ–­æˆ˜æ–—æ˜¯å¦æ­£åœ¨è¿è¡Œçš„å…¬å…±åªè¯»å±æ€§ã€‚
     /// </summary>
     public bool IsBattleRunning => _battleRunning;
 
     /// <summary>
-    /// Õ½¶·Ö÷Ñ­»·µÄĞ­³ÌÒıÓÃ¡£
+    /// æˆ˜æ–—ä¸»å¾ªç¯çš„åç¨‹å¼•ç”¨ã€‚
     /// </summary>
     private Coroutine _battleLoopRoutine;
 
     /// <summary>
-    /// ½Å±¾ÆôÓÃÊ±£¬ÏòÊÂ¼ş×ÜÏß¶©ÔÄµ±Ç°¶ÔÏóµÄÊÂ¼ş½ÓÊÕ¡£
+    /// è„šæœ¬å¯ç”¨æ—¶ï¼Œå‘äº‹ä»¶æ€»çº¿è®¢é˜…å½“å‰å¯¹è±¡çš„äº‹ä»¶æ¥æ”¶ã€‚
     /// </summary>
     private void OnEnable()
     {
@@ -65,19 +69,18 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     }
 
     /// <summary>
-    /// ½Å±¾½ûÓÃÊ±£¬´ÓÊÂ¼ş×ÜÏßÈ¡Ïû¶©ÔÄµ±Ç°¶ÔÏóµÄÊÂ¼ş½ÓÊÕ¡£
+    /// è„šæœ¬ç¦ç”¨æ—¶ï¼Œä»äº‹ä»¶æ€»çº¿å–æ¶ˆè®¢é˜…å½“å‰å¯¹è±¡çš„äº‹ä»¶æ¥æ”¶ã€‚
     /// </summary>
     private void OnDisable()
     {
         EventBus.Unsubscribe(this);
     }
 
-    #region ÊÂ¼ş¼àÌı
+    #region äº‹ä»¶ç›‘å¬
 
     /// <summary>
-    /// ½ÓÊÕ²¢´¦ÀíÓÎÏ·Ä£Ê½ÇĞ»»ÊÂ¼şµÄ»Øµ÷·½·¨¡£
+    /// æ¥æ”¶å¹¶å¤„ç†æ¸¸æˆæ¨¡å¼åˆ‡æ¢äº‹ä»¶çš„å›è°ƒæ–¹æ³•ã€‚
     /// </summary>
-    /// <param name="evt">ÓÎÏ·Ä£Ê½ÇĞ»»ÊÂ¼şÊı¾İ¡£</param>
     public void OnEvent(GameModeChangedEvent evt)
     {
         if (evt.newMode == GameMode.Battle)
@@ -86,7 +89,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
             return;
         }
 
-        // Í£Ö¹Õ½¶·
+        // åœæ­¢æˆ˜æ–—
         if (_battleRunning)
             StopBattle();
     }
@@ -94,13 +97,13 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     #endregion
 
     /// <summary>
-    /// ÉèÖÃµ±Ç°Õ½¶·×´Ì¬¡£
+    /// è®¾ç½®å½“å‰æˆ˜æ–—çŠ¶æ€ã€‚
     /// </summary>
-    /// <param name="nextState">ÒªÇĞ»»µ½µÄÏÂÒ»¸ö×´Ì¬¡£</param>
+    /// <param name="nextState">è¦åˆ‡æ¢åˆ°çš„ä¸‹ä¸€ä¸ªçŠ¶æ€ã€‚</param>
     public void SetState(BattleState nextState) => _currentState = nextState;
 
     /// <summary>
-    /// µ±Âú×ãÌõ¼şÊ±£¨Õ½¶·Î´ÔËĞĞ¡¢´¦ÓÚÕ½¶·Ä£Ê½ÇÒÓĞÊı¾İÔØºÉ£©£¬×¼±¸²¢Æô¶¯Õ½¶·¡£
+    /// å½“æ»¡è¶³æ¡ä»¶æ—¶ï¼ˆæˆ˜æ–—æœªè¿è¡Œã€å¤„äºæˆ˜æ–—æ¨¡å¼ä¸”æœ‰æ•°æ®è½½è·ï¼‰ï¼Œå‡†å¤‡å¹¶å¯åŠ¨æˆ˜æ–—ã€‚
     /// </summary>
     private void StartBattleIfReady()
     {
@@ -111,7 +114,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         if (!BattleService.Instance.HasPendingPayload) return;
 
         var payload = BattleService.Instance.ConsumeStartPayload();
-        // ½øÈëÕ½¶·µÚÒ»¸ö½×¶Î
+        // è¿›å…¥æˆ˜æ–—ç¬¬ä¸€ä¸ªé˜¶æ®µ
         SetState(new BattleSetupState(this, payload));
 
         _battleRunning = true;
@@ -119,29 +122,29 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     }
 
     /// <summary>
-    /// ±ê×¼×´Ì¬»úÕ½¶·Ö÷Ñ­»·Ğ­³Ì¡£
-    /// <para>Ñ­»·Ö´ĞĞÂß¼­£º(Enter ×ÊÔ´×¼±¸ -> Execute ĞĞÎª´¥·¢ -> Exit ×ÊÔ´»ØÊÕ)</para>
+    /// æ ‡å‡†çŠ¶æ€æœºæˆ˜æ–—ä¸»å¾ªç¯åç¨‹ã€‚
+    /// <para>å¾ªç¯æ‰§è¡Œé€»è¾‘ï¼š(Enter èµ„æºå‡†å¤‡ -> Execute è¡Œä¸ºè§¦å‘ -> Exit èµ„æºå›æ”¶)</para>
     /// </summary>
     private IEnumerator BattleLoopRoutine()
     {
         while (_battleRunning && _currentState != null)
         {
-            // ÏÈ¼Ç×¡ÕâÒ»ÂÖ¿ªÊ¼Ê±µÄ×´Ì¬£¬±ÜÃâ Enter ÀïÇĞ×´Ì¬ºó»¹¼ÌĞøÅÜ´íÁ÷³Ì¡£
+            // å…ˆè®°ä½è¿™ä¸€è½®å¼€å§‹æ—¶çš„çŠ¶æ€ï¼Œé¿å… Enter é‡Œåˆ‡çŠ¶æ€åè¿˜ç»§ç»­è·‘é”™æµç¨‹ã€‚
             var stateSnapshot = _currentState;
 
             yield return StartCoroutine(stateSnapshot.Enter());
 
-            // Èç¹û Enter ÆÚ¼äÒÑ¾­ÇĞµ½±ğµÄ×´Ì¬ÁË£¬ÕâÒ»ÂÖ¾Í²»Òª¼ÌĞøÍùÏÂÖ´ĞĞ¡£
+            // å¦‚æœ Enter æœŸé—´å·²ç»åˆ‡åˆ°åˆ«çš„çŠ¶æ€äº†ï¼Œè¿™ä¸€è½®å°±ä¸è¦ç»§ç»­å¾€ä¸‹æ‰§è¡Œã€‚
             if (stateSnapshot != _currentState)
             {
                 yield return StartCoroutine(stateSnapshot.Exit());
                 continue;
             }
 
-            // µ±Ç°×´Ì¬ÕæÕıÖ´ĞĞÒµÎñ¡£
+            // å½“å‰çŠ¶æ€çœŸæ­£æ‰§è¡Œä¸šåŠ¡ã€‚
             yield return StartCoroutine(stateSnapshot.Execute());
 
-            // µ±Ç°×´Ì¬×Ô¼ºµÄÊÕÎ²ÇåÀí¡£
+            // å½“å‰çŠ¶æ€è‡ªå·±çš„æ”¶å°¾æ¸…ç†ã€‚
             yield return StartCoroutine(stateSnapshot.Exit());
         }
 
@@ -149,7 +152,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     }
 
     /// <summary>
-    /// Í£Ö¹µ±Ç°µÄÕ½¶·£¬ÇåÀí×´Ì¬²¢ÖĞ¶ÏĞ­³Ì¡£
+    /// åœæ­¢å½“å‰çš„æˆ˜æ–—ï¼Œæ¸…ç†çŠ¶æ€å¹¶ä¸­æ–­åç¨‹ã€‚
     /// </summary>
     public void StopBattle()
     {
