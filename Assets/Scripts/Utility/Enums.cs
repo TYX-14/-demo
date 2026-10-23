@@ -6,6 +6,17 @@ public enum GameMode
     Pause,
 }
 
+/// <summary>
+/// æˆ˜æ–—æŒ‡ä»¤ç±»å‹ã€‚
+/// </summary>
+public enum BattleCommandType
+{
+    Attack,       // æ”»å‡»
+    Item,         // é“å…·
+    SwapPosition, // äº¤æ¢ä½ç½®
+    Escape,       // é€ƒè·‘
+}
+
 public enum ActiveMap
 {
     Player,
@@ -25,22 +36,22 @@ public enum PlayerJob
 {
     Any,
 
-    Warrior½£Ê¿,//½£Ê¿
-    ApothecaryÒ©Ê¦,
-    ClericÉñ¹Ù,
-    DacerÎèÕß,
-    HunterÁÔÈË,
-    MerchantÉÌÈË,//ÉÌÈË
-    ScholarÑ§Ê¿,//Ñ§Ê¿
-    ThiefµÁÔô,//µÁÔô
+    Warriorå‰‘å£«,//å‰‘å£«
+    Apothecaryè¯å¸ˆ,
+    Clericç¥å®˜,
+    Dacerèˆè€…,
+    HunterçŒäºº,
+    Merchantå•†äºº,//å•†äºº
+    Scholarå­¦å£«,//å­¦å£«
+    Thiefç›—è´¼,//ç›—è´¼
 }
 
 public enum GrowthRank {S,A,B,C,D}
 
 public enum ItemType
 {
-    Equipment = 0,//×°±¸
-    Consumable = 1,//ÏûºÄÆ·
+    Equipment = 0,//è£…å¤‡
+    Consumable = 1,//æ¶ˆè€—å“
 }
 
 public enum ItemIconKey
@@ -123,7 +134,7 @@ public enum StatType
     CurrenBP=102,
 }
 /// <summary>
-/// µĞÈËÕ¾Î»·½Ê½
+/// æ•Œäººç«™ä½æ–¹å¼
 /// </summary>
 public enum EnemyLayoutFormation
 {
@@ -131,7 +142,7 @@ public enum EnemyLayoutFormation
     BossTriangle = 1,
 }
 /// <summary>
-/// µ­Èëµ­³öĞ§¹û
+/// æ·¡å…¥æ·¡å‡ºæ•ˆæœ
 /// </summary>
 public enum FadeStyle
 {
