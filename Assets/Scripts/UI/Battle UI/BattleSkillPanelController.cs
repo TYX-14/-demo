@@ -8,12 +8,12 @@ using UnityEngine.UI;
 /// 战斗技能二级面板。
 /// 监听当前行动者变化，并根据角色定义动态生成技能条目。
 /// 当前版本只展示技能信息，不执行技能或消耗 SP。
-/// 请将本控制器挂在战斗 UI 中始终激活的父物体上，panelRoot 指向独立的技能面板子物体。
+/// 建议将本控制器挂在始终激活的一级指令面板对象上，panelRoot 指向攻击按钮下的技能面板子物体。
 /// </summary>
 public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentEntityChangedEvent>
 {
     [Header("技能面板")]
-    [SerializeField, Tooltip("技能二级面板根物体，不应是本控制器所在的父物体")]
+    [SerializeField, Tooltip("技能二级面板根物体，建议放在攻击按钮下作为子物体")]
     private GameObject panelRoot;
 
     [SerializeField, Tooltip("动态技能条目的父节点，通常是列表 Content")]
@@ -58,6 +58,21 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
             RefreshSkills();
     }
 
+    public void TogglePanel()
+    {
+        if (panelRoot == null)
+        {
+            Debug.LogWarning("BattleSkillPanelController 未绑定技能面板根物体。", this);
+            return;
+        }
+
+        bool shouldShow = !panelRoot.activeSelf;
+        panelRoot.SetActive(shouldShow);
+
+        if (shouldShow)
+            RefreshSkills();
+    }
+
     public void ShowPanel()
     {
         if (panelRoot == null)
@@ -74,12 +89,6 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
     {
         if (panelRoot != null)
             panelRoot.SetActive(false);
-
-        if (currentEntity != null && currentEntity.IsPlayer &&
-            BattleCommandUI.Instance != null)
-        {
-            BattleCommandUI.Instance.ShowPanel();
-        }
     }
 
     private void RefreshSkills()

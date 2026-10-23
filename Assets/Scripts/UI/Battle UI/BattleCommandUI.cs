@@ -236,8 +236,9 @@ public class BattleCommandUI : singleton<BattleCommandUI>
                 return;
             }
 
-            ClosePanel();
-            skillPanelController.ShowPanel();
+            // 技能面板是攻击按钮的子物体，只切换二级面板显隐。
+            // 不关闭一级指令面板，避免父级 CanvasGroup 同时淡出。
+            skillPanelController.TogglePanel();
             return;
         }
 
