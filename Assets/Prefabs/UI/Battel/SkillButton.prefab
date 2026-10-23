@@ -464,11 +464,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a89e96a4b8c74f07a2c66c0d8a9f3102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skillIcon: {fileID: 0}
-  skillNameText: {fileID: 0}
+  skillIcon: {fileID: 6815941507025299488}
+  skillNameText: {fileID: 992060840295106457}
   usablePositionsText: {fileID: 0}
   targetPositionsText: {fileID: 0}
-  spCostText: {fileID: 0}
+  spCostText: {fileID: 2600376665022835010}
 --- !u!1 &3056337694336829286
 GameObject:
   m_ObjectHideFlags: 0
