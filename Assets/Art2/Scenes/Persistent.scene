@@ -16487,6 +16487,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d4f9a1b2c3e4f5a9b0c1d2e3f4a5b6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CurrentAction: {fileID: 0}
+  FirstButton: {fileID: 0}
+  actionIcon: {fileID: 0}
   partySlots:
   - {fileID: 1734617924}
   - {fileID: 1705738156}
@@ -19128,9 +19131,11 @@ MonoBehaviour:
   actionIcon: {fileID: 0}
   itemButton: {fileID: 1048608566}
   equipmentButton: {fileID: 160026063}
+  partyButton: {fileID: 377802109}
   currencyAmountText: {fileID: 811723947}
   itemPanelControl: {fileID: 246464847}
   equipmentPanelController: {fileID: 1626302309}
+  partyPanelController: {fileID: 1110511005}
   leftCanvas: {fileID: 1839715686}
 --- !u!1 &1345482715
 GameObject:
