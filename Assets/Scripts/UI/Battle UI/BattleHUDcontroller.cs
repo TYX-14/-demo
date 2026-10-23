@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// 战斗 HUD 控制器。
-/// 负责控制战斗中的血条面板与 CPB UI 根节点的显示。
+/// 负责控制战斗中的血条面板与 CTB UI 根节点的显示。
 /// </summary>
 public class BattleHUDcontroller : MonoBehaviour, IEventReceiver<BattleStartedEvent>
 {
@@ -11,8 +11,8 @@ public class BattleHUDcontroller : MonoBehaviour, IEventReceiver<BattleStartedEv
     [SerializeField, Tooltip("血条面板的根物体")]
     private GameObject healthBarPanelRoot;
 
-    [SerializeField, Tooltip("CPB UI 的根物体")]
-    private GameObject cpbRoot;
+    [SerializeField, Tooltip("CTB UI 的根物体")]
+    private GameObject ctbRoot;
 
     private void OnEnable()
     {
@@ -42,9 +42,9 @@ public class BattleHUDcontroller : MonoBehaviour, IEventReceiver<BattleStartedEv
             healthBarPanelRoot.SetActive(true);
         }
 
-        if (cpbRoot != null)
+        if (ctbRoot != null)
         {
-            cpbRoot.SetActive(true);
+            ctbRoot.SetActive(true);
         }
     }
 }
