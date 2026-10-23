@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: "\u6756\u51FB"
   m_EditorClassIdentifier: 
   skillName: "\u6756\u51FB"
-  skillIcon: {fileID: 21300000, guid: 42d4ee87e76b44f8ea234ed2f2a77134, type: 3}
+  skillIcon: {fileID: 21300000, guid: 932d2875d77b74250b4dc59138d50766, type: 3}
   description: 
   spCost: 0
-  usablePositions: 020000000300000004000000
+  usablePositions: 0100000002000000
   targetPositions: 0100000002000000
