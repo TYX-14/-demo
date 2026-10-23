@@ -12,6 +12,9 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     [SerializeField, Tooltip("战斗指令面板的 CanvasGroup")]
     private CanvasGroup commandPanelCanvasGroup;
 
+    [SerializeField, Tooltip("独立于布局组的战斗指令面板背景图")]
+    private Image commandPanelBackgroundImage;
+
     [Header("战斗指令按钮")]
     [SerializeField, Tooltip("攻击按钮")]
     private Button attackButton;
@@ -74,6 +77,8 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     /// </summary>
     public void ShowPanel()
     {
+        SetBackgroundVisible(true);
+
         if (commandPanelCanvasGroup == null)
         {
             Debug.LogWarning("BattleCommandUI：尚未绑定战斗指令面板的 CanvasGroup。", this);
@@ -90,6 +95,8 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     /// </summary>
     public void ClosePanel()
     {
+        SetBackgroundVisible(false);
+
         if (commandPanelCanvasGroup == null)
         {
             return;
@@ -98,6 +105,17 @@ public class BattleCommandUI : singleton<BattleCommandUI>
         commandPanelCanvasGroup.alpha = 0f;
         commandPanelCanvasGroup.interactable = false;
         commandPanelCanvasGroup.blocksRaycasts = false;
+    }
+
+    /// <summary>
+    /// 控制独立背景图的显隐。背景图已移出 CanvasGroup/布局控制范围，因此需要单独同步状态。
+    /// </summary>
+    private void SetBackgroundVisible(bool isVisible)
+    {
+        if (commandPanelBackgroundImage != null)
+        {
+            commandPanelBackgroundImage.enabled = isVisible;
+        }
     }
 
     /// <summary>
