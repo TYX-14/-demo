@@ -24,8 +24,9 @@ MonoBehaviour:
     PDef: 100
     MAtk: 100
     MDef: 100
-    Speed: 30
+    Speed: 3
     Accuracy: 0
     Evasion: 0
+  maxSwapDistance: 1
   filedAnimator: {fileID: 0}
   battleAnimator: {fileID: 22100000, guid: 37cc258520fcaeb45a04119fe5523224, type: 2}

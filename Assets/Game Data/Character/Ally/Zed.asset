@@ -24,10 +24,10 @@ MonoBehaviour:
     PDef: 30
     MAtk: 40
     MDef: 30
-    Speed: 50
+    Speed: 7
     Accuracy: 0
     Evasion: 0
-  maxSwapDistance: 1
+  maxSwapDistance: 3
   filedAnimator: {fileID: 22100000, guid: 15b95794c8a2bc7438a1ad6aa9f0c2a9, type: 2}
   battleAnimator: {fileID: 22100000, guid: 8e7f8d6e6651a6842b1bc051b0652066, type: 2}
   job: 8

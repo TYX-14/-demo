@@ -25,10 +25,10 @@ MonoBehaviour:
   statBonus:
     MaxHP: 0
     MaxSP: 0
-    PActk: 20
+    PAtk: 10
     PDef: 0
     MAtk: 0
     MDef: 0
-    Speed: 5
+    Speed: 2
     Accuracy: 0
     Evasion: 0
