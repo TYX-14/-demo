@@ -4,9 +4,11 @@ public class UIManager : MonoBehaviour,
     IEventReceiver<PanelRequestEvent>,
     IEventReceiver<GameModeChangedEvent>
 {
-    [Header("¸ùÎïÌåÓëÌØÊâÃæ°åÊ¹ÓÃ")]
-    [SerializeField, Tooltip("Ì½Ë÷Ä£Ê½ÏÂÏÔÊ¾µÄ×ÜÌåUI¸ù½Úµã")]
+    [Header("æ ¹ç‰©ä½“ä¸ç‰¹æ®Šé¢æ¿ä½¿ç”¨")]
+    [SerializeField, Tooltip("æ¢ç´¢æ¨¡å¼ä¸‹æ˜¾ç¤ºçš„æ€»ä½“UIæ ¹èŠ‚ç‚¹")]
     private GameObject fielUIroot;
+    [SerializeField, Tooltip("æˆ˜æ–—æ¨¡å¼ä¸‹æ˜¾ç¤ºçš„æˆ˜æ–— UI æ ¹èŠ‚ç‚¹")]
+    private GameObject battleUIRoot;
     [SerializeField] private GameObject mainPanel;
    
 
@@ -16,7 +18,7 @@ public class UIManager : MonoBehaviour,
     
     
 
-    #region ÖÜÆÚº¯Êı
+    #region å‘¨æœŸå‡½æ•°
     private void Awake()
     {
         _PanelControllerDict.Clear();
@@ -58,9 +60,9 @@ public class UIManager : MonoBehaviour,
         mainPanel.SetActive(true);
     }
 
-    #region ÊÂ¼şÏà¹Ø
+    #region äº‹ä»¶ç›¸å…³
     /// <summary>
-    /// ¸ÃÊÂ¼şÆô¶¯¸÷¸öÃæ°å£¬²¢ÇÒÉèÖÃÃæ°å
+    /// è¯¥äº‹ä»¶å¯åŠ¨å„ä¸ªé¢æ¿ï¼Œå¹¶ä¸”è®¾ç½®é¢æ¿
     /// </summary>
     /// <param name="evt"></param>
     public void OnEvent(PanelRequestEvent evt)
@@ -73,12 +75,14 @@ public class UIManager : MonoBehaviour,
     }
 
     /// <summary>
-    /// Èç¹ûÓÎÏ·Ä£Ê½ÇĞ»»£¬¸ÃÊÂ¼ş¹Ø±ÕÃæ°å
+    /// å¦‚æœæ¸¸æˆæ¨¡å¼åˆ‡æ¢ï¼Œè¯¥äº‹ä»¶å…³é—­é¢æ¿
     /// </summary>
     /// <param name="evt"></param>
     /// <exception cref="System.NotImplementedException"></exception>
     public void OnEvent(GameModeChangedEvent evt)
     {
+        SwitchFieldAndBattleUI(evt.newMode);
+
         if (evt.newMode != GameMode.InteractionMenu)
         {
              CloseAllPanels();         
@@ -86,14 +90,33 @@ public class UIManager : MonoBehaviour,
     }
     #endregion
 
-    #region Ãæ°å¿ØÖÆÏà¹Ø
     /// <summary>
-    /// °ÑËùÓĞÈı¼¶²Ëµ¥¿ØÖÆÆ÷»ñÈ¡²¢Ìí¼Óµ½×Öµä
+    /// æ ¹æ®æ¸¸æˆæ¨¡å¼åˆ‡æ¢æ¢ç´¢ç•Œé¢ä¸æˆ˜æ–—ç•Œé¢ã€‚
+    /// æˆ˜æ–—æ¨¡å¼æ˜¾ç¤º Battle UIï¼Œå…¶ä½™æ¨¡å¼æ˜¾ç¤º Field UIã€‚
+    /// </summary>
+    private void SwitchFieldAndBattleUI(GameMode mode)
+    {
+        bool isBattleMode = mode == GameMode.Battle;
+
+        if (fielUIroot != null)
+        {
+            fielUIroot.SetActive(!isBattleMode);
+        }
+
+        if (battleUIRoot != null)
+        {
+            battleUIRoot.SetActive(isBattleMode);
+        }
+    }
+
+    #region é¢æ¿æ§åˆ¶ç›¸å…³
+    /// <summary>
+    /// æŠŠæ‰€æœ‰ä¸‰çº§èœå•æ§åˆ¶å™¨è·å–å¹¶æ·»åŠ åˆ°å­—å…¸
     /// </summary>
     /// <param name="root"></param>
     private void GetPanelFromRoot(Transform root)
     {
-        var panels = root.GetComponentsInChildren<PanelController>(true);//panels½«»á±»×Ô¶¯Ê¶±ğÎªÊı×é
+        var panels = root.GetComponentsInChildren<PanelController>(true);//panelså°†ä¼šè¢«è‡ªåŠ¨è¯†åˆ«ä¸ºæ•°ç»„
         foreach (var panel in panels)
         {
             _allPanelList.Add(panel);
@@ -106,7 +129,7 @@ public class UIManager : MonoBehaviour,
     }
 
     /// <summary>
-    /// ±éÀúËùÓĞÔÚ×ÖµäµÄÈı¼¶²Ëµ¥£¬Èç¹ûËüÊôÓÚ¼¤»î×´Ì¬£¬Ôò¹Ø±ÕËü
+    /// éå†æ‰€æœ‰åœ¨å­—å…¸çš„ä¸‰çº§èœå•ï¼Œå¦‚æœå®ƒå±äºæ¿€æ´»çŠ¶æ€ï¼Œåˆ™å…³é—­å®ƒ
     /// </summary>
     private void TryHandCancelByActivePanel()
     {
@@ -120,7 +143,7 @@ public class UIManager : MonoBehaviour,
         }
     }
     /// <summary>
-    /// ¼ì²éÊÇ·ñÓĞÈı¼¶²Ëµ¥´¦ÓÚ¼¤»î×´Ì¬
+    /// æ£€æŸ¥æ˜¯å¦æœ‰ä¸‰çº§èœå•å¤„äºæ¿€æ´»çŠ¶æ€
     /// </summary>
     /// <returns></returns>
     private bool InAnyPanelActive()
