@@ -82,6 +82,7 @@
      <Compile Include="Assets\Scripts\Game\Game Mod\GameModeEvent.cs" />
      <Compile Include="Assets\Scripts\Game\Game Mod\GameModeManager.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\InteractionUIcontroller.cs" />
+     <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\ChallengePanelController.cs" />
      <Compile Include="Assets\Scripts\UI\Inventory\StealItemButton.cs" />
      <Compile Include="Assets\Scripts\UI\Equipment\EquipmentCandidatePaneControllerl.cs" />
