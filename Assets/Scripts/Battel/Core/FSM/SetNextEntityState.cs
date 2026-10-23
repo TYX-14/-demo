@@ -44,6 +44,16 @@ public class SetNextEntityState : BattleState
             yield break;
         }
 
+        // 输出选人结果，便于在 Unity Console 中确认当前行动者、阵营、站位和速度。
+        string characterName = nextEntity.RuntimeData != null &&
+                               !string.IsNullOrEmpty(nextEntity.RuntimeData.DisplayName)
+            ? nextEntity.RuntimeData.DisplayName
+            : nextEntity.name;
+        int entityIndex = _controller.AllEntities.IndexOf(nextEntity);
+        int displayedPosition = GetPositionPriority(nextEntity, entityIndex);
+        string factionName = nextEntity.IsPlayer ? "友军" : "敌军";
+        Debug.Log($"[战斗行动] 当前选中：{characterName} | 阵营：{factionName} | 站位：第 {displayedPosition} 位 | 速度：{nextEntity.TotalStats.Speed}", nextEntity);
+
         // 更新当前行动者，并通知 UI / 时间轴同步显示。
         _controller.CurrentEntity = nextEntity;
         EventBus.Publish(new CurrentEntityChangedEvent(nextEntity));
