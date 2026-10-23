@@ -48,11 +48,13 @@ public class SetNextEntityState : BattleState
         string characterName = nextEntity.RuntimeData != null &&
                                !string.IsNullOrEmpty(nextEntity.RuntimeData.DisplayName)
             ? nextEntity.RuntimeData.DisplayName
-            : nextEntity.name;
+            : (nextEntity.Definition != null && !string.IsNullOrEmpty(nextEntity.Definition.Name)
+                ? nextEntity.Definition.Name
+                : nextEntity.ID);
         int entityIndex = _controller.AllEntities.IndexOf(nextEntity);
         int displayedPosition = GetPositionPriority(nextEntity, entityIndex);
         string factionName = nextEntity.IsPlayer ? "友军" : "敌军";
-        Debug.Log($"[战斗行动] 当前选中：{characterName} | 阵营：{factionName} | 站位：第 {displayedPosition} 位 | 速度：{nextEntity.TotalStats.Speed}", nextEntity);
+        Debug.Log($"[战斗行动] 当前选中：{characterName} | 阵营：{factionName} | 站位：第 {displayedPosition} 位 | 速度：{nextEntity.TotalStats.Speed}", nextEntity.Unit);
 
         // 更新当前行动者，并通知 UI / 时间轴同步显示。
         _controller.CurrentEntity = nextEntity;
