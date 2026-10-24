@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 技能列表中的单个显示条目。
-/// 负责显示技能信息，并在鼠标悬停时展示技能说明。
+/// 负责显示技能信息、站位图案，并在鼠标悬停时展示技能说明。
 /// </summary>
 public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -17,11 +17,18 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private TMP_Text targetPositionsText;
     [SerializeField] private TMP_Text spCostText;
 
+    [Header("站位图案")]
+    [SerializeField] private SkillPositionDiagram positionDiagram;
+
     private GameObject skillTip;
     private TMP_Text skillTipDescription;
 
     private void Awake()
     {
+        // 如果未在 Inspector 绑定，则尝试从技能条目子物体中获取站位图案组件。
+        if (positionDiagram == null)
+            positionDiagram = GetComponentInChildren<SkillPositionDiagram>(true);
+
         // Tip 已经放在按钮预制体下，按名称自动获取，避免额外改动预制体引用。
         Transform tipTransform = transform.Find("Skill Tip");
         if (tipTransform == null)
@@ -56,14 +63,18 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (skillNameText != null)
             skillNameText.text = skill.SkillName;
 
+        // 站位信息改由八点图案表现，不再把站位编号写成文字。
         if (usablePositionsText != null)
-            usablePositionsText.text = $"自身站位：{FormatPositions(skill.UsablePositions)}";
+            usablePositionsText.text = string.Empty;
 
         if (targetPositionsText != null)
-            targetPositionsText.text = $"目标站位：{FormatPositions(skill.TargetPositions)}";
+            targetPositionsText.text = string.Empty;
 
         if (spCostText != null)
             spCostText.text = $"{skill.SpCost} SP";
+
+        if (positionDiagram != null)
+            positionDiagram.Setup(skill);
 
         if (skillTipDescription != null)
             skillTipDescription.text = skill.Description ?? string.Empty;
@@ -127,6 +138,9 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         if (spCostText != null)
             spCostText.text = string.Empty;
+
+        if (positionDiagram != null)
+            positionDiagram.Clear();
 
         if (skillTipDescription != null)
             skillTipDescription.text = string.Empty;
