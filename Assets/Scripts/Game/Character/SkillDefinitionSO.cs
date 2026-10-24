@@ -22,8 +22,12 @@ public class SkillDefinitionSO : ScriptableObject
     [Tooltip("角色自身处于哪些站位时可以使用该技能，站位编号为 1~4。")]
     [SerializeField] private List<int> usablePositions = new() { 1, 2, 3, 4 };
 
-    [Tooltip("该技能可以选择哪些目标站位，站位编号为 1~4。")]
+    [Tooltip("该技能可以选择哪些目标站位，站位编号为 1~4。当前战斗 UI 将这些位置显示在敌方一侧。")]
     [SerializeField] private List<int> targetPositions = new() { 1, 2, 3, 4 };
+
+    [Header("固定 AoE 范围")]
+    [Tooltip("该技能实际覆盖的敌方站位，编号为 1~4。留空表示不配置固定 AoE 范围；非空时这些位置会以 AoE 颜色显示。")]
+    [SerializeField] private List<int> fixedAreaPositions = new();
 
     public string SkillName => skillName;
     public Sprite SkillIcon => skillIcon;
@@ -31,4 +35,5 @@ public class SkillDefinitionSO : ScriptableObject
     public int SpCost => spCost;
     public IReadOnlyList<int> UsablePositions => usablePositions;
     public IReadOnlyList<int> TargetPositions => targetPositions;
+    public IReadOnlyList<int> FixedAreaPositions => fixedAreaPositions;
 }
