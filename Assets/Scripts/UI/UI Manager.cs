@@ -15,6 +15,10 @@ public class UIManager : MonoBehaviour,
     private readonly Dictionary<Type, PanelController> _PanelControllerDict = new();
     private readonly List<PanelController> _allPanelList = new();
 
+    // 战斗时保留主菜单所在的 Canvas，只隐藏其他探索界面节点。
+    private readonly Dictionary<GameObject, bool> _fieldUIOriginalStates = new();
+    private bool _fieldUIFilteredForBattle;
+
     
     
 
@@ -50,13 +54,36 @@ public class UIManager : MonoBehaviour,
 
     private void HandleGlobalMenuInput()
     {
-        if (mainPanel.activeInHierarchy)
+        if (mainPanel == null)
         {
-            mainPanel.SetActive(false);
-            GameModeManager.Instance.RequestChangeMode(GameMode.Explore);
+            Debug.LogWarning("UIManager：Main Panel 尚未绑定，请在 Inspector 中指定主菜单根物体。");
             return;
         }
-        GameModeManager.Instance.RequestChangeMode(GameMode.Pause);
+
+        var modeManager = GameModeManager.Instance;
+        if (modeManager == null)
+        {
+            Debug.LogWarning("UIManager：找不到 GameModeManager，无法切换暂停状态。");
+            return;
+        }
+
+        if (mainPanel.activeSelf)
+        {
+            mainPanel.SetActive(false);
+
+            if (modeManager.CurrentGameMode == GameMode.Pause)
+            {
+                modeManager.RequestChangeMode(modeManager.ModeBeforePause);
+            }
+
+            return;
+        }
+
+        if (modeManager.CurrentGameMode != GameMode.Pause)
+        {
+            modeManager.RequestChangeMode(GameMode.Pause);
+        }
+
         mainPanel.SetActive(true);
     }
 
@@ -81,12 +108,12 @@ public class UIManager : MonoBehaviour,
     /// <exception cref="System.NotImplementedException"></exception>
     public void OnEvent(GameModeChangedEvent evt)
     {
-        SwitchFieldAndBattleUI(evt.newMode);
-
         if (evt.newMode != GameMode.InteractionMenu)
         {
-             CloseAllPanels();         
+            CloseAllPanels();
         }
+
+        SwitchFieldAndBattleUI(evt.newMode);
     }
     #endregion
 
@@ -96,17 +123,113 @@ public class UIManager : MonoBehaviour,
     /// </summary>
     private void SwitchFieldAndBattleUI(GameMode mode)
     {
+        // 暂停只是覆盖在当前模式上的状态，不应切换或关闭当前模式的 Canvas。
+        if (mode == GameMode.Pause)
+        {
+            return;
+        }
+
         bool isBattleMode = mode == GameMode.Battle;
+
+        if (isBattleMode)
+        {
+            if (fielUIroot != null)
+            {
+                if (mainPanel != null && mainPanel.transform.IsChildOf(fielUIroot.transform))
+                {
+                    HideFieldUIExceptMainPanel();
+                }
+                else
+                {
+                    fielUIroot.SetActive(false);
+                }
+            }
+
+            if (battleUIRoot != null)
+            {
+                battleUIRoot.SetActive(true);
+            }
+
+            return;
+        }
+
+        RestoreFieldUI();
 
         if (fielUIroot != null)
         {
-            fielUIroot.SetActive(!isBattleMode);
+            fielUIroot.SetActive(true);
         }
 
         if (battleUIRoot != null)
         {
-            battleUIRoot.SetActive(isBattleMode);
+            battleUIRoot.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// 保留主菜单及其父级路径，让主菜单在战斗时仍处于有效 Canvas 中。
+    /// </summary>
+    private void HideFieldUIExceptMainPanel()
+    {
+        if (_fieldUIFilteredForBattle || fielUIroot == null || mainPanel == null)
+        {
+            return;
+        }
+
+        _fieldUIOriginalStates.Clear();
+
+        foreach (Transform item in fielUIroot.GetComponentsInChildren<Transform>(true))
+        {
+            if (item.gameObject != fielUIroot)
+            {
+                _fieldUIOriginalStates[item.gameObject] = item.gameObject.activeSelf;
+            }
+        }
+
+        HideUnrelatedFieldUIBranches(fielUIroot.transform, mainPanel.transform);
+        _fieldUIFilteredForBattle = true;
+    }
+
+    private void HideUnrelatedFieldUIBranches(Transform current, Transform protectedPanel)
+    {
+        foreach (Transform child in current)
+        {
+            if (child == protectedPanel)
+            {
+                // 保留主菜单本身及其所有子物体的原始状态。
+                continue;
+            }
+
+            if (protectedPanel.IsChildOf(child))
+            {
+                // 主菜单的祖先必须保持激活，才能继续使用 Field UI 的 Canvas。
+                child.gameObject.SetActive(true);
+                HideUnrelatedFieldUIBranches(child, protectedPanel);
+            }
+            else
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void RestoreFieldUI()
+    {
+        if (!_fieldUIFilteredForBattle)
+        {
+            return;
+        }
+
+        foreach (var pair in _fieldUIOriginalStates)
+        {
+            if (pair.Key != null)
+            {
+                pair.Key.SetActive(pair.Value);
+            }
+        }
+
+        _fieldUIOriginalStates.Clear();
+        _fieldUIFilteredForBattle = false;
     }
 
     #region 面板控制相关
