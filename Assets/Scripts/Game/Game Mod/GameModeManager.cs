@@ -3,12 +3,7 @@ public class GameModeManager : singleton<GameModeManager>
 {
     public GameMode CurrentGameMode;
 
-    /// <summary>
-    /// 暂停前的模式，用于恢复探索或战斗。
-    /// </summary>
-    public GameMode ModeBeforePause { get; private set; } = GameMode.Explore;
-
-    [SerializeField] private GameMode defaultMode = GameMode.Explore;
+   [SerializeField] private GameMode defaultMode = GameMode.Explore;
 
   
     protected override void Awake()
@@ -24,38 +19,25 @@ public class GameModeManager : singleton<GameModeManager>
 
     public void RequestChangeMode(GameMode newMode)
     {
-        if (Instance == null || newMode == CurrentGameMode)
+        
+        if (Instance == null)
         {
             return;
         }
-
-        if (!CanSwitchMode(newMode))
+        if (CanSwitchMode(newMode))
         {
-            return;
+            AppleMode(newMode);
+           
+            
         }
-
-        if (newMode == GameMode.Pause)
-        {
-            ModeBeforePause = CurrentGameMode;
-        }
-
-        AppleMode(newMode);
     }
 
     public bool CanSwitchMode(GameMode newMode)
     {
-        // 战斗中只能进入暂停，不能直接跳回探索。
         if (CurrentGameMode == GameMode.Battle)
         {
-            return newMode == GameMode.Pause;
+            return false;
         }
-
-        // 暂停期间只允许恢复到进入暂停前的模式。
-        if (CurrentGameMode == GameMode.Pause)
-        {
-            return newMode == ModeBeforePause;
-        }
-
         return true;
     }
 
