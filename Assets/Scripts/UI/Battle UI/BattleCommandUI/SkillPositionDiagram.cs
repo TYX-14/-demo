@@ -45,7 +45,7 @@ public class SkillPositionDiagram : MonoBehaviour
 
         // AoE 覆盖点使用独立颜色，覆盖普通的可选目标点显示。
         IReadOnlyList<int> areaPositions = skill.FixedAreaPositions;
-        if (areaPositions != null && areaPositions.Count > 0)
+        if (areaPositions != null && areaPositions.Count > 0 && enemyPositionDots != null)
         {
             for (int i = 0; i < areaPositions.Count; i++)
             {
