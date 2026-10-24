@@ -26,6 +26,9 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     [SerializeField, Tooltip("点击攻击后打开的二级技能面板控制器")]
     private BattleSkillPanelController skillPanelController;
 
+    [SerializeField, Tooltip("点击道具后打开的二级道具面板控制器")]
+    private BattleItemPanelController itemPanelController;
+
     [SerializeField, Tooltip("交换位置按钮")]
     private Button swapPositionButton;
 
@@ -230,23 +233,41 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     {
         if (commandType == BattleCommandType.Attack)
         {
+            if (itemPanelController != null)
+                itemPanelController.HidePanel();
+
             if (skillPanelController == null)
             {
                 Debug.LogWarning("尚未绑定 BattleSkillPanelController，请在 Inspector 中设置技能二级面板控制器。", this);
                 return;
             }
 
-            // 技能面板是攻击按钮的子物体，只切换二级面板显隐。
-            // 不关闭一级指令面板，避免父级 CanvasGroup 同时淡出。
+            // 技能面板与道具面板互斥；不关闭一级指令面板。
             skillPanelController.TogglePanel();
             return;
         }
 
-        // 其他指令都与技能面板互斥，先关闭技能面板，再执行对应指令逻辑。
-        if (skillPanelController != null)
+        if (commandType == BattleCommandType.Item)
         {
-            skillPanelController.HidePanel();
+            if (skillPanelController != null)
+                skillPanelController.HidePanel();
+
+            if (itemPanelController == null)
+            {
+                Debug.LogWarning("尚未绑定 BattleItemPanelController，请在 Inspector 中设置道具二级面板控制器。", this);
+                return;
+            }
+
+            itemPanelController.TogglePanel();
+            return;
         }
+
+        // 交换位置、逃跑等其他指令都关闭二级面板，再交给后续战斗逻辑处理。
+        if (skillPanelController != null)
+            skillPanelController.HidePanel();
+
+        if (itemPanelController != null)
+            itemPanelController.HidePanel();
 
         Debug.Log($"选择了战斗指令：{commandType}", this);
     }
