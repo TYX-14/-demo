@@ -68,6 +68,11 @@ public class TargetSelectionState : BattleState
                             _controller.AllEntities,
                             _controller.GetLogicalPosition))
                     {
+                        // 只有玩家确认目标后才关闭技能二级面板。
+                        // 取消分支不关闭它，因此返回输入状态时可以继续选择技能。
+                        if (BattleCommandUI.Instance != null)
+                            BattleCommandUI.Instance.HideSkillPanel();
+
                         _controller.SetState(new PerformActionState(_controller, _actionContext));
                         yield break;
                     }
