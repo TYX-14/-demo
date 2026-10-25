@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,9 +22,16 @@ public class SkillPositionDiagram : MonoBehaviour
 
     [Header("显示颜色")]
     [SerializeField] private Color inactiveColor = new Color(1f, 1f, 1f, 0.25f);
+    [SerializeField] private Color selectedInactiveColor = new Color(0f, 0f, 0f, 0.25f);
+    [SerializeField, Min(0.01f)] private float colorTransitionDuration = 0.15f;
     [SerializeField] private Color targetableColor = new Color(1f, 0.35f, 0.3f, 1f);
     [SerializeField] private Color usableColor = new Color(0.35f, 0.75f, 1f, 1f);
     [SerializeField] private Color areaColor = new Color(1f, 0.75f, 0.2f, 1f);
+
+    private readonly Dictionary<Image, Color> baseDotColors = new();
+    private readonly HashSet<Image> inactiveDots = new();
+    private Coroutine colorTransition;
+    private bool isSelected;
 
     private void Awake()
     {
@@ -32,9 +40,14 @@ public class SkillPositionDiagram : MonoBehaviour
 
     public void Setup(SkillDefinitionSO skill)
     {
+        StopColorTransition();
+        baseDotColors.Clear();
+        inactiveDots.Clear();
+
         if (skill == null)
         {
-            Clear();
+            ClearDotsImmediately();
+            HideAreaConnections();
             return;
         }
 
@@ -50,13 +63,50 @@ public class SkillPositionDiagram : MonoBehaviour
         {
             HideAreaConnections();
         }
+
+        // 新技能条目或技能数据刷新时直接应用当前状态，避免列表重建时播放多余动画。
+        ApplyDotColorsImmediately(isSelected);
+    }
+
+    /// <summary>
+    /// 由技能条目的选中/取消选中事件调用。
+    /// 只渐变未激活站位点，高亮的目标点、可用点和 AoE 点保持原色。
+    /// </summary>
+    public void SetSelected(bool selected)
+    {
+        if (isSelected == selected)
+            return;
+
+        isSelected = selected;
+        StopColorTransition();
+        colorTransition = StartCoroutine(TransitionInactiveDots(selected));
     }
 
     public void Clear()
     {
-        SetAllDots(enemyPositionDots, inactiveColor);
-        SetAllDots(allyPositionDots, inactiveColor);
+        StopColorTransition();
+        baseDotColors.Clear();
+        inactiveDots.Clear();
+
+        RegisterAllDotsAsInactive(enemyPositionDots);
+        RegisterAllDotsAsInactive(allyPositionDots);
+        ApplyDotColorsImmediately(isSelected);
         HideAreaConnections();
+    }
+
+    private void RegisterAllDotsAsInactive(Image[] dots)
+    {
+        if (dots == null)
+            return;
+
+        foreach (Image dot in dots)
+        {
+            if (dot == null)
+                continue;
+
+            baseDotColors[dot] = inactiveColor;
+            inactiveDots.Add(dot);
+        }
     }
 
     private void SetEnemyDots(IReadOnlyList<int> activePositions, Color activeColor)
@@ -66,12 +116,13 @@ public class SkillPositionDiagram : MonoBehaviour
 
         for (int i = 0; i < enemyPositionDots.Length; i++)
         {
-            if (enemyPositionDots[i] == null)
+            Image dot = enemyPositionDots[i];
+            if (dot == null)
                 continue;
 
             int positionNumber = 4 - i;
-            enemyPositionDots[i].color =
-                ContainsPosition(activePositions, positionNumber) ? activeColor : inactiveColor;
+            bool active = ContainsPosition(activePositions, positionNumber);
+            RegisterDotColor(dot, active ? activeColor : inactiveColor, !active);
         }
     }
 
@@ -82,23 +133,91 @@ public class SkillPositionDiagram : MonoBehaviour
 
         for (int i = 0; i < dots.Length; i++)
         {
-            if (dots[i] == null)
+            Image dot = dots[i];
+            if (dot == null)
                 continue;
 
-            dots[i].color = ContainsPosition(activePositions, i + 1) ? activeColor : inactiveColor;
+            bool active = ContainsPosition(activePositions, i + 1);
+            RegisterDotColor(dot, active ? activeColor : inactiveColor, !active);
         }
     }
 
-    private void SetAllDots(Image[] dots, Color color)
+    private void RegisterDotColor(Image dot, Color color, bool inactive)
     {
-        if (dots == null)
-            return;
+        baseDotColors[dot] = color;
 
-        foreach (Image dot in dots)
+        if (inactive)
+            inactiveDots.Add(dot);
+        else
+            inactiveDots.Remove(dot);
+    }
+
+    private void ClearDotsImmediately()
+    {
+        RegisterAllDotsAsInactive(enemyPositionDots);
+        RegisterAllDotsAsInactive(allyPositionDots);
+        ApplyDotColorsImmediately(isSelected);
+    }
+
+    private void ApplyDotColorsImmediately(bool selected)
+    {
+        foreach (KeyValuePair<Image, Color> pair in baseDotColors)
+        {
+            if (pair.Key == null)
+                continue;
+
+            pair.Key.color = selected && inactiveDots.Contains(pair.Key)
+                ? selectedInactiveColor
+                : pair.Value;
+        }
+    }
+
+    private IEnumerator TransitionInactiveDots(bool selected)
+    {
+        Dictionary<Image, Color> startColors = new();
+
+        foreach (Image dot in inactiveDots)
         {
             if (dot != null)
-                dot.color = color;
+                startColors[dot] = dot.color;
         }
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, colorTransitionDuration);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+            Color targetColor = selected ? selectedInactiveColor : inactiveColor;
+
+            foreach (KeyValuePair<Image, Color> pair in startColors)
+            {
+                if (pair.Key != null)
+                    pair.Key.color = Color.Lerp(pair.Value, targetColor, easedProgress);
+            }
+
+            yield return null;
+        }
+
+        Color finalColor = selected ? selectedInactiveColor : inactiveColor;
+        foreach (Image dot in inactiveDots)
+        {
+            if (dot != null)
+                dot.color = finalColor;
+        }
+
+        colorTransition = null;
+    }
+
+    private void StopColorTransition()
+    {
+        if (colorTransition == null)
+            return;
+
+        StopCoroutine(colorTransition);
+        colorTransition = null;
     }
 
     private void SetAreaConnections(IReadOnlyList<int> positions)
