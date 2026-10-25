@@ -71,48 +71,15 @@ public class BattleFieldManager : MonoBehaviour
         if (members == null)
             return units;
 
-        var enemyPositions = new int[members.Count];
-        var enemyOccupiedCounts = new int[members.Count];
-        var enemyGroupCounts = new Dictionary<int, int>();
-        var enemyGroupIndices = new Dictionary<int, int>();
-
-        if (!isAlly)
-        {
-            // 先统计每个逻辑位置有多少敌人，以便视觉偏移围绕槽位中心对称分布。
-            for (int i = 0; i < members.Count; i++)
-            {
-                CharacterRuntimeData member = members[i];
-                EnemyDfinitionSo enemyDefinition = member?.Definition as EnemyDfinitionSo;
-
-                int occupiedCount = enemyDefinition != null
-                    ? Mathf.Clamp(enemyDefinition.occupiedSlotCount, 1, 4)
-                    : 1;
-
-                int position = member != null ? member.Position : 1;
-                if (position < 1 || position > 4)
-                {
-                    Debug.LogError("BattleFieldManager：敌人未被分配有效逻辑位置，拒绝使用默认位置补救。", this);
-                    return new List<BattleUnit>();
-                }
-
-                position = Mathf.Clamp(position, 1, 5 - occupiedCount);
-
-                if (member != null)
-                    member.Position = position;
-
-                enemyPositions[i] = position;
-                enemyOccupiedCounts[i] = occupiedCount;
-
-                if (!enemyGroupCounts.ContainsKey(position))
-                    enemyGroupCounts[position] = 0;
-
-                enemyGroupCounts[position]++;
-            }
-        }
-
         for (int i = 0; i < members.Count; i++)
         {
             CharacterRuntimeData member = members[i];
+            if (member == null || member.Definition == null)
+            {
+                Debug.LogError($"BattleFieldManager：第 {i + 1} 个单位缺少运行时数据或角色定义。", this);
+                return new List<BattleUnit>();
+            }
+
             Vector3 targetSlotPos;
             if (isAlly)
             {
@@ -120,20 +87,16 @@ public class BattleFieldManager : MonoBehaviour
             }
             else
             {
-                int position = enemyPositions[i];
-                int groupIndex = enemyGroupIndices.TryGetValue(position, out int currentIndex)
-                    ? currentIndex
-                    : 0;
+                EnemyDfinitionSo enemyDefinition = member.Definition as EnemyDfinitionSo;
+                int occupiedCount = enemyDefinition != null
+                    ? Mathf.Clamp(enemyDefinition.occupiedSlotCount, 1, 4)
+                    : 1;
 
-                targetSlotPos = layout.GetEnemySlotPos(position, enemyOccupiedCounts[i]) +
-                                layout.GetEnemyVisualOffset(groupIndex, enemyGroupCounts[position]);
-
-                enemyGroupIndices[position] = groupIndex + 1;
+                // 位置已由 EnemySpawnManager 分配并在 SpawnAll 中验证，本类只负责坐标映射。
+                targetSlotPos = layout.GetEnemySlotPos(member.Position, occupiedCount);
             }
 
-            // 友方从统一入场点生成；敌方直接出现在固定逻辑位置对应的视觉位置。
             Vector3 spawnPos = isAlly ? layout.initTrans.position : targetSlotPos;
-
             BattleUnit unitObj = Instantiate(
                 battleUnitPrefab,
                 spawnPos,
