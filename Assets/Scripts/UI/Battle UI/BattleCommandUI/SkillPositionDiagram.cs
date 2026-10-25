@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// 技能按钮上的八点站位示意图。
 /// 敌方从左到右为 4、3、2、1 号位；友方从左到右为 1、2、3、4 号位。
 /// 单体技能只高亮可选目标；AoE 技能高亮攻击位置，并连接相邻的高亮点。
+/// 此组件只负责显示，不负责战斗目标选择或伤害计算。
 /// </summary>
 public class SkillPositionDiagram : MonoBehaviour
 {
@@ -20,62 +21,30 @@ public class SkillPositionDiagram : MonoBehaviour
 
     [Header("显示颜色")]
     [SerializeField] private Color inactiveColor = new Color(1f, 1f, 1f, 0.25f);
-    [SerializeField] private Color selectedInactiveColor = new Color(0f, 0f, 0f, 0.25f);
     [SerializeField] private Color targetableColor = new Color(1f, 0.35f, 0.3f, 1f);
     [SerializeField] private Color usableColor = new Color(0.35f, 0.75f, 1f, 1f);
     [SerializeField] private Color areaColor = new Color(1f, 0.75f, 0.2f, 1f);
 
-    private SkillDefinitionSO currentSkill;
-    private bool isSelected;
-
     private void Awake()
     {
-        Refresh();
+        Clear();
     }
 
     public void Setup(SkillDefinitionSO skill)
     {
-        currentSkill = skill;
-        Refresh();
-    }
-
-    /// <summary>
-    /// 根据技能按钮的选中状态切换未激活点的颜色。
-    /// </summary>
-    public void SetSelected(bool selected)
-    {
-        if (isSelected == selected)
-            return;
-
-        isSelected = selected;
-        Refresh();
-    }
-
-    public void Clear()
-    {
-        currentSkill = null;
-        Refresh();
-    }
-
-    private void Refresh()
-    {
-        Color inactive = isSelected ? selectedInactiveColor : inactiveColor;
-
-        if (currentSkill == null)
+        if (skill == null)
         {
-            SetAllDots(enemyPositionDots, inactive);
-            SetAllDots(allyPositionDots, inactive);
-            HideAreaConnections();
+            Clear();
             return;
         }
 
-        SetEnemyDots(currentSkill.TargetPositions, targetableColor, inactive);
-        SetDots(allyPositionDots, currentSkill.UsablePositions, usableColor, inactive);
+        SetEnemyDots(skill.TargetPositions, targetableColor);
+        SetDots(allyPositionDots, skill.UsablePositions, usableColor);
 
-        if (currentSkill.TargetType == SkillTargetType.AoE)
+        if (skill.TargetType == SkillTargetType.AoE)
         {
-            SetEnemyDots(currentSkill.TargetPositions, areaColor, inactive);
-            SetAreaConnections(currentSkill.TargetPositions);
+            SetEnemyDots(skill.TargetPositions, areaColor);
+            SetAreaConnections(skill.TargetPositions);
         }
         else
         {
@@ -83,7 +52,14 @@ public class SkillPositionDiagram : MonoBehaviour
         }
     }
 
-    private void SetEnemyDots(IReadOnlyList<int> activePositions, Color activeColor, Color inactive)
+    public void Clear()
+    {
+        SetAllDots(enemyPositionDots, inactiveColor);
+        SetAllDots(allyPositionDots, inactiveColor);
+        HideAreaConnections();
+    }
+
+    private void SetEnemyDots(IReadOnlyList<int> activePositions, Color activeColor)
     {
         if (enemyPositionDots == null)
             return;
@@ -95,11 +71,11 @@ public class SkillPositionDiagram : MonoBehaviour
 
             int positionNumber = 4 - i;
             enemyPositionDots[i].color =
-                ContainsPosition(activePositions, positionNumber) ? activeColor : inactive;
+                ContainsPosition(activePositions, positionNumber) ? activeColor : inactiveColor;
         }
     }
 
-    private void SetDots(Image[] dots, IReadOnlyList<int> activePositions, Color activeColor, Color inactive)
+    private void SetDots(Image[] dots, IReadOnlyList<int> activePositions, Color activeColor)
     {
         if (dots == null)
             return;
@@ -109,7 +85,7 @@ public class SkillPositionDiagram : MonoBehaviour
             if (dots[i] == null)
                 continue;
 
-            dots[i].color = ContainsPosition(activePositions, i + 1) ? activeColor : inactive;
+            dots[i].color = ContainsPosition(activePositions, i + 1) ? activeColor : inactiveColor;
         }
     }
 
