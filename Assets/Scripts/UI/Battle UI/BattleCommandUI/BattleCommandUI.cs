@@ -227,6 +227,15 @@ public class BattleCommandUI : singleton<BattleCommandUI>
     }
 
     /// <summary>
+    /// 关闭技能二级面板。目标选择被取消时不调用，确认目标后再关闭。
+    /// </summary>
+    public void HideSkillPanel()
+    {
+        if (skillPanelController != null)
+            skillPanelController.HidePanel();
+    }
+
+    /// <summary>
     /// 统一的战斗指令入口。目前只接收指令类型，具体行为后续接入战斗系统。
     /// </summary>
     private void OnCommandButtonClicked(BattleCommandType commandType)
