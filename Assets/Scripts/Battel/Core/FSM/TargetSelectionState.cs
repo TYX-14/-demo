@@ -1,8 +1,10 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
 /// 等待玩家选择行动目标。
@@ -15,6 +17,8 @@ public class TargetSelectionState : BattleState
     private Camera _battleCamera;
     private BattleEntity _lastLoggedHoveredTarget;
     private bool _hasLoggedHoverResult;
+    private readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();
+    private string _lastLoggedUIHit;
 
     public TargetSelectionState(BattleController controller, BattleActionContext actionContext)
         : base(controller)
@@ -27,6 +31,7 @@ public class TargetSelectionState : BattleState
         _battleCamera = Camera.main;
         _lastLoggedHoveredTarget = null;
         _hasLoggedHoverResult = false;
+        _lastLoggedUIHit = null;
 
         Debug.Log("【目标选择】进入 TargetSelectionState。");
         if (_battleCamera == null)
@@ -121,9 +126,14 @@ public class TargetSelectionState : BattleState
 
     private void UpdateHoveredTargetCursor(Mouse mouse, Vector2 screenPosition)
     {
-        // 悬停检测直接使用战斗单位的屏幕范围，不依赖 UI 射线检测。
-        // 透明或铺满屏幕的 UI 也可能被 EventSystem 判定为鼠标所在对象，
-        // 如果在这里提前 return，就会导致敌人始终无法显示目标光标。
+        // UI 与战斗实体使用不同的命中机制：先检查鼠标下是否有真正参与射线检测的 UI。
+        // UI 命中时不把鼠标输入同时解释成战场悬停；若意外命中全屏透明 UI，日志会指出对象名。
+        if (IsPointerOverUI(screenPosition))
+        {
+            SetAllTargetCursors(false);
+            return;
+        }
+
         if (_battleCamera == null)
             _battleCamera = Camera.main;
 
@@ -150,6 +160,50 @@ public class TargetSelectionState : BattleState
 
             entity.Unit.SetTargetSelection(entity == hoveredTarget);
         }
+    }
+
+    private bool IsPointerOverUI(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+        {
+            LogUIHitIfChanged(null);
+            return false;
+        }
+
+        var pointerData = new PointerEventData(eventSystem)
+        {
+            position = screenPosition
+        };
+
+        _uiRaycastResults.Clear();
+        eventSystem.RaycastAll(pointerData, _uiRaycastResults);
+
+        GameObject uiHit = null;
+        foreach (RaycastResult result in _uiRaycastResults)
+        {
+            if (result.module is GraphicRaycaster)
+            {
+                uiHit = result.gameObject;
+                break;
+            }
+        }
+
+        LogUIHitIfChanged(uiHit);
+        return uiHit != null;
+    }
+
+    private void LogUIHitIfChanged(GameObject uiHit)
+    {
+        string hitName = uiHit != null ? uiHit.name : null;
+        if (hitName == _lastLoggedUIHit)
+            return;
+
+        _lastLoggedUIHit = hitName;
+        if (hitName == null)
+            Debug.Log("【目标选择】鼠标下没有 UI 射线命中，允许检测战斗实体。");
+        else
+            Debug.Log($"【目标选择】鼠标被 UI 阻挡：{hitName}。若它是透明/全屏背景，请检查其 Graphic 的 Raycast Target。 ");
     }
 
     private BattleEntity FindTargetAtScreenPosition(Vector2 screenPosition)
