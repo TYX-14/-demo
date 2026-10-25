@@ -88,6 +88,49 @@ public class BattleUnit : MonoBehaviour
         }
         targetCursorRenderer.enabled = visible;
     }
+
+    /// <summary>
+    /// 判断屏幕坐标是否落在该单位 SpriteRenderer 投影后的屏幕矩形内。
+    /// 用于目标选择，不依赖额外的 2D/3D Collider 配置。
+    /// </summary>
+    public bool ContainsScreenPoint(Vector2 screenPosition, Camera targetCamera)
+    {
+        if (spriteRenderer == null || targetCamera == null)
+            return false;
+
+        Bounds bounds = spriteRenderer.bounds;
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+        float minX = float.PositiveInfinity;
+        float minY = float.PositiveInfinity;
+        float maxX = float.NegativeInfinity;
+        float maxY = float.NegativeInfinity;
+        bool foundPointInFrontOfCamera = false;
+
+        for (int x = 0; x <= 1; x++)
+        for (int y = 0; y <= 1; y++)
+        for (int z = 0; z <= 1; z++)
+        {
+            Vector3 worldCorner = new Vector3(
+                x == 0 ? min.x : max.x,
+                y == 0 ? min.y : max.y,
+                z == 0 ? min.z : max.z);
+
+            Vector3 screenCorner = targetCamera.WorldToScreenPoint(worldCorner);
+            if (screenCorner.z <= 0f)
+                continue;
+
+            foundPointInFrontOfCamera = true;
+            minX = Mathf.Min(minX, screenCorner.x);
+            minY = Mathf.Min(minY, screenCorner.y);
+            maxX = Mathf.Max(maxX, screenCorner.x);
+            maxY = Mathf.Max(maxY, screenCorner.y);
+        }
+
+        return foundPointInFrontOfCamera &&
+               screenPosition.x >= minX && screenPosition.x <= maxX &&
+               screenPosition.y >= minY && screenPosition.y <= maxY;
+    }
     /// <summary>
     /// 绑定角色数据体
     /// </summary>
