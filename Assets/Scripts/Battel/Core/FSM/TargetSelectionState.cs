@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// 等待玩家选择行动目标。
+/// 鼠标悬停在合法敌人身上时，只显示该敌人身上的目标提示图标；
 /// Esc 或鼠标右键会取消选择并返回玩家输入状态，不消耗行动。
 /// </summary>
 public class TargetSelectionState : BattleState
@@ -31,7 +32,8 @@ public class TargetSelectionState : BattleState
             yield break;
         }
 
-        SetValidTargetCursors(true);
+        // 进入目标选择时先隐藏所有提示，等待鼠标实际悬停到某个合法目标。
+        SetAllTargetCursors(false);
         yield break;
     }
 
@@ -47,36 +49,46 @@ public class TargetSelectionState : BattleState
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            if (mouse != null)
             {
-                // 点击 UI 只操作 UI，不应同时被当作战场目标输入。
-                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                {
-                    yield return null;
-                    continue;
-                }
+                Vector2 mousePosition = mouse.position.ReadValue();
+                UpdateHoveredTargetCursor(mouse, mousePosition);
 
-                if (_battleCamera == null)
-                    _battleCamera = Camera.main;
-
-                if (_battleCamera != null)
+                if (mouse.leftButton.wasPressedThisFrame)
                 {
-                    BattleEntity clickedTarget = FindClickedTarget(mouse.position.ReadValue());
-                    if (clickedTarget != null &&
-                        _actionContext.TrySetTarget(
-                            clickedTarget,
-                            _controller.AllEntities,
-                            _controller.GetLogicalPosition))
+                    // 点击 UI 只操作 UI，不应同时被当作战场目标输入。
+                    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                     {
-                        // 只有玩家确认目标后才关闭技能二级面板。
-                        // 取消分支不关闭它，因此返回输入状态时可以继续选择技能。
-                        if (BattleCommandUI.Instance != null)
-                            BattleCommandUI.Instance.HideSkillPanel();
+                        yield return null;
+                        continue;
+                    }
 
-                        _controller.SetState(new PerformActionState(_controller, _actionContext));
-                        yield break;
+                    if (_battleCamera == null)
+                        _battleCamera = Camera.main;
+
+                    if (_battleCamera != null)
+                    {
+                        BattleEntity clickedTarget = FindTargetAtScreenPosition(mousePosition);
+                        if (clickedTarget != null &&
+                            _actionContext.TrySetTarget(
+                                clickedTarget,
+                                _controller.AllEntities,
+                                _controller.GetLogicalPosition))
+                        {
+                            // 只有玩家确认目标后才关闭技能二级面板。
+                            // 取消分支不关闭它，因此返回输入状态时可以继续选择技能。
+                            if (BattleCommandUI.Instance != null)
+                                BattleCommandUI.Instance.HideSkillPanel();
+
+                            _controller.SetState(new PerformActionState(_controller, _actionContext));
+                            yield break;
+                        }
                     }
                 }
+            }
+            else
+            {
+                SetAllTargetCursors(false);
             }
 
             yield return null;
@@ -85,7 +97,8 @@ public class TargetSelectionState : BattleState
 
     public override IEnumerator Exit()
     {
-        SetValidTargetCursors(false);
+        // 无论确认、取消还是战斗中断，都不能让提示图标残留在敌人身上。
+        SetAllTargetCursors(false);
         yield break;
     }
 
@@ -98,8 +111,36 @@ public class TargetSelectionState : BattleState
                (mouse != null && mouse.rightButton.wasPressedThisFrame);
     }
 
-    private BattleEntity FindClickedTarget(Vector2 screenPosition)
+    private void UpdateHoveredTargetCursor(Mouse mouse, Vector2 screenPosition)
     {
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            SetAllTargetCursors(false);
+            return;
+        }
+
+        if (_battleCamera == null)
+            _battleCamera = Camera.main;
+
+        BattleEntity hoveredTarget = _battleCamera != null
+            ? FindTargetAtScreenPosition(screenPosition)
+            : null;
+
+        // 每帧只允许一个合法目标显示提示；鼠标离开目标或移到无效目标时立即隐藏。
+        foreach (BattleEntity entity in _controller.AllEntities)
+        {
+            if (entity == null || entity.Unit == null)
+                continue;
+
+            entity.Unit.SetTargetSelection(entity == hoveredTarget);
+        }
+    }
+
+    private BattleEntity FindTargetAtScreenPosition(Vector2 screenPosition)
+    {
+        if (_actionContext == null || _actionContext.Skill == null || _battleCamera == null)
+            return null;
+
         foreach (BattleEntity entity in _controller.AllEntities)
         {
             if (entity == null || !entity.IsAlive || entity.IsPlayer || entity.Unit == null)
@@ -115,21 +156,12 @@ public class TargetSelectionState : BattleState
         return null;
     }
 
-    private void SetValidTargetCursors(bool visible)
+    private void SetAllTargetCursors(bool visible)
     {
         foreach (BattleEntity entity in _controller.AllEntities)
         {
-            if (entity == null || entity.Unit == null)
-                continue;
-
-            bool isValidTarget = entity.IsAlive &&
-                                 !entity.IsPlayer &&
-                                 _actionContext != null &&
-                                 _actionContext.Skill != null &&
-                                 _actionContext.Skill.TargetPositions.Contains(
-                                     _controller.GetLogicalPosition(entity));
-
-            entity.Unit.SetTargetSelection(visible && isValidTarget);
+            if (entity?.Unit != null)
+                entity.Unit.SetTargetSelection(visible);
         }
     }
 }
