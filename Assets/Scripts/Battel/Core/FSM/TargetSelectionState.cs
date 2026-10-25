@@ -147,9 +147,14 @@ public class TargetSelectionState : BattleState
             _hasLoggedHoverResult = true;
             _lastLoggedHoveredTarget = hoveredTarget;
             if (hoveredTarget == null)
+            {
                 Debug.Log($"【目标选择】鼠标位置 {screenPosition} 未命中合法敌人。");
+                LogTargetHitDiagnostics(screenPosition);
+            }
             else
+            {
                 Debug.Log($"【目标选择】鼠标命中合法敌人：{hoveredTarget.Definition.name}，逻辑站位：{_controller.GetLogicalPosition(hoveredTarget)}。");
+            }
         }
 
         // 每帧只允许一个合法目标显示提示；鼠标离开目标或移到无效目标时立即隐藏。
@@ -159,6 +164,41 @@ public class TargetSelectionState : BattleState
                 continue;
 
             entity.Unit.SetTargetSelection(entity == hoveredTarget);
+        }
+    }
+
+    /// <summary>
+    /// 当鼠标未命中合法目标时，输出每个敌人的筛选结果，区分站位不合法与屏幕范围未命中。
+    /// 仅在悬停结果发生变化时调用，避免每帧刷屏。
+    /// </summary>
+    private void LogTargetHitDiagnostics(Vector2 screenPosition)
+    {
+        if (_actionContext == null || _actionContext.Skill == null)
+        {
+            Debug.LogWarning("【目标选择诊断】行动上下文或技能为空。");
+            return;
+        }
+
+        Debug.Log($"【目标选择诊断】技能={_actionContext.Skill.name}，允许站位=[{string.Join(", ", _actionContext.Skill.TargetPositions)}]，相机={(_battleCamera != null ? _battleCamera.name : "NULL")}。");
+
+        foreach (BattleEntity entity in _controller.AllEntities)
+        {
+            if (entity == null)
+            {
+                Debug.Log("【目标选择诊断】实体列表包含 NULL。");
+                continue;
+            }
+
+            int position = _controller.GetLogicalPosition(entity);
+            bool validSideAndLife = entity.IsAlive && !entity.IsPlayer && entity.Unit != null;
+            bool validPosition = _actionContext.Skill.TargetPositions.Contains(position);
+            bool containsPoint = validSideAndLife && _battleCamera != null &&
+                                 entity.Unit.ContainsScreenPoint(screenPosition, _battleCamera);
+
+            Debug.Log(
+                $"【目标选择诊断】实体={entity.Definition?.name ?? "NULL"}，存活={entity.IsAlive}，玩家方={entity.IsPlayer}，" +
+                $"站位={position}，站位合法={validPosition}，单位组件存在={entity.Unit != null}，" +
+                $"鼠标在实体屏幕范围内={containsPoint}。");
         }
     }
 
