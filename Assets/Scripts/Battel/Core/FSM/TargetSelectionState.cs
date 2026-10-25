@@ -16,9 +16,6 @@ public class TargetSelectionState : BattleState
     private readonly BattleActionContext _actionContext;
     private Camera _battleCamera;
     private readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();
-    private Vector2Int _lastDiagnosticBucket;
-    private bool _hasDiagnosticBucket;
-    private BattleEntity _lastDiagnosticTarget;
 
     public TargetSelectionState(BattleController controller, BattleActionContext actionContext)
         : base(controller)
@@ -29,9 +26,6 @@ public class TargetSelectionState : BattleState
     public override IEnumerator Enter()
     {
         _battleCamera = Camera.main;
-        _hasDiagnosticBucket = false;
-        _lastDiagnosticTarget = null;
-
         Debug.Log("【目标选择】进入 TargetSelectionState。");
         if (_battleCamera == null)
             Debug.LogWarning("【目标选择】未找到 MainCamera，无法进行鼠标目标检测。");
@@ -81,7 +75,6 @@ public class TargetSelectionState : BattleState
                     if (_battleCamera != null)
                     {
                         BattleEntity clickedTarget = FindTargetAtScreenPosition(mousePosition);
-                        LogPointerDiagnostics(mousePosition, false, clickedTarget, true);
                         if (clickedTarget != null &&
                             _actionContext.TrySetTarget(
                                 clickedTarget,
@@ -129,7 +122,6 @@ public class TargetSelectionState : BattleState
         bool pointerOverUI = IsPointerOverUI(screenPosition);
         if (pointerOverUI)
         {
-            LogPointerDiagnostics(screenPosition, true, null, false);
             SetAllTargetCursors(false);
             return;
         }
@@ -141,7 +133,6 @@ public class TargetSelectionState : BattleState
             ? FindTargetAtScreenPosition(screenPosition)
             : null;
 
-        LogPointerDiagnostics(screenPosition, false, hoveredTarget, false);
 
         foreach (BattleEntity entity in _controller.AllEntities)
         {
@@ -149,66 +140,6 @@ public class TargetSelectionState : BattleState
                 continue;
 
             entity.Unit.SetTargetSelection(entity == hoveredTarget);
-        }
-    }
-
-    /// <summary>
-    /// 统一记录鼠标悬停与点击时的坐标、相机、UI 状态及各实体屏幕矩形。
-    /// 仅在鼠标跨越 24 像素诊断网格、命中目标变化或点击时输出，避免逐帧刷屏。
-    /// </summary>
-    private void LogPointerDiagnostics(
-        Vector2 screenPosition,
-        bool pointerOverUI,
-        BattleEntity detectedTarget,
-        bool forceLog)
-    {
-        Vector2Int bucket = new Vector2Int(
-            Mathf.FloorToInt(screenPosition.x / 24f),
-            Mathf.FloorToInt(screenPosition.y / 24f));
-
-        bool shouldLog = forceLog ||
-                         !_hasDiagnosticBucket ||
-                         bucket != _lastDiagnosticBucket ||
-                         detectedTarget != _lastDiagnosticTarget;
-
-        if (!shouldLog)
-            return;
-
-        _hasDiagnosticBucket = true;
-        _lastDiagnosticBucket = bucket;
-        _lastDiagnosticTarget = detectedTarget;
-
-        Debug.Log(
-            $"【目标命中诊断】阶段={(forceLog ? "点击" : "悬停")}，鼠标={screenPosition}，" +
-            $"相机={(_battleCamera != null ? _battleCamera.name : "NULL")}，UI阻挡={pointerOverUI}，" +
-            $"检测目标={(detectedTarget != null ? detectedTarget.Definition?.name : "无")}，" +
-            $"技能={(_actionContext?.Skill != null ? _actionContext.Skill.name : "NULL")}，" +
-            $"允许站位={(_actionContext?.Skill != null ? string.Join(", ", _actionContext.Skill.TargetPositions) : "无")}。");
-
-        foreach (BattleEntity entity in _controller.AllEntities)
-        {
-            if (entity == null)
-            {
-                Debug.Log("【目标命中诊断】实体=NULL。");
-                continue;
-            }
-
-            bool validSideAndLife = entity.IsAlive && !entity.IsPlayer && entity.Unit != null;
-            int logicalPosition = _controller.GetLogicalPosition(entity);
-            bool validPosition = _actionContext?.Skill != null &&
-                                 _actionContext.Skill.TargetPositions.Contains(logicalPosition);
-
-            Rect screenBounds = default;
-            bool hasBounds = entity.Unit != null && _battleCamera != null &&
-                             entity.Unit.TryGetScreenBounds(_battleCamera, out screenBounds);
-            bool containsPoint = hasBounds && screenBounds.Contains(screenPosition);
-
-            Debug.Log(
-                $"【目标命中诊断】实体={entity.Definition?.name ?? "NULL"}，存活={entity.IsAlive}，" +
-                $"玩家方={entity.IsPlayer}，站位={logicalPosition}，站位合法={validPosition}，" +
-                $"Unit存在={entity.Unit != null}，有屏幕矩形={hasBounds}，" +
-                $"屏幕矩形={(hasBounds ? screenBounds.ToString() : "无")}，鼠标在矩形内={containsPoint}，" +
-                $"符合目标筛选={validSideAndLife && validPosition && containsPoint}。");
         }
     }
 
@@ -251,6 +182,8 @@ public class TargetSelectionState : BattleState
             if (entity == null || !entity.IsAlive || entity.IsPlayer || entity.Unit == null)
                 continue;
 
+            // 只有技能允许攻击的逻辑站位才能成为悬停目标并显示小手。
+            // 不合法站位在命中检测阶段直接排除，悬停与点击共用此规则。
             if (!_actionContext.Skill.TargetPositions.Contains(_controller.GetLogicalPosition(entity)))
                 continue;
 
