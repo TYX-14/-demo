@@ -99,8 +99,9 @@ public class BattleUnit : MonoBehaviour
     /// 判断屏幕坐标是否落在该单位 SpriteRenderer 投影后的屏幕矩形内。
     /// 用于目标选择，不依赖额外的 2D/3D Collider 配置。
     /// </summary>
-    public bool ContainsScreenPoint(Vector2 screenPosition, Camera targetCamera)
+    public bool TryGetScreenBounds(Camera targetCamera, out Rect screenBounds)
     {
+        screenBounds = default;
         if (spriteRenderer == null || targetCamera == null)
             return false;
 
@@ -133,10 +134,22 @@ public class BattleUnit : MonoBehaviour
             maxY = Mathf.Max(maxY, screenCorner.y);
         }
 
-        return foundPointInFrontOfCamera &&
-               screenPosition.x >= minX && screenPosition.x <= maxX &&
-               screenPosition.y >= minY && screenPosition.y <= maxY;
+        if (!foundPointInFrontOfCamera)
+            return false;
+
+        screenBounds = Rect.MinMaxRect(minX, minY, maxX, maxY);
+        return true;
     }
+
+    /// <summary>
+    /// 判断屏幕坐标是否落在该单位 SpriteRenderer 投影后的屏幕矩形内。
+    /// </summary>
+    public bool ContainsScreenPoint(Vector2 screenPosition, Camera targetCamera)
+    {
+        return TryGetScreenBounds(targetCamera, out Rect screenBounds) &&
+               screenBounds.Contains(screenPosition);
+    }
+
     /// <summary>
     /// 绑定角色数据体
     /// </summary>
