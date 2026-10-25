@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 /// <summary>
 /// 战场管理器。
-/// 负责生成战斗单位、记录入场归位点，并管理友方换位和位移。
-/// 敌方初始站位使用固定逻辑槽位，不再根据敌人列表索引动态排布。
+/// 负责实例化已完成站位分配的战斗单位、记录入场归位点，并管理友方换位和位移。
+/// 敌方阵容的逻辑站位由 EnemySpawnManager 预先分配，本类不再决定敌人站在哪里。
 /// </summary>
 public class BattleFieldManager : MonoBehaviour
 {
@@ -26,13 +26,25 @@ public class BattleFieldManager : MonoBehaviour
     /// <summary>
     /// 根据战斗起始载荷生成双方单位。
     /// </summary>
-    public void SpawnAll(BattleStartPayload payload)
+    public bool SpawnAll(BattleStartPayload payload)
     {
+        if (payload == null)
+        {
+            Debug.LogError("BattleFieldManager：战斗载荷为空，无法生成战斗单位。", this);
+            return false;
+        }
+
         layout = FindAnyObjectByType<BattleFieldLayout>();
         if (layout == null)
         {
             Debug.LogError("BattleFieldManager：场景中找不到 BattleFieldLayout，无法生成战斗单位。", this);
-            return;
+            return false;
+        }
+
+        if (!EnemySpawnManager.ValidateAssignedFormation(payload.Enemies, out string formationError))
+        {
+            Debug.LogError($"BattleFieldManager：敌方站位无效，取消本次生成。{formationError}", this);
+            return false;
         }
 
         ClearAllUnits();
@@ -46,11 +58,12 @@ public class BattleFieldManager : MonoBehaviour
         // 保留数据列表顺序，确保 RuntimeData 与 BattleUnit 按索引正确绑定。
         _spawnedAllyUnits.AddRange(SpawnSide(payload.Allies, true));
         _spawnedEnemyUnits.AddRange(SpawnSide(payload.Enemies, false));
+        return true;
     }
 
     /// <summary>
-    /// 按阵营生成单位。友方使用固定队伍位置；敌方使用 EnemyDefinition 中配置的逻辑位置。
-    /// 同一逻辑位置上的敌人只在视觉 Y 轴上分散，逻辑位置保持一致。
+    /// 按阵营生成单位。友方使用队伍逻辑位置；敌方使用 EnemySpawnManager 已分配的位置。
+    /// 大型敌人以连续占据槽位的坐标中心作为视觉中心。
     /// </summary>
     private List<BattleUnit> SpawnSide(List<CharacterRuntimeData> members, bool isAlly)
     {
@@ -77,7 +90,10 @@ public class BattleFieldManager : MonoBehaviour
 
                 int position = member != null ? member.Position : 1;
                 if (position < 1 || position > 4)
-                    position = enemyDefinition != null ? enemyDefinition.defaultBattlePosition : 1;
+                {
+                    Debug.LogError("BattleFieldManager：敌人未被分配有效逻辑位置，拒绝使用默认位置补救。", this);
+                    return new List<BattleUnit>();
+                }
 
                 position = Mathf.Clamp(position, 1, 5 - occupiedCount);
 

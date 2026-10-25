@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// 战场布局配置类，管理友方和敌方单位在场景中的站位。
-/// 友方和敌方都使用固定逻辑槽位；敌方允许多个实体共享同一逻辑位置。
+/// 战场布局配置类，管理友方和敌方逻辑槽位到场景坐标的映射。
+/// 逻辑编号与屏幕左右顺序分离：敌方视觉上为 4、3、2、1，友方为 1、2、3、4。
+/// 双方的逻辑 1、2 号位均为前排，3、4 号位均为后排；每个槽位只能被一个占格实体占用。
 /// </summary>
 public class BattleFieldLayout : MonoBehaviour
 {
@@ -92,8 +93,7 @@ public class BattleFieldLayout : MonoBehaviour
     }
 
     /// <summary>
-    /// 为共享同一逻辑位置的多个敌人生成纯视觉 Y 轴偏移。
-    /// 偏移不改变敌人的逻辑 Position，也不改变槽位的 Z 坐标。
+    /// 旧版视觉偏移辅助方法。新生成器会禁止敌人占格冲突，因此新流程不调用此方法。
     /// </summary>
     public Vector3 GetEnemyVisualOffset(int indexInGroup, int groupCount)
     {

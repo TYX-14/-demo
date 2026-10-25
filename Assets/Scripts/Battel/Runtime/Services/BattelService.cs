@@ -4,21 +4,21 @@ using UnityEngine.AddressableAssets;
 using System.Collections.Generic;
 
 /// <summary>
-/// Õ½¶··şÎñºËĞÄÀà£º¸ºÔğÕ½¶·µÄÆô¶¯¡¢³¡¾°ÇĞ»»¡¢ÒÔ¼°Õ½¶·Ç°×´Ì¬ÕûÀí
+/// æˆ˜æ–—æœåŠ¡æ ¸å¿ƒç±»ï¼šè´Ÿè´£æˆ˜æ–—çš„å¯åŠ¨ã€åœºæ™¯åˆ‡æ¢ã€ä»¥åŠæˆ˜æ–—å‰çŠ¶æ€æ•´ç†
 /// </summary>
 public class BattleService : singleton<BattleService>
 {
-    /// <summary>Õ½¶·½áÊøºó·µ»ØµÄ³¡¾°ÒıÓÃ</summary>
+    /// <summary>æˆ˜æ–—ç»“æŸåè¿”å›çš„åœºæ™¯å¼•ç”¨</summary>
     private AssetReference _returnSceneAfterBattle;
 
-    /// <summary>Õ½¶·Æô¶¯»º´æÊı¾İ</summary>
+    /// <summary>æˆ˜æ–—å¯åŠ¨ç¼“å­˜æ•°æ®</summary>
     private BattleStartPayload _pendingPayload;
 
-    /// <summary>ÊÇ·ñ´æÔÚ´ı´¦ÀíµÄÕ½¶·Êı¾İ</summary>
+    /// <summary>æ˜¯å¦å­˜åœ¨å¾…å¤„ç†çš„æˆ˜æ–—æ•°æ®</summary>
     public bool HasPendingPayload => _pendingPayload != null;
 
     /// <summary>
-    /// Íâ²¿ÄÃµ½_pendingPayload£¨Õ½¶·Æô¶¯»º´æÊı¾İ£©£¬ÄÃµ½Ö®ºóÇå³ı_pendingPayload»º´æÊı¾İ
+    /// å¤–éƒ¨æ‹¿åˆ°_pendingPayloadï¼ˆæˆ˜æ–—å¯åŠ¨ç¼“å­˜æ•°æ®ï¼‰ï¼Œæ‹¿åˆ°ä¹‹åæ¸…é™¤_pendingPayloadç¼“å­˜æ•°æ®
     /// </summary>
     /// <returns></returns>
     public BattleStartPayload ConsumeStartPayload()
@@ -29,19 +29,24 @@ public class BattleService : singleton<BattleService>
     }
 
     /// <summary>
-    /// ´Ó¹Ø¿¨ÌôÕ½ĞĞÎª´¥·¢Õ½¶·
+    /// ä»å…³å¡æŒ‘æˆ˜è¡Œä¸ºè§¦å‘æˆ˜æ–—
     /// </summary>
     public void StartBattleFromAction(ChallengeAction action)
     {
         List<CharacterRuntimeData> allies =
             new List<CharacterRuntimeData>(PartyManager.Instance.PartyMembers);
 
-        List<CharacterRuntimeData> enemies = new List<CharacterRuntimeData>();
+        List<CharacterRuntimeData> enemies;
+        string generationError;
 
-        foreach (var definition in action.npcTeamMembers)
+        bool generated = action.encounterConfiguration != null
+            ? EnemySpawnManager.TryCreateFromEncounter(action.encounterConfiguration, out enemies, out generationError)
+            : EnemySpawnManager.TryCreateAutomaticFormation(action.npcTeamMembers, out enemies, out generationError);
+
+        if (!generated)
         {
-            if (definition is not null)
-                enemies.Add(new CharacterRuntimeData(definition));
+            Debug.LogError($"BattleServiceï¼šæ— æ³•ç”Ÿæˆæ•Œæ–¹é˜µå®¹ã€‚{generationError}", action);
+            return;
         }
 
         StartBattle(
@@ -53,7 +58,7 @@ public class BattleService : singleton<BattleService>
     }
 
     /// <summary>
-    /// ÕıÊ½Æô¶¯Õ½¶·Á÷³Ì£¨ºËĞÄÈë¿Ú£©
+    /// æ­£å¼å¯åŠ¨æˆ˜æ–—æµç¨‹ï¼ˆæ ¸å¿ƒå…¥å£ï¼‰
     /// </summary>
     public void StartBattle(
         List<CharacterRuntimeData> allies,
@@ -63,20 +68,20 @@ public class BattleService : singleton<BattleService>
     {
         SceneLoadManager sceneLoadManager = SceneLoadManager.Instance;
 
-        // ¼ÇÂ¼·µ»Ø³¡¾°£¨Õ½¶·½áÊøºó»Øµ½ÄÄÀï£©
+        // è®°å½•è¿”å›åœºæ™¯ï¼ˆæˆ˜æ–—ç»“æŸåå›åˆ°å“ªé‡Œï¼‰
         _returnSceneAfterBattle = sceneLoadManager.activeScene;
 
-        // Õ½¶·Ç°×´Ì¬¹éÒ»»¯£¨±ÜÃâ²ĞÑª/Òì³£×´Ì¬½øÈëÕ½¶·£©
+        // æˆ˜æ–—å‰çŠ¶æ€å½’ä¸€åŒ–ï¼ˆé¿å…æ®‹è¡€/å¼‚å¸¸çŠ¶æ€è¿›å…¥æˆ˜æ–—ï¼‰
         NormalizeBattleSessionState(PartyManager.Instance.PartyMembers);
 
-        // ×é×°Õ½¶·¼ÓÔØÊı¾İ
+        // ç»„è£…æˆ˜æ–—åŠ è½½æ•°æ®
         _pendingPayload = new BattleStartPayload(
             new List<CharacterRuntimeData>(allies),
             new List<CharacterRuntimeData>(enemies),
             formation
         );
 
-        // ÇĞ»»µ½Õ½¶·³¡¾°
+        // åˆ‡æ¢åˆ°æˆ˜æ–—åœºæ™¯
         sceneLoadManager.RequestLoad(
             new SceneLoadRequest(
                 battleScene,
@@ -87,11 +92,11 @@ public class BattleService : singleton<BattleService>
     }
 
     /// <summary>
-    /// Õ½¶·¿ªÊ¼Ç°Í³Ò»ĞŞÕı½ÇÉ«×´Ì¬
+    /// æˆ˜æ–—å¼€å§‹å‰ç»Ÿä¸€ä¿®æ­£è§’è‰²çŠ¶æ€
     /// </summary>
     private void NormalizeBattleSessionState(List<CharacterRuntimeData> members)
     {
-        //Èç¹ûÓĞ½ÇÉ«ËÀÁË£¬ÔÙ´Î½øÈëÕ½¶·Ê±Ó¦¸Ã×Ô¶¯±ä³É1Ñª
+        //å¦‚æœæœ‰è§’è‰²æ­»äº†ï¼Œå†æ¬¡è¿›å…¥æˆ˜æ–—æ—¶åº”è¯¥è‡ªåŠ¨å˜æˆ1è¡€
         foreach (var member in members)
         {
             member.ResetBattleBP();

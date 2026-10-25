@@ -8,38 +8,42 @@ public class ChallengeAction : ActionBase
     
     [Header("Challenge Action")]
 
-    // Õ½¶·³¡¾°µÄ×ÊÔ´ÒıÓÃ£¨Í¨³£ÅäºÏ Addressables ×ÊÔ´¹ÜÀíÏµÍ³Ê¹ÓÃ£¬ÊµÏÖÒì²½¼ÓÔØ£©
+    // æˆ˜æ–—åœºæ™¯çš„èµ„æºå¼•ç”¨ï¼ˆé€šå¸¸é…åˆ Addressables èµ„æºç®¡ç†ç³»ç»Ÿä½¿ç”¨ï¼Œå®ç°å¼‚æ­¥åŠ è½½ï¼‰
     public AssetReference battleSceneReference;
 
-    // ²ÎÓëÌôÕ½µÄ NPC ¶ÓÓÑÁĞ±í£¬´æ´¢µÄÊÇ ScriptableObject (SO) ÀàĞÍµÄ½ÇÉ«¶¨Òå
+    // å‚ä¸æŒ‘æˆ˜çš„ NPC é˜Ÿå‹åˆ—è¡¨ï¼Œå­˜å‚¨çš„æ˜¯ ScriptableObject (SO) ç±»å‹çš„è§’è‰²å®šä¹‰
     public List<CharacterDefinitionSO> npcTeamMembers;
 
-     [Header("ÕóĞÍ")]
+    [Header("å¯é€‰é­é‡é…ç½®")]
+    [Tooltip("æŒ‡å®šåç”±é­é‡é…ç½®å®Œæ•´å®šä¹‰æœ¬åœºæ•ŒäººåŠç«™ä½ï¼›ä¸æŒ‡å®šæ—¶ï¼Œä½¿ç”¨ npcTeamMembers è‡ªåŠ¨å¸ƒé˜µã€‚")]
+    public BattleEncounterSO encounterConfiguration;
 
-    // µĞÈËµÄ²¼¾ÖÕóĞÍ£¬Ä¬ÈÏÉèÖÃÎªÒ»×ÖÅÅ¿ªµÄÏßĞÍÕó£¨EnemyLayoutFormation.Line£©
+     [Header("é˜µå‹")]
+
+    // æ•Œäººçš„å¸ƒå±€é˜µå‹ï¼Œé»˜è®¤è®¾ç½®ä¸ºä¸€å­—æ’å¼€çš„çº¿å‹é˜µï¼ˆEnemyLayoutFormation.Lineï¼‰
     public EnemyLayoutFormation enemyLayoutFormation = EnemyLayoutFormation.Line;
 
-    // ÊôĞÔ£ºµ±Ç°ÓëÍæ¼Ò½»»¥µÄ NPC »ò¹ÖÎï½ÇÉ«¶¨Òå£¬Íâ²¿¿É¶Á£¬ÄÚ²¿Ë½ÓĞÉèÖÃ
+    // å±æ€§ï¼šå½“å‰ä¸ç©å®¶äº¤äº’çš„ NPC æˆ–æ€ªç‰©è§’è‰²å®šä¹‰ï¼Œå¤–éƒ¨å¯è¯»ï¼Œå†…éƒ¨ç§æœ‰è®¾ç½®
     public CharacterDefinitionSO CurrentCharacter {  get; private set; }
 
-    // ÊôĞÔ£ºÉÏÒ»´ÎÑ¡Ôñ»òÌôÕ½µÄÄÑ¶ÈÏµÊı
+    // å±æ€§ï¼šä¸Šä¸€æ¬¡é€‰æ‹©æˆ–æŒ‘æˆ˜çš„éš¾åº¦ç³»æ•°
     public int LastDifficulty { get; private set; }
 
 
     
     private void Awake()
     {
-        // »ñÈ¡µ±Ç°ÓÎÏ·¶ÔÏóÉÏµÄ CharacterIdentity ×é¼ş£¬²¢ÄÃµ½ËüÉíÉÏ°ó¶¨µÄ½ÇÉ«¶¨ÒåÊı¾İ
+        // è·å–å½“å‰æ¸¸æˆå¯¹è±¡ä¸Šçš„ CharacterIdentity ç»„ä»¶ï¼Œå¹¶æ‹¿åˆ°å®ƒèº«ä¸Šç»‘å®šçš„è§’è‰²å®šä¹‰æ•°æ®
         CurrentCharacter = GetComponent<CharacterIdentity>().CharacterDefinition;
         
 
-        // ¿ÕºÏ²¢¸³Öµ£ºÈç¹û npcTeamMembers ÁĞ±íÎª null£¬Ôò³õÊ¼»¯Ò»¸ö¿ÕÁĞ±í£¬·ÀÖ¹±¨¿ÕÖ¸ÕëÒì³£
+        // ç©ºåˆå¹¶èµ‹å€¼ï¼šå¦‚æœ npcTeamMembers åˆ—è¡¨ä¸º nullï¼Œåˆ™åˆå§‹åŒ–ä¸€ä¸ªç©ºåˆ—è¡¨ï¼Œé˜²æ­¢æŠ¥ç©ºæŒ‡é’ˆå¼‚å¸¸
         npcTeamMembers ??= new List<CharacterDefinitionSO>();
 
-        // ¼ì²é¶ÓÓÑÁĞ±íÖĞÊÇ·ñÒÑ¾­°üº¬ÁËµ±Ç°½ÇÉ«
+        // æ£€æŸ¥é˜Ÿå‹åˆ—è¡¨ä¸­æ˜¯å¦å·²ç»åŒ…å«äº†å½“å‰è§’è‰²
         if (!npcTeamMembers.Contains(CurrentCharacter))
         {
-            // Èç¹û²»°üº¬£¬Ôò½«µ±Ç°½ÇÉ«²åÈëµ½¶ÓÎéÁĞ±íµÄ×îÇ°¶Ë£¨Ë÷Òı 0 µÄÎ»ÖÃ£©
+            // å¦‚æœä¸åŒ…å«ï¼Œåˆ™å°†å½“å‰è§’è‰²æ’å…¥åˆ°é˜Ÿä¼åˆ—è¡¨çš„æœ€å‰ç«¯ï¼ˆç´¢å¼• 0 çš„ä½ç½®ï¼‰
             npcTeamMembers.Insert(0, CurrentCharacter);
         }
     }
@@ -49,29 +53,29 @@ public class ChallengeAction : ActionBase
         BattleService.Instance.StartBattleFromAction(this);
     }
 
-    // ÖØĞ´´¥·¢ĞĞÎªµÄ·½·¨£¬µ±Íæ¼ÒÓë¸ÃÎïÌå½»»¥£¨ÀıÈçµã»÷»ò×ß½ü°´ E£©Ê±µ÷ÓÃ
-    // ´«Èë²ÎÊı interactor ÊÇ´¥·¢Õâ´Î½»»¥µÄÃËÓÑ/Íæ¼Ò¶¨Òå
+    // é‡å†™è§¦å‘è¡Œä¸ºçš„æ–¹æ³•ï¼Œå½“ç©å®¶ä¸è¯¥ç‰©ä½“äº¤äº’ï¼ˆä¾‹å¦‚ç‚¹å‡»æˆ–èµ°è¿‘æŒ‰ Eï¼‰æ—¶è°ƒç”¨
+    // ä¼ å…¥å‚æ•° interactor æ˜¯è§¦å‘è¿™æ¬¡äº¤äº’çš„ç›Ÿå‹/ç©å®¶å®šä¹‰
     public override void TriggerAction(AllyDefinitionSO interactor)
     {
         LastDifficulty = EvaluateDifficulty(EvaluatePlayerTeamPower(), EvaluateEnemyTeamPower());
 
 
-        // Í¨¹ıÊÂ¼ş×ÜÏß£¨EventBus£©·¢²¼Ò»¸ö´ò¿ªÃæ°åµÄÇëÇóÊÂ¼ş£¬²¢½«µ±Ç°½Å±¾ÊµÀı£¨this£©×÷Îª²ÎÊı´«¹ıÈ¥
-        // UI ²ãÊÕµ½Õâ¸öÊÂ¼şºó£¬¾Í»á¸ù¾İÕâÀïÃæµÄÊı¾İ£¨Èç³¡¾°¡¢¶ÓÓÑ¡¢ÕóĞÍµÈ£©äÖÈ¾³öÉÏÒ»ÕÅÍ¼ÀïµÄ UI Ãæ°å
-        EventBus.Publish(new PanelRequestEvent(this)); // ´ò¿ªÃæ°å
+        // é€šè¿‡äº‹ä»¶æ€»çº¿ï¼ˆEventBusï¼‰å‘å¸ƒä¸€ä¸ªæ‰“å¼€é¢æ¿çš„è¯·æ±‚äº‹ä»¶ï¼Œå¹¶å°†å½“å‰è„šæœ¬å®ä¾‹ï¼ˆthisï¼‰ä½œä¸ºå‚æ•°ä¼ è¿‡å»
+        // UI å±‚æ”¶åˆ°è¿™ä¸ªäº‹ä»¶åï¼Œå°±ä¼šæ ¹æ®è¿™é‡Œé¢çš„æ•°æ®ï¼ˆå¦‚åœºæ™¯ã€é˜Ÿå‹ã€é˜µå‹ç­‰ï¼‰æ¸²æŸ“å‡ºä¸Šä¸€å¼ å›¾é‡Œçš„ UI é¢æ¿
+        EventBus.Publish(new PanelRequestEvent(this)); // æ‰“å¼€é¢æ¿
     }
 
     /// <summary>
-    /// ¼ÆËãÍæ¼Òµ±Ç°¶ÓÎéµÄ×ÜÕ½Á¦
+    /// è®¡ç®—ç©å®¶å½“å‰é˜Ÿä¼çš„æ€»æˆ˜åŠ›
     /// </summary>
-    /// <returns>Íæ¼Ò¶ÓÎé×ÜÕ½Á¦Öµ</returns>
+    /// <returns>ç©å®¶é˜Ÿä¼æ€»æˆ˜åŠ›å€¼</returns>
     private int EvaluatePlayerTeamPower()
     {
         var partyMembers = PartyManager.Instance.PartyMembers;
         var totalPower = 0;
         foreach (var member in partyMembers)
         {
-            // Íæ¼Ò½ÇÉ«¼ÆËã°üº¬×°±¸/ÔöÒæÔÚÄÚµÄ×ÛºÏÊôĞÔ£¨GetTotalStats£©
+            // ç©å®¶è§’è‰²è®¡ç®—åŒ…å«è£…å¤‡/å¢ç›Šåœ¨å†…çš„ç»¼åˆå±æ€§ï¼ˆGetTotalStatsï¼‰
             totalPower += CharacterRuntimeData.EvaluatePowerFromStats(member.GetTotalStats());
         }
 
@@ -81,15 +85,15 @@ public class ChallengeAction : ActionBase
 
 
     /// <summary>
-    /// ¼ÆËãµĞ·½/NPC ¶ÓÎéµÄ×ÜÕ½Á¦
+    /// è®¡ç®—æ•Œæ–¹/NPC é˜Ÿä¼çš„æ€»æˆ˜åŠ›
     /// </summary>
-    /// <returns>µĞ·½¶ÓÎé×ÜÕ½Á¦Öµ</returns>
+    /// <returns>æ•Œæ–¹é˜Ÿä¼æ€»æˆ˜åŠ›å€¼</returns>
     private int EvaluateEnemyTeamPower()
     {
         var totalPower = 0;
         foreach (var member in npcTeamMembers)
         {
-            // µĞ·½½ÇÉ«Í¨³£¼ÆËã»ù´¡ÊôĞÔ£¨BaseStats£©
+            // æ•Œæ–¹è§’è‰²é€šå¸¸è®¡ç®—åŸºç¡€å±æ€§ï¼ˆBaseStatsï¼‰
             totalPower += CharacterRuntimeData.EvaluatePowerFromStats(member.BaseStats);
         }
 
@@ -99,26 +103,26 @@ public class ChallengeAction : ActionBase
 
 
     /// <summary>
-    /// ¸ù¾İÍæ¼ÒÓëµĞ·½µÄÕ½Á¦±ÈÖµ£¬ÆÀ¹À²¢·µ»Ø¶ÔÓ¦µÄÌôÕ½ÄÑ¶ÈµÈ¼¶
+    /// æ ¹æ®ç©å®¶ä¸æ•Œæ–¹çš„æˆ˜åŠ›æ¯”å€¼ï¼Œè¯„ä¼°å¹¶è¿”å›å¯¹åº”çš„æŒ‘æˆ˜éš¾åº¦ç­‰çº§
     /// </summary>
-    /// <param name="playerPower">Íæ¼Ò×ÜÕ½Á¦</param>
-    /// <param name="enemyPower">µĞ·½×ÜÕ½Á¦</param>
-    /// <returns>1-10 µÄÄÑ¶ÈµÈ¼¶</returns>
+    /// <param name="playerPower">ç©å®¶æ€»æˆ˜åŠ›</param>
+    /// <param name="enemyPower">æ•Œæ–¹æ€»æˆ˜åŠ›</param>
+    /// <returns>1-10 çš„éš¾åº¦ç­‰çº§</returns>
     private int EvaluateDifficulty(int playerPower, int enemyPower)
     {
         float ratio = enemyPower / (float)playerPower;
 
-        // ¸ù¾İÕ½Á¦±ÈÖµÇø¼ä»®·Ö 1 ~ 10 ¸öÄÑ¶ÈÌİ¶È
-        if (ratio < 0.55f) return 1;    // ÄëÑ¹
+        // æ ¹æ®æˆ˜åŠ›æ¯”å€¼åŒºé—´åˆ’åˆ† 1 ~ 10 ä¸ªéš¾åº¦æ¢¯åº¦
+        if (ratio < 0.55f) return 1;    // ç¢¾å‹
         if (ratio < 0.65f) return 2;
         if (ratio < 0.75f) return 3;
         if (ratio < 0.85f) return 4;
-        if (ratio < 1.05f) return 5;    // ÊÆ¾ùÁ¦µĞ
+        if (ratio < 1.05f) return 5;    // åŠ¿å‡åŠ›æ•Œ
         if (ratio < 1.20f) return 6;
         if (ratio < 1.40f) return 7;
         if (ratio < 1.65f) return 8;
         if (ratio < 1.95f) return 9;
-        return 10;                      // ¼«¶ÈÎ£ÏÕ
+        return 10;                      // æåº¦å±é™©
     }
 
 }

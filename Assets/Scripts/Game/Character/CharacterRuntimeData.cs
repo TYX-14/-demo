@@ -33,12 +33,8 @@ public class CharacterRuntimeData
         EquipmentStats = StatBlock.Zero;
         Level = definition.BaseLevel;
 
-        // 敌人的逻辑位置与占位数量来自敌人定义数据，不再根据队列索引推算。
-        if (definition is EnemyDfinitionSo enemyDefinition)
-        {
-            int occupiedCount = Mathf.Clamp(enemyDefinition.occupiedSlotCount, 1, 4);
-            Position = Mathf.Clamp(enemyDefinition.defaultBattlePosition, 1, 5 - occupiedCount);
-        }
+        // Position 由队伍管理器（友军）或 EnemySpawnManager（敌军）负责分配。
+        // 构造函数不再从敌人定义中决定本场战斗的实际位置。
 
         var Stats =  GetTotalStats();
         CurrentHP = Stats.MaxHP;

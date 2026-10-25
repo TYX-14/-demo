@@ -71,9 +71,8 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     }
 
     /// <summary>
-    /// 返回实体的逻辑站位。友方优先使用固定 Position；
-    /// 敌方若尚未写入 Position，则按敌方列表顺序从队伍人数递减分配位置。
-    /// 例如 3 名敌人依次对应 3、2、1 号位。
+    /// 返回实体的逻辑站位。友方优先使用固定 Position。
+    /// 敌方必须由 EnemySpawnManager 预先分配位置；若缺失则返回 0，绝不根据列表顺序猜测站位。
     /// </summary>
     public int GetLogicalPosition(BattleEntity entity)
     {
@@ -99,25 +98,6 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
             }
 
             return 0;
-        }
-
-        int enemyCount = 0;
-        foreach (BattleEntity current in _allEntities)
-        {
-            if (current != null && !current.IsPlayer)
-                enemyCount++;
-        }
-
-        int enemyIndex = 0;
-        foreach (BattleEntity current in _allEntities)
-        {
-            if (current == null || current.IsPlayer)
-                continue;
-
-            if (current == entity)
-                return enemyCount - enemyIndex;
-
-            enemyIndex++;
         }
 
         return 0;

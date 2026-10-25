@@ -34,7 +34,11 @@ public class BattleSetupState : BattleState
     public override IEnumerator Execute()
     {
         // 1. 先按 payload 在战斗场景里生成敌我双方的 BattleUnit。
-        _controller.FieldManager.SpawnAll(_startPayload);
+        if (!_controller.FieldManager.SpawnAll(_startPayload))
+        {
+            _controller.StopBattle();
+            yield break;
+        }
 
         // 2. 再把 RuntimeData、BattleUnit 和 BattleEntity 正式绑起来。
         _controller.AllEntities.Clear();
