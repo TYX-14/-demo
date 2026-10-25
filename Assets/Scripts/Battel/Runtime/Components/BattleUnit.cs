@@ -34,6 +34,11 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     [SerializeField] private SpriteRenderer targetCursorRenderer;
 
+    /// <summary>
+    /// 小手与单位精灵顶部之间的悬浮距离（世界单位），可在 Inspector 中微调。
+    /// </summary>
+    [SerializeField, Min(0f)] private float targetCursorGap = 0.15f;
+
     [Header("状态图标")]
     /// <summary>
     /// 击退期间显示的眩晕图标（Star）。
@@ -59,21 +64,28 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     private void UpdateTargetCursorPosition()
     {
-        // 1. 获取 Sprite 边界的全局世界中心点
-        Vector3 worldCenter = spriteRenderer.bounds.center;
+        if (spriteRenderer == null || targetCursorRenderer == null)
+            return;
 
-        // 2. 将世界中心点转换为当前单位的局部坐标
-        Vector3 localCenter = transform.InverseTransformPoint(worldCenter);
+        // 以精灵渲染边界的顶部为基准，而不是使用中心点。
+        // 大型敌人的 bounds.max.y 更高，因此小手会自动移动到其头顶上方。
+        Bounds bounds = spriteRenderer.bounds;
+        Vector3 worldTop = new Vector3(
+            bounds.center.x,
+            bounds.max.y + targetCursorGap,
+            bounds.center.z
+        );
 
-        // 3. 读取光标当前的局部坐标（保留X轴和Z轴原始数据）
+        // 光标和 hitPoint 仍使用单位的本地坐标，保持原有挂点同步方式。
+        Vector3 localTop = transform.InverseTransformPoint(worldTop);
         Vector3 localPos = targetCursorRenderer.transform.localPosition;
+        localPos.x = localTop.x;
+        localPos.y = localTop.y;
+        localPos.z = localTop.z;
 
-        // 4. 仅更新Y轴高度，使其与单位中心对齐
-        localPos.y = localCenter.y;
-
-        // 5. 将坐标应用到目标光标和命中点
         targetCursorRenderer.transform.localPosition = localPos;
-        hitPoint.localPosition = localPos;
+        if (hitPoint != null)
+            hitPoint.localPosition = localPos;
     }
 
     /// <summary>
