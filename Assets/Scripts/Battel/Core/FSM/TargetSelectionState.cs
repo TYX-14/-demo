@@ -198,8 +198,9 @@ public class TargetSelectionState : BattleState
             bool validPosition = _actionContext?.Skill != null &&
                                  _actionContext.Skill.TargetPositions.Contains(logicalPosition);
 
+            Rect screenBounds = default;
             bool hasBounds = entity.Unit != null && _battleCamera != null &&
-                             entity.Unit.TryGetScreenBounds(_battleCamera, out Rect screenBounds);
+                             entity.Unit.TryGetScreenBounds(_battleCamera, out screenBounds);
             bool containsPoint = hasBounds && screenBounds.Contains(screenPosition);
 
             Debug.Log(
