@@ -82,11 +82,17 @@ public class BattleUnit : MonoBehaviour
     /// <param name="visible">True 表示显示并刷新位置，False 表示隐藏。</param>
     public void SetTargetSelection(bool visible)
     {
+        if (targetCursorRenderer == null)
+            return;
+
         if (visible)
-        {
             UpdateTargetCursorPosition();
-        }
+
+        // 目标光标在 Prefab 中可能默认处于 inactive 状态。
+        // 仅切换 SpriteRenderer.enabled 无法显示 inactive 的 GameObject，因此同步控制两者。
         targetCursorRenderer.enabled = visible;
+        if (targetCursorRenderer.gameObject.activeSelf != visible)
+            targetCursorRenderer.gameObject.SetActive(visible);
     }
 
     /// <summary>
