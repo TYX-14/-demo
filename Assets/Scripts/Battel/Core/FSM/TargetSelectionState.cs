@@ -38,8 +38,10 @@ public class TargetSelectionState : BattleState
             yield break;
         }
 
-        // 进入目标选择时先隐藏所有提示，等待鼠标实际悬停到某个合法目标。
+        // 目标选择开始时，显示所有符合当前技能站位要求的敌人脚下光圈。
+        // 目标小手仍只在鼠标悬停到具体合法目标时显示。
         SetAllTargetCursors(false);
+        SetLegalTargetHighlights(true);
         yield break;
     }
 
@@ -103,8 +105,9 @@ public class TargetSelectionState : BattleState
 
     public override IEnumerator Exit()
     {
-        // 无论确认、取消还是战斗中断，都不能让提示图标残留在敌人身上。
+        // 无论确认、取消还是战斗中断，都不能让目标提示残留。
         SetAllTargetCursors(false);
+        SetLegalTargetHighlights(false);
         yield break;
     }
 
@@ -174,17 +177,12 @@ public class TargetSelectionState : BattleState
 
     private BattleEntity FindTargetAtScreenPosition(Vector2 screenPosition)
     {
-        if (_actionContext == null || _actionContext.Skill == null || _battleCamera == null)
+        if (_battleCamera == null)
             return null;
 
         foreach (BattleEntity entity in _controller.AllEntities)
         {
-            if (entity == null || !entity.IsAlive || entity.IsPlayer || entity.Unit == null)
-                continue;
-
-            // 只有技能允许攻击的逻辑站位才能成为悬停目标并显示小手。
-            // 不合法站位在命中检测阶段直接排除，悬停与点击共用此规则。
-            if (!_actionContext.Skill.TargetPositions.Contains(_controller.GetLogicalPosition(entity)))
+            if (!IsLegalTarget(entity))
                 continue;
 
             if (entity.Unit.ContainsScreenPoint(screenPosition, _battleCamera))
@@ -192,6 +190,30 @@ public class TargetSelectionState : BattleState
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 统一判断当前技能能否选择该实体。光圈与鼠标命中共用此规则。
+    /// </summary>
+    private bool IsLegalTarget(BattleEntity entity)
+    {
+        if (entity == null || !entity.IsAlive || entity.IsPlayer || entity.Unit == null ||
+            _actionContext == null || _actionContext.Skill == null)
+            return false;
+
+        return _actionContext.Skill.TargetPositions.Contains(
+            _controller.GetLogicalPosition(entity));
+    }
+
+    private void SetLegalTargetHighlights(bool visible)
+    {
+        foreach (BattleEntity entity in _controller.AllEntities)
+        {
+            if (entity?.Unit == null)
+                continue;
+
+            entity.Unit.SetTargetHighlight(visible && IsLegalTarget(entity));
+        }
     }
 
     private void SetAllTargetCursors(bool visible)
