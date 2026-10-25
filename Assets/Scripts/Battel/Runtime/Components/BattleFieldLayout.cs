@@ -1,7 +1,8 @@
-
+using UnityEngine;
 
 /// <summary>
-/// 战场布局配置类，管理友方和敌方单位在场景中的站位及阵型逻辑。
+/// 战场布局配置类，管理友方和敌方单位在场景中的站位。
+/// 友方和敌方都使用固定逻辑槽位；敌方允许多个实体共享同一逻辑位置。
 /// </summary>
 public class BattleFieldLayout : MonoBehaviour
 {
@@ -22,53 +23,30 @@ public class BattleFieldLayout : MonoBehaviour
     [SerializeField] private Transform allySlot3;
     [SerializeField] private Transform allySlot4;
 
-    [Header("Enemy Slot Segment (Normal)")]
-    /// <summary>
-    /// 敌方普通阵型站位线段起点（顶部）。
-    /// </summary>
+    [Header("Enemy Fixed Slots")]
+    [SerializeField] private Transform enemySlot1;
+    [SerializeField] private Transform enemySlot2;
+    [SerializeField] private Transform enemySlot3;
+    [SerializeField] private Transform enemySlot4;
+
+    [Min(0f)]
+    [SerializeField, Tooltip("同一逻辑位置存在多个普通敌人时，沿 Y 轴分散的间距。")]
+    private float enemyGroupVerticalSpacing = 0.55f;
+
+    [Header("Legacy Enemy Formation Anchors")]
+    [Tooltip("旧版动态阵型锚点。新固定槽位系统不再使用，验证完成后再从场景中清理。")]
     [SerializeField] private Transform enemyTopTrans;
-
-    /// <summary>
-    /// 敌方普通阵型站位线段终点（底部）。
-    /// </summary>
     [SerializeField] private Transform enemyBottomTrans;
-
-    [Header("Enemy Formation (BossTriangle)")]
-    /// <summary>
-    /// BOSS 站位（三角形阵型中心点）。
-    /// </summary>
     [SerializeField] private Transform bossCenterTrans;
-
-    /// <summary>
-    /// BOSS 三角形阵型中，小怪的站位线段起点（顶部）。
-    /// </summary>
     [SerializeField] private Transform minionTopTrans;
-
-    /// <summary>
-    /// BOSS 三角形阵型中，小怪的站位线段终点（底部）。
-    /// </summary>
     [SerializeField] private Transform minionBottomTrans;
 
     /// <summary>
     /// 根据逻辑位置获取友方单位的固定站位。位置编号为 1~4，与队伍人数无关。
     /// </summary>
-    /// <param name="position">角色的逻辑位置（1~4）。</param>
-    /// <returns>对应槽位的世界坐标。</returns>
     public Vector3 GetAllySlotPos(int position)
     {
-        Transform slot = null;
-
-        switch (position)
-        {
-            case 1: slot = allySlot1; break;
-            case 2: slot = allySlot2; break;
-            case 3: slot = allySlot3; break;
-            case 4: slot = allySlot4; break;
-            default:
-                Debug.LogError($"友方站位编号无效：{position}，有效范围为 1~4。", this);
-                return transform.position;
-        }
-
+        Transform slot = GetAllySlotTransform(position);
         if (slot == null)
         {
             Debug.LogError($"BattleFieldLayout 尚未配置 AllySlot{position}。", this);
@@ -79,12 +57,81 @@ public class BattleFieldLayout : MonoBehaviour
     }
 
     /// <summary>
-    /// 获取敌方单位的目标站立位置，根据阵型不同计算方式不同。
+    /// 获取敌方固定槽位坐标。
+    /// occupiedSlotCount 大于 1 时，取连续占用槽位的世界坐标平均值，作为大型敌人的视觉中心。
+    /// position 表示该敌人占用的起始逻辑位置。
     /// </summary>
-    /// <param name="index">单位在队列中的索引（0开始）。</param>
-    /// <param name="count">队列总人数。</param>
-    /// <param name="formation">指定的敌方阵型枚举。</param>
-    /// <returns>计算后的世界坐标。</returns>
+    public Vector3 GetEnemySlotPos(int position, int occupiedSlotCount = 1)
+    {
+        occupiedSlotCount = Mathf.Clamp(occupiedSlotCount, 1, 4);
+        int safePosition = Mathf.Clamp(position, 1, 5 - occupiedSlotCount);
+
+        if (safePosition != position)
+        {
+            Debug.LogWarning(
+                $"敌人起始位置 {position} 与占位数量 {occupiedSlotCount} 超出 1~4 槽位范围，已临时调整为 {safePosition}。",
+                this);
+        }
+
+        Vector3 totalPosition = Vector3.zero;
+        for (int i = 0; i < occupiedSlotCount; i++)
+        {
+            int currentPosition = safePosition + i;
+            Transform slot = GetEnemySlotTransform(currentPosition);
+
+            if (slot == null)
+            {
+                Debug.LogError($"BattleFieldLayout 尚未配置 EnemySlot{currentPosition}。", this);
+                return transform.position;
+            }
+
+            totalPosition += slot.position;
+        }
+
+        return totalPosition / occupiedSlotCount;
+    }
+
+    /// <summary>
+    /// 为共享同一逻辑位置的多个敌人生成纯视觉 Y 轴偏移。
+    /// 偏移不改变敌人的逻辑 Position，也不改变槽位的 Z 坐标。
+    /// </summary>
+    public Vector3 GetEnemyVisualOffset(int indexInGroup, int groupCount)
+    {
+        if (groupCount <= 1)
+            return Vector3.zero;
+
+        float centeredIndex = indexInGroup - (groupCount - 1) * 0.5f;
+        return new Vector3(0f, centeredIndex * enemyGroupVerticalSpacing, 0f);
+    }
+
+    private Transform GetAllySlotTransform(int position)
+    {
+        return position switch
+        {
+            1 => allySlot1,
+            2 => allySlot2,
+            3 => allySlot3,
+            4 => allySlot4,
+            _ => null
+        };
+    }
+
+    private Transform GetEnemySlotTransform(int position)
+    {
+        return position switch
+        {
+            1 => enemySlot1,
+            2 => enemySlot2,
+            3 => enemySlot3,
+            4 => enemySlot4,
+            _ => null
+        };
+    }
+
+    #region Legacy API
+    /// <summary>
+    /// 旧版动态阵型接口。仅保留以避免迁移阶段其他旧调用立即失效，新系统不应继续使用。
+    /// </summary>
     public Vector3 GetEnemySlotPos(int index, int count, EnemyLayoutFormation formation)
     {
         switch (formation)
@@ -98,31 +145,20 @@ public class BattleFieldLayout : MonoBehaviour
         }
     }
 
-    #region 线段等分算法
-    /// <summary>
-    /// 线段等分算法：计算线段 [0, 1] 区间内，排除两端点后的等分点位置。
-    /// </summary>
-    /// <param name="start">线段起点。</param>
-    /// <param name="end">线段终点。</param>
-    /// <param name="index">第几个等分点。</param>
-    /// <param name="count">总分段数。</param>
-    /// <returns>计算后的世界坐标。</returns>
     private Vector3 LerpByMidpointRule(Vector3 start, Vector3 end, int index, int count)
     {
+        if (count <= 0)
+            return start;
+
         float t = (index + 0.5f) / count;
         return Vector3.Lerp(start, end, t);
     }
 
-    /// <summary>
-    /// 获取 BOSS 三角形阵型下的具体站立位置。
-    /// </summary>
-    /// <param name="index">单位在队列中的索引（0开始）。</param>
-    /// <param name="count">队列总人数。</param>
-    /// <returns>计算后的世界坐标。</returns>
     private Vector3 GetEnemyBossTrianglePos(int index, int count)
     {
         if (index == 0)
             return bossCenterTrans.position;
+
         return LerpByMidpointRule(minionTopTrans.position, minionBottomTrans.position, index, count);
     }
     #endregion

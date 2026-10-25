@@ -2,78 +2,39 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// 战场管理器（更新版）。
-/// 负责管理战场的生成、布局、单位集合以及敌对单位的阵型。
-/// 实现了战斗单位的动态创建、销毁及初始位置映射。
+/// 战场管理器。
+/// 负责生成战斗单位、记录入场归位点，并管理友方换位和位移。
+/// 敌方初始站位使用固定逻辑槽位，不再根据敌人列表索引动态排布。
 /// </summary>
 public class BattleFieldManager : MonoBehaviour
 {
     [Header("Prefab")]
-    /// <summary>
-    /// 战斗单位的预制体引用。
-    /// 用于在实例化生成单位时作为对象蓝图。
-    /// </summary>
     [SerializeField] private BattleUnit battleUnitPrefab;
 
-    /// <summary>
-    /// 战场布局计算器的引用。
-    /// 负责提供站位坐标的计算。
-    /// </summary>
     private BattleFieldLayout layout;
-
-    /// <summary>
-    /// 所有友方单位的根节点（用于保持 Hierarchy 整洁及相对坐标管理）。
-    /// </summary>
     private Transform allyRoot;
-
-    /// <summary>
-    /// 所有敌方单位的根节点（用于保持 Hierarchy 整洁及相对坐标管理）。
-    /// </summary>
     private Transform enemyRoot;
 
-    /// <summary>
-    /// 记录每个战斗单位（BattleUnit）对应的最终战斗阵型站位（Home Position）。
-    /// 用于在后续状态（如 BattleSetupState）控制单位执行“跑进场”动画。
-    /// </summary>
     private readonly Dictionary<BattleUnit, Vector3> _homePos = new();
-
-    // 防止换位/击退动画尚未结束时再次触发阵型位移。
     private bool _formationMovementInProgress;
-
-    /// <summary>
-    /// 当前已生成的友方单位列表。
-    /// </summary>
     private readonly List<BattleUnit> _spawnedAllyUnits = new();
-
-    /// <summary>
-    /// 当前已生成的敌方单位列表。
-    /// </summary>
     private readonly List<BattleUnit> _spawnedEnemyUnits = new();
 
-    /// <summary>
-    /// 获取当前所有已生成的友方单位的只读集合。
-    /// </summary>
     public IReadOnlyList<BattleUnit> SpawnedAllyUnits => _spawnedAllyUnits;
-
-    /// <summary>
-    /// 获取当前所有已生成的敌方单位的只读集合。
-    /// </summary>
     public IReadOnlyList<BattleUnit> SpawnedEnemyUnits => _spawnedEnemyUnits;
 
     /// <summary>
-    /// 当前敌方单位所使用的阵型模式（默认以线性阵型起步）。
+    /// 根据战斗起始载荷生成双方单位。
     /// </summary>
-    private EnemyLayoutFormation _currentFormation = EnemyLayoutFormation.Line;
-
-    /// <summary>
-    /// 根据传入的战斗数据载荷（BattleStartPayload），生成战斗双方的所有单位。
-    /// </summary>
-    /// <param name="payload">包含双方人数及阵型信息的战斗起始载荷。</param>
     public void SpawnAll(BattleStartPayload payload)
     {
         layout = FindAnyObjectByType<BattleFieldLayout>();
+        if (layout == null)
+        {
+            Debug.LogError("BattleFieldManager：场景中找不到 BattleFieldLayout，无法生成战斗单位。", this);
+            return;
+        }
 
-        // 先清空上一次生成的单位，再创建本次战斗的根节点。
         ClearAllUnits();
 
         allyRoot = new GameObject("Ally Root").transform;
@@ -82,36 +43,81 @@ public class BattleFieldManager : MonoBehaviour
         enemyRoot = new GameObject("Enemy Root").transform;
         enemyRoot.SetParent(layout.transform, false);
 
-        _currentFormation = payload.Formation;
-
-        // 保留数据列表顺序，确保后续 RuntimeData 与 BattleUnit 按索引正确绑定。
+        // 保留数据列表顺序，确保 RuntimeData 与 BattleUnit 按索引正确绑定。
         _spawnedAllyUnits.AddRange(SpawnSide(payload.Allies, true));
         _spawnedEnemyUnits.AddRange(SpawnSide(payload.Enemies, false));
     }
 
     /// <summary>
-    /// 按阵营生成一侧的多个单位，并记录他们的出生点与阵型归位点。
+    /// 按阵营生成单位。友方使用固定队伍位置；敌方使用 EnemyDefinition 中配置的逻辑位置。
+    /// 同一逻辑位置上的敌人只在视觉 Y 轴上分散，逻辑位置保持一致。
     /// </summary>
-    /// <param name="count">该阵营要生成的单位数量。</param>
-    /// <param name="isAlly">是否为友方阵营（true为友方，false为敌方）。</param>
-    /// <returns>该阵营生成的所有 BattleUnit 列表。</returns>
     private List<BattleUnit> SpawnSide(List<CharacterRuntimeData> members, bool isAlly)
     {
         List<BattleUnit> units = new List<BattleUnit>();
+        if (members == null)
+            return units;
+
+        var enemyPositions = new int[members.Count];
+        var enemyOccupiedCounts = new int[members.Count];
+        var enemyGroupCounts = new Dictionary<int, int>();
+        var enemyGroupIndices = new Dictionary<int, int>();
+
+        if (!isAlly)
+        {
+            // 先统计每个逻辑位置有多少敌人，以便视觉偏移围绕槽位中心对称分布。
+            for (int i = 0; i < members.Count; i++)
+            {
+                CharacterRuntimeData member = members[i];
+                EnemyDfinitionSo enemyDefinition = member?.Definition as EnemyDfinitionSo;
+
+                int occupiedCount = enemyDefinition != null
+                    ? Mathf.Clamp(enemyDefinition.occupiedSlotCount, 1, 4)
+                    : 1;
+
+                int position = member != null ? member.Position : 1;
+                if (position < 1 || position > 4)
+                    position = enemyDefinition != null ? enemyDefinition.defaultBattlePosition : 1;
+
+                position = Mathf.Clamp(position, 1, 5 - occupiedCount);
+
+                if (member != null)
+                    member.Position = position;
+
+                enemyPositions[i] = position;
+                enemyOccupiedCounts[i] = occupiedCount;
+
+                if (!enemyGroupCounts.ContainsKey(position))
+                    enemyGroupCounts[position] = 0;
+
+                enemyGroupCounts[position]++;
+            }
+        }
+
         for (int i = 0; i < members.Count; i++)
         {
-            // 友方使用持久化的 Position；敌方继续沿用现有的阵型计算。
-            Vector3 targetSlotPos = isAlly
-                ? layout.GetAllySlotPos(members[i].Position)
-                : layout.GetEnemySlotPos(i, members.Count, _currentFormation);
+            CharacterRuntimeData member = members[i];
+            Vector3 targetSlotPos;
+            if (isAlly)
+            {
+                targetSlotPos = layout.GetAllySlotPos(member.Position);
+            }
+            else
+            {
+                int position = enemyPositions[i];
+                int groupIndex = enemyGroupIndices.TryGetValue(position, out int currentIndex)
+                    ? currentIndex
+                    : 0;
 
-            // 2. 决定出生点 (Spawn Position)
-            // 友方从统一入场点生成，敌方直接从最终站位生成（或者你也可以让敌人也有入场动画）
-            Vector3 spawnPos = isAlly
-                ? layout.initTrans.position
-                : targetSlotPos;
+                targetSlotPos = layout.GetEnemySlotPos(position, enemyOccupiedCounts[i]) +
+                                layout.GetEnemyVisualOffset(groupIndex, enemyGroupCounts[position]);
 
-            // 3. 生成单位
+                enemyGroupIndices[position] = groupIndex + 1;
+            }
+
+            // 友方从统一入场点生成；敌方直接出现在固定逻辑位置对应的视觉位置。
+            Vector3 spawnPos = isAlly ? layout.initTrans.position : targetSlotPos;
+
             BattleUnit unitObj = Instantiate(
                 battleUnitPrefab,
                 spawnPos,
@@ -119,11 +125,7 @@ public class BattleFieldManager : MonoBehaviour
                 isAlly ? allyRoot : enemyRoot
             );
 
-            // 4. 记录缓存
             units.Add(unitObj);
-
-            // [关键] 这里记录的是 targetSlotPos(最终站位), 不是 spawnPos(出生点).
-            // 后续 BattleSetupState 会用这个 Home 位置来执行"跑进场"动画。
             _homePos[unitObj] = targetSlotPos;
         }
 
@@ -195,7 +197,6 @@ public class BattleFieldManager : MonoBehaviour
         if (targetUnit == null || targetUnit == actor.Unit)
             return false;
 
-        // 数据层只交换两名角色的位置，其他队员不动。
         PartyManager.Instance.SwapPosition(currentPosition, targetPosition);
 
         Vector3 actorTarget = layout.GetAllySlotPos(targetPosition);
@@ -260,7 +261,6 @@ public class BattleFieldManager : MonoBehaviour
             }
             else if ((unit.transform.position - targetPos).sqrMagnitude > 0.0001f)
             {
-                // 只有实际需要补位的队友才播放跑步动画，原地不动的队友保持当前动画。
                 StartCoroutine(unit.MoveToPosition(targetPos, duration));
             }
         }
@@ -274,27 +274,33 @@ public class BattleFieldManager : MonoBehaviour
     /// </summary>
     public void ClearAllUnits()
     {
-        // 清理友方单位
         foreach (var unit in _spawnedAllyUnits)
         {
-            Destroy(unit.gameObject);
+            if (unit != null)
+                Destroy(unit.gameObject);
         }
         _spawnedAllyUnits.Clear();
 
-        // 清理敌方单位
         foreach (var unit in _spawnedEnemyUnits)
         {
-            Destroy(unit.gameObject);
+            if (unit != null)
+                Destroy(unit.gameObject);
         }
         _spawnedEnemyUnits.Clear();
 
-        // 清空位置映射表
         _homePos.Clear();
+
+        if (allyRoot != null)
+            Destroy(allyRoot.gameObject);
+        if (enemyRoot != null)
+            Destroy(enemyRoot.gameObject);
+
+        allyRoot = null;
+        enemyRoot = null;
     }
+
     /// <summary>
-    /// 外部接口，拿到_homePos
+    /// 外部接口，拿到 _homePos。
     /// </summary>
-    /// <param name="unit"></param>
-    /// <returns></returns>
     public Vector3 GetHomePos(BattleUnit unit) => _homePos[unit];
 }

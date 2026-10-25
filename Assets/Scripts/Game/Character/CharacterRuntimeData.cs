@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using UnityEngine;
 [Serializable]
 public class CharacterRuntimeData
 {
@@ -13,7 +15,7 @@ public class CharacterRuntimeData
 
     public string DisplayName => Definition.Name; 
 
-    public StatBlock EquipmentStats;//×°±¸ÊôĞÔ
+    public StatBlock EquipmentStats;//è£…å¤‡å±æ€§
 
 
     [Serializable]
@@ -27,9 +29,16 @@ public class CharacterRuntimeData
 
     public  CharacterRuntimeData(CharacterDefinitionSO definition)
     { 
-        Definition = definition; 
+        Definition = definition;
         EquipmentStats = StatBlock.Zero;
         Level = definition.BaseLevel;
+
+        // æ•Œäººçš„é€»è¾‘ä½ç½®ä¸å ä½æ•°é‡æ¥è‡ªæ•Œäººå®šä¹‰æ•°æ®ï¼Œä¸å†æ ¹æ®é˜Ÿåˆ—ç´¢å¼•æ¨ç®—ã€‚
+        if (definition is EnemyDfinitionSo enemyDefinition)
+        {
+            int occupiedCount = Mathf.Clamp(enemyDefinition.occupiedSlotCount, 1, 4);
+            Position = Mathf.Clamp(enemyDefinition.defaultBattlePosition, 1, 5 - occupiedCount);
+        }
 
         var Stats =  GetTotalStats();
         CurrentHP = Stats.MaxHP;
@@ -39,7 +48,7 @@ public class CharacterRuntimeData
         ApplyIntialEquipment();
     }
     /// <summary>
-    /// ÄÃµ½ÓÑ¾ü»òÕßµĞÈËµÄ»ù±¾ÊôĞÔ£¨¼ÆËãºó£©
+    /// æ‹¿åˆ°å‹å†›æˆ–è€…æ•Œäººçš„åŸºæœ¬å±æ€§ï¼ˆè®¡ç®—åï¼‰
     /// </summary>
     /// <returns></returns>
     public StatBlock GetBaseStats()
@@ -55,12 +64,12 @@ public class CharacterRuntimeData
         return Definition != null? Definition.BaseStats : StatBlock.Zero;
     }
     /// <summary>
-    /// µÃµ½×ÜÊôĞÔ£º»ù´¡+×°±¸
+    /// å¾—åˆ°æ€»å±æ€§ï¼šåŸºç¡€+è£…å¤‡
     /// </summary>
     /// <returns></returns>
     public StatBlock GetTotalStats() => GetBaseStats()+EquipmentStats;
 
-    #region ÊôĞÔ±ä»¯·½·¨
+    #region å±æ€§å˜åŒ–æ–¹æ³•
     public void HealFull()
     {
         CurrentHP = GetTotalStats().MaxHP;
@@ -69,7 +78,7 @@ public class CharacterRuntimeData
     }
 
     /// <summary>
-    /// hp¸Ä±ä
+    /// hpæ”¹å˜
     /// </summary>
     /// <param name="amount"></param>
     public void ModifyHp(int amount)
@@ -78,7 +87,7 @@ public class CharacterRuntimeData
         CurrentHP = Mathf.Clamp(CurrentHP, 0, GetTotalStats().MaxHP);
     }
     /// <summary>
-    /// Mp¸Ä±ä
+    /// Mpæ”¹å˜
     /// </summary>
     /// <param name="amount"></param>
     public void ModifyMp(int amount)
@@ -93,16 +102,16 @@ public class CharacterRuntimeData
     #endregion
 
 
-    #region ÌôÕ½Õ½Á¦ÆÀ¹À
+    #region æŒ‘æˆ˜æˆ˜åŠ›è¯„ä¼°
 
     /// <summary>
-    /// ¸ù¾İ½ÇÉ«µÄ»ù´¡ÊôĞÔ¿éÆÀ¹À²¢¼ÆËãÆäÕ½Á¦ÆÀ·Ö
+    /// æ ¹æ®è§’è‰²çš„åŸºç¡€å±æ€§å—è¯„ä¼°å¹¶è®¡ç®—å…¶æˆ˜åŠ›è¯„åˆ†
     /// </summary>
-    /// <param name="stats">½ÇÉ«µÄÊôĞÔÊı¾İ¿é</param>
-    /// <returns>¼ÆËãºóµÄÕûĞÍÕ½Á¦Öµ£¨×îµÍÎª 1£©</returns>
+    /// <param name="stats">è§’è‰²çš„å±æ€§æ•°æ®å—</param>
+    /// <returns>è®¡ç®—åçš„æ•´å‹æˆ˜åŠ›å€¼ï¼ˆæœ€ä½ä¸º 1ï¼‰</returns>
     public static int EvaluatePowerFromStats(StatBlock stats)
     {
-        // ¸ù¾İ¸÷ÏîÊôĞÔÈ¨ÖØ¼ÓÈ¨ÇóºÍ
+        // æ ¹æ®å„é¡¹å±æ€§æƒé‡åŠ æƒæ±‚å’Œ
         float score =
             stats.MaxHP * 0.2f +
             stats.MaxSP * 0.1f +
@@ -112,12 +121,12 @@ public class CharacterRuntimeData
             stats.MDef * 1.0f +
             stats.Speed * 1.2f;
 
-        // ËÄÉáÎåÈëÎªÕûÊı£¬²¢È·±£×îÖÕÕ½Á¦ÆÀ¹ÀÖµ²»µÍÓÚ 1
+        // å››èˆäº”å…¥ä¸ºæ•´æ•°ï¼Œå¹¶ç¡®ä¿æœ€ç»ˆæˆ˜åŠ›è¯„ä¼°å€¼ä¸ä½äº 1
         return Mathf.Max(1, Mathf.RoundToInt(score));
     }
 
     #endregion
-    #region ×°±¸ÏµÍ³
+    #region è£…å¤‡ç³»ç»Ÿ
     private void ApplyIntialEquipment()
     {
         
@@ -153,12 +162,12 @@ public class CharacterRuntimeData
     #endregion
 
 
-    #region ¹¤¾ß£ºÔöÉ¾¸Ä²é
+    #region å·¥å…·ï¼šå¢åˆ æ”¹æŸ¥
 
     public void SetEquippedItem(EquipSlot slot, EquipmentItemSO item)
     {
         var entry = EquipedItems.Find(e=>e.slot == slot);
-        //Èç¹û×°±¸²»ÊÇ¿ÕµÄ
+        //å¦‚æœè£…å¤‡ä¸æ˜¯ç©ºçš„
         if (entry != null)
         {
             if (item != null)
@@ -197,7 +206,7 @@ public class CharacterRuntimeData
         return count;
     }
     /// <summary>
-    /// Ë¢ĞÂ×°±¸¼Ó³ÉÊôĞÔ
+    /// åˆ·æ–°è£…å¤‡åŠ æˆå±æ€§
     /// </summary>
     public void RebuildEquipmentStats()
     {
