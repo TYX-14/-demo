@@ -159,8 +159,9 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
             return;
         }
 
-        if (battleController.BeginSkillTargetSelection(skill))
-            HidePanel();
+        // 进入目标选择时保留技能面板。
+        // 若玩家取消选择，原面板仍然打开；只有确认目标后才由目标选择状态关闭。 
+        battleController.BeginSkillTargetSelection(skill);
     }
 
     private void ClearEntries()
