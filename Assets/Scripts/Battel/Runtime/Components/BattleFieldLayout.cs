@@ -19,16 +19,16 @@ public class BattleFieldLayout : MonoBehaviour
     public Transform initTrans;
 
     [Header("Ally Fixed Slots")]
-    [SerializeField] private Transform allySlot1;
-    [SerializeField] private Transform allySlot2;
-    [SerializeField] private Transform allySlot3;
-    [SerializeField] private Transform allySlot4;
+    [SerializeField, Tooltip("玩家逻辑1号位：前排，视觉上最靠左、最接近战场中央。")] private Transform allySlot1;
+    [SerializeField, Tooltip("玩家逻辑2号位：前排，位于玩家1号位外侧。")] private Transform allySlot2;
+    [SerializeField, Tooltip("玩家逻辑3号位：后排，位于玩家4号位内侧。")] private Transform allySlot3;
+    [SerializeField, Tooltip("玩家逻辑4号位：后排，视觉上最靠右、远离战场中央。")] private Transform allySlot4;
 
     [Header("Enemy Fixed Slots")]
-    [SerializeField] private Transform enemySlot1;
-    [SerializeField] private Transform enemySlot2;
-    [SerializeField] private Transform enemySlot3;
-    [SerializeField] private Transform enemySlot4;
+    [SerializeField, Tooltip("怪物逻辑1号位：前排，视觉上最靠右、最接近战场中央。")] private Transform enemySlot1;
+    [SerializeField, Tooltip("怪物逻辑2号位：前排，位于怪物1号位外侧。")] private Transform enemySlot2;
+    [SerializeField, Tooltip("怪物逻辑3号位：后排，位于怪物4号位内侧。")] private Transform enemySlot3;
+    [SerializeField, Tooltip("怪物逻辑4号位：后排，视觉上最靠左、远离战场中央。")] private Transform enemySlot4;
 
     [Min(0f)]
     [SerializeField, Tooltip("同一逻辑位置存在多个普通敌人时，沿 Y 轴分散的间距。")]
