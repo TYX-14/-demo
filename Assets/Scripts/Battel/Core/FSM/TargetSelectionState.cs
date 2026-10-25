@@ -13,6 +13,8 @@ public class TargetSelectionState : BattleState
 {
     private readonly BattleActionContext _actionContext;
     private Camera _battleCamera;
+    private BattleEntity _lastLoggedHoveredTarget;
+    private bool _hasLoggedHoverResult;
 
     public TargetSelectionState(BattleController controller, BattleActionContext actionContext)
         : base(controller)
@@ -23,6 +25,12 @@ public class TargetSelectionState : BattleState
     public override IEnumerator Enter()
     {
         _battleCamera = Camera.main;
+        _lastLoggedHoveredTarget = null;
+        _hasLoggedHoverResult = false;
+
+        Debug.Log("【目标选择】进入 TargetSelectionState。");
+        if (_battleCamera == null)
+            Debug.LogWarning("【目标选择】未找到 MainCamera，无法进行鼠标目标检测。");
 
         if (_actionContext == null || _actionContext.Skill == null)
         {
@@ -113,18 +121,26 @@ public class TargetSelectionState : BattleState
 
     private void UpdateHoveredTargetCursor(Mouse mouse, Vector2 screenPosition)
     {
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-        {
-            SetAllTargetCursors(false);
-            return;
-        }
-
+        // 悬停检测直接使用战斗单位的屏幕范围，不依赖 UI 射线检测。
+        // 透明或铺满屏幕的 UI 也可能被 EventSystem 判定为鼠标所在对象，
+        // 如果在这里提前 return，就会导致敌人始终无法显示目标光标。
         if (_battleCamera == null)
             _battleCamera = Camera.main;
 
         BattleEntity hoveredTarget = _battleCamera != null
             ? FindTargetAtScreenPosition(screenPosition)
             : null;
+
+        // 只在悬停目标发生变化时记录日志，避免每帧刷屏。
+        if (!_hasLoggedHoverResult || hoveredTarget != _lastLoggedHoveredTarget)
+        {
+            _hasLoggedHoverResult = true;
+            _lastLoggedHoveredTarget = hoveredTarget;
+            if (hoveredTarget == null)
+                Debug.Log($"【目标选择】鼠标位置 {screenPosition} 未命中合法敌人。", this);
+            else
+                Debug.Log($"【目标选择】鼠标命中合法敌人：{hoveredTarget.Definition.name}，逻辑站位：{_controller.GetLogicalPosition(hoveredTarget)}。", this);
+        }
 
         // 每帧只允许一个合法目标显示提示；鼠标离开目标或移到无效目标时立即隐藏。
         foreach (BattleEntity entity in _controller.AllEntities)
