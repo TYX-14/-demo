@@ -36,6 +36,108 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     public BattleEntity CurrentEntity { get; set; }
 
     /// <summary>
+    /// 当前等待确认或执行的行动数据。状态切换时共享同一份上下文。
+    /// </summary>
+    public BattleActionContext PendingAction { get; private set; }
+
+    /// <summary>
+    /// 从技能 UI 发起目标选择。只有当前玩家行动者且站位满足技能要求时才接受。
+    /// </summary>
+    public bool BeginSkillTargetSelection(SkillDefinitionSO skill)
+    {
+        if (!_battleRunning || !(CurrentState is PlayerInputState) ||
+            CurrentEntity == null || !CurrentEntity.IsPlayer || skill == null)
+            return false;
+
+        int actorPosition = GetLogicalPosition(CurrentEntity);
+        if (!ContainsPosition(skill.UsablePositions, actorPosition))
+        {
+            Debug.LogWarning(
+                $"当前角色站位 {actorPosition} 不允许使用技能「{skill.SkillName}」。", this);
+            return false;
+        }
+
+        PendingAction = new BattleActionContext(CurrentEntity, skill);
+        SetState(new TargetSelectionState(this, PendingAction));
+        return true;
+    }
+
+    /// <summary>
+    /// 取消尚未确认的行动数据。取消目标选择不会消耗回合或资源。
+    /// </summary>
+    public void CancelPendingAction()
+    {
+        PendingAction = null;
+    }
+
+    /// <summary>
+    /// 返回实体的逻辑站位。友方优先使用固定 Position；
+    /// 敌方若尚未写入 Position，则按敌方列表顺序从队伍人数递减分配位置。
+    /// 例如 3 名敌人依次对应 3、2、1 号位。
+    /// </summary>
+    public int GetLogicalPosition(BattleEntity entity)
+    {
+        if (entity == null)
+            return 0;
+
+        if (entity.RuntimeData != null &&
+            entity.RuntimeData.Position >= 1 &&
+            entity.RuntimeData.Position <= 4)
+            return entity.RuntimeData.Position;
+
+        if (entity.IsPlayer)
+        {
+            int allyPosition = 0;
+            foreach (BattleEntity current in _allEntities)
+            {
+                if (current == null || !current.IsPlayer)
+                    continue;
+
+                allyPosition++;
+                if (current == entity)
+                    return allyPosition;
+            }
+
+            return 0;
+        }
+
+        int enemyCount = 0;
+        foreach (BattleEntity current in _allEntities)
+        {
+            if (current != null && !current.IsPlayer)
+                enemyCount++;
+        }
+
+        int enemyIndex = 0;
+        foreach (BattleEntity current in _allEntities)
+        {
+            if (current == null || current.IsPlayer)
+                continue;
+
+            if (current == entity)
+                return enemyCount - enemyIndex;
+
+            enemyIndex++;
+        }
+
+        return 0;
+    }
+
+    private static bool ContainsPosition(System.Collections.Generic.IReadOnlyList<int> positions, int position)
+    {
+        if (positions == null)
+            return false;
+
+        for (int i = 0; i < positions.Count; i++)
+        {
+            if (positions[i] == position)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// 当前战斗运行所处的状态。
     /// </summary>
     private BattleState _currentState;
