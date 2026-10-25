@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,7 +7,7 @@ using UnityEngine.UI;
 /// 技能列表中的单个显示条目。
 /// 负责显示技能信息、站位图案，并在鼠标悬停时展示技能说明。
 /// </summary>
-public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     [Header("可在 Inspector 中分别绑定")]
     [SerializeField] private Image skillIcon;
@@ -25,11 +24,9 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void Awake()
     {
-        // 如果未在 Inspector 绑定，则尝试从技能条目子物体中获取站位图案组件。
         if (positionDiagram == null)
             positionDiagram = GetComponentInChildren<SkillPositionDiagram>(true);
 
-        // Tip 已经放在按钮预制体下，按名称自动获取，避免额外改动预制体引用。
         Transform tipTransform = transform.Find("Skill Tip");
         if (tipTransform == null)
             tipTransform = FindChildByName(transform, "Skill Tip");
@@ -74,7 +71,11 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
             spCostText.text = $"{skill.SpCost} SP";
 
         if (positionDiagram != null)
+        {
             positionDiagram.Setup(skill);
+            positionDiagram.SetSelected(EventSystem.current != null &&
+                EventSystem.current.currentSelectedGameObject == gameObject);
+        }
 
         if (skillTipDescription != null)
             skillTipDescription.text = skill.Description ?? string.Empty;
@@ -92,6 +93,18 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
             skillTip.SetActive(false);
     }
 
+    public void OnSelect(BaseEventData eventData)
+    {
+        if (positionDiagram != null)
+            positionDiagram.SetSelected(true);
+    }
+
+    public void OnDeselect(BaseEventData eventData)
+    {
+        if (positionDiagram != null)
+            positionDiagram.SetSelected(false);
+    }
+
     private Transform FindChildByName(Transform parent, string childName)
     {
         foreach (Transform child in parent)
@@ -105,18 +118,6 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
 
         return null;
-    }
-
-    private string FormatPositions(IReadOnlyList<int> positions)
-    {
-        if (positions == null || positions.Count == 0)
-            return "无";
-
-        List<string> labels = new();
-        for (int i = 0; i < positions.Count; i++)
-            labels.Add(positions[i].ToString());
-
-        return $"{string.Join("、", labels)}号位";
     }
 
     private void Clear()
