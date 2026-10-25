@@ -152,7 +152,7 @@ Transform:
   m_GameObject: {fileID: 60590901}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5, y: 0, z: -4.97}
+  m_LocalPosition: {x: -5.9, y: 0, z: -4.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -590,6 +590,11 @@ MonoBehaviour:
   allySlot2: {fileID: 800030932}
   allySlot3: {fileID: 1032535298}
   allySlot4: {fileID: 1334797031}
+  enemySlot1: {fileID: 1291427162}
+  enemySlot2: {fileID: 1701134998}
+  enemySlot3: {fileID: 1648500851}
+  enemySlot4: {fileID: 60590902}
+  enemyGroupVerticalSpacing: 0.55
   enemyTopTrans: {fileID: 1197716387}
   enemyBottomTrans: {fileID: 1819148484}
   bossCenterTrans: {fileID: 123102871}
@@ -1619,7 +1624,7 @@ Transform:
   m_GameObject: {fileID: 1648500850}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4, y: 0, z: -4.97}
+  m_LocalPosition: {x: -4.6, y: 0, z: -4.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1651,7 +1656,7 @@ Transform:
   m_GameObject: {fileID: 1701134997}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 0, z: -4.97}
+  m_LocalPosition: {x: -3.3, y: 0, z: -4.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

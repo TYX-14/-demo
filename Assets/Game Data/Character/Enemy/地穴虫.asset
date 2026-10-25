@@ -27,5 +27,12 @@ MonoBehaviour:
     Speed: 0
     Accuracy: 0
     Evasion: 0
+  maxSwapDistance: 1
+  initialSkills: []
   filedAnimator: {fileID: 0}
   battleAnimator: {fileID: 22100000, guid: b63edc48550821e449bacbf8a96468a6, type: 2}
+  occupiedSlotCount: 1
+  preferredPositionMin: 1
+  preferredPositionMax: 4
+  legacyDefaultBattlePosition: 3
+  hasMigratedLegacyPosition: 1
