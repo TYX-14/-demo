@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u5E1D\u56FD\u6307\u4EE4"
   skillIcon: {fileID: 21300000, guid: 573bbd637cdfc491d8da7762a9fa36bd, type: 3}
-  description: 
+  description: "\u6807\u8BB0"
   spCost: 20
+  targetType: 0
   usablePositions: 0300000004000000
   targetPositions: 01000000020000000300000004000000

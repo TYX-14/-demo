@@ -49,7 +49,6 @@
      <Compile Include="Assets\Scripts\Game\Character\EnemyDfinitionSo.cs" />
      <Compile Include="Assets\Scripts\MFramewrok\Event\IEventReceiver.cs" />
      <Compile Include="Assets\Scripts\MFramewrok\Event\IEvent.cs" />
-     <Compile Include="Assets\Scripts\UI\Battle UI\BattleItemPanelController.cs" />
      <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI\BattleItemEntryUI.cs" />
      <Compile Include="Assets\Scripts\UI\Equipment\EquipmentStatPreviewPanel.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
@@ -62,7 +61,6 @@
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark04.cs" />
      <Compile Include="Assets\Scripts\Game\Party\FieldFollower.cs" />
-     <Compile Include="Assets\Scripts\UI\Battle UI\BattleItemEntryUI.cs" />
      <Compile Include="Assets\Scripts\Game\Character\SkillDefinitionSO.cs" />
      <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
@@ -76,7 +74,6 @@
      <Compile Include="Assets\Scripts\Game\Character\AllyDefinitionSO.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
-     <Compile Include="Assets\Scripts\UI\Battle UI\BattleSkillEntryUI.cs" />
      <Compile Include="Assets\Scripts\Battel\Core\Models\BattleEntity.cs" />
      <Compile Include="Assets\Scripts\Battel\Events\BattleEvents.cs" />
      <Compile Include="Assets\Scripts\UI\Equipment\EquipmentCandidateButton.cs" />
@@ -90,9 +87,9 @@
      <Compile Include="Assets\Scripts\Game\Game Mod\GameModeEvent.cs" />
      <Compile Include="Assets\Scripts\Game\Game Mod\GameModeManager.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\InteractionUIcontroller.cs" />
-     <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\ChallengePanelController.cs" />
      <Compile Include="Assets\Scripts\UI\Inventory\StealItemButton.cs" />
+     <Compile Include="Assets\Scripts\Battel\Core\Models\BattleActionContext.cs" />
      <Compile Include="Assets\Scripts\UI\Equipment\EquipmentCandidatePaneControllerl.cs" />
      <Compile Include="Assets\Scripts\UI\Equipment\MainPaneController.cs" />
      <Compile Include="Assets\Scripts\Game\Path Acton\StealAction.cs" />
@@ -114,6 +111,7 @@
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
+     <Compile Include="Assets\Scripts\Battel\Core\FSM\TargetSelectionState.cs" />
      <Compile Include="Assets\Scripts\Battel\Core\FSM\BattleSetupState.cs" />
      <Compile Include="Assets\Scripts\Game\Party\PartyManager.cs" />
      <Compile Include="Assets\Scripts\Game\Path Acton\RecruitiActon.cs" />
@@ -125,6 +123,7 @@
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
      <Compile Include="Assets\Scripts\Battel\Runtime\Services\BattleStartPayload.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexJitter.cs" />
+     <Compile Include="Assets\Scripts\Battel\Core\FSM\PerformActionState.cs" />
      <Compile Include="Assets\Scripts\Utility\Enums.cs" />
      <Compile Include="Assets\Scripts\Game\SceneTranstion\SceneLoadManager.cs" />
      <Compile Include="Assets\Scripts\MFramewrok\Singletton\singleton.cs" />
@@ -158,7 +157,6 @@
      <Compile Include="Assets\Scripts\Game\Path Acton\ShopAction.cs" />
      <Compile Include="Assets\Scripts\Game\Character\CharacterDefinitionSO.cs" />
      <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleUnit.cs" />
-     <Compile Include="Assets\Scripts\UI\Battle UI\BattleSkillPanelController.cs" />
      <Compile Include="Assets\Scripts\Game\Input\InputSystemController.cs" />
      <Compile Include="Assets\Scripts\Game\Path Acton\ActionBase.cs" />
      <Compile Include="Assets\Scripts\MFramewrok\Event\EventBus.cs" />

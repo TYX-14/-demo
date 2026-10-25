@@ -32,6 +32,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f3b6269557c028f44a08d2556a530dc5, type: 2}
   - {fileID: 11400000, guid: da4faf68ad3c30d4391398d9607bc68c, type: 2}
   - {fileID: 11400000, guid: 236b1719e8110834db31e4960cf3f910, type: 2}
+  - {fileID: 11400000, guid: 711c3cc9de31e134a80d8a9e09f718b2, type: 2}
   filedAnimator: {fileID: 22100000, guid: 057a438bf3e1b48479b15e68909b2c0d, type: 2}
   battleAnimator: {fileID: 22100000, guid: c7bc12672665216479107b9c5a737cdf, type: 2}
   job: 4
