@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// 技能列表中的单个显示条目。
 /// 负责显示技能信息、站位图案，并在鼠标悬停时展示技能说明。
 /// </summary>
-public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     [Header("可在 Inspector 中分别绑定")]
     [SerializeField] private Image skillIcon;
@@ -75,6 +75,18 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         if (skillTipDescription != null)
             skillTipDescription.text = skill.Description ?? string.Empty;
+    }
+
+    public void OnSelect(BaseEventData eventData)
+    {
+        if (positionDiagram != null)
+            positionDiagram.SetSelected(true);
+    }
+
+    public void OnDeselect(BaseEventData eventData)
+    {
+        if (positionDiagram != null)
+            positionDiagram.SetSelected(false);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
