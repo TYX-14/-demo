@@ -29,8 +29,13 @@ public class PlayerInputState : BattleState
 
     public override IEnumerator Exit()
     {
-        if (BattleCommandUI.Instance != null)
+        // 进入目标选择时保留一级指令面板。
+        // 这样 Esc/右键取消后，玩家仍能看到刚才的指令上下文，不必重新打开进攻菜单。
+        if (!(_controller.CurrentState is TargetSelectionState) &&
+            BattleCommandUI.Instance != null)
+        {
             BattleCommandUI.Instance.ClosePanel();
+        }
 
         yield break;
     }
