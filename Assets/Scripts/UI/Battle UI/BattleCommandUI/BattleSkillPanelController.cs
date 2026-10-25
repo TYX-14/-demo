@@ -143,12 +143,24 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
                 continue;
 
             BattleSkillEntryUI entry = Instantiate(skillEntryPrefab, skillListContent);
-            entry.Setup(skill);
+            entry.Setup(skill, OnSkillSelected);
             spawnedEntries.Add(entry);
         }
 
         if (spawnedEntries.Count == 0)
             SetStatus("该角色尚未配置有效技能。");
+    }
+
+    private void OnSkillSelected(SkillDefinitionSO skill)
+    {
+        if (battleController == null)
+        {
+            Debug.LogWarning("BattleSkillPanelController 未绑定 BattleController，无法开始目标选择。", this);
+            return;
+        }
+
+        if (battleController.BeginSkillTargetSelection(skill))
+            HidePanel();
     }
 
     private void ClearEntries()
