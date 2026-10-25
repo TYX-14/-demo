@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:yousandi.cn,2023:
---- !u!1 &1978126768238372479
+--- !u!1 &1798136327977572331
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,24 +8,24 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 7
   m_Component:
-  - component: {fileID: 7491046386939372082}
-  - component: {fileID: 8049416849373282221}
-  - component: {fileID: 6384394938060811085}
+  - component: {fileID: 1667814700168430349}
+  - component: {fileID: 877177490623725643}
+  - component: {fileID: 4405428234500485727}
   m_Layer: 0
   m_HasEditorInfo: 1
-  m_Name: fire_front_activate_sheet_0
+  m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &7491046386939372082
+  m_IsActive: 1
+--- !u!4 &1667814700168430349
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978126768238372479}
+  m_GameObject: {fileID: 1798136327977572331}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0.01, z: 0}
@@ -34,13 +34,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3625482353717104623}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!212 &8049416849373282221
+--- !u!95 &877177490623725643
+Animator:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1798136327977572331}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 564ef3dcda140ef46ac960c2f52390da, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!212 &4405428234500485727
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978126768238372479}
+  m_GameObject: {fileID: 1798136327977572331}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -89,29 +112,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!95 &6384394938060811085
-Animator:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978126768238372479}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 564ef3dcda140ef46ac960c2f52390da, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2556182002852635844
 GameObject:
   m_ObjectHideFlags: 0
@@ -255,11 +255,11 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7491046386939372082}
   - {fileID: 6673500222710577962}
   - {fileID: 5682452667192819058}
   - {fileID: 5976578034639053071}
   - {fileID: 202823082758735938}
+  - {fileID: 1667814700168430349}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8254251149606129785
@@ -279,6 +279,9 @@ MonoBehaviour:
   hitPoint: {fileID: 5682452667192819058}
   targetCursorRenderer: {fileID: 3829843980078710185}
   targetCursorGap: 0.15
+  targetHighlight: {fileID: 1798136327977572331}
+  targetHighlightGroundOffset: 0.015
+  targetHighlightWidthMultiplier: 1
   star: {fileID: 2556182002852635844}
 --- !u!1 &4297984649204407528
 GameObject:
