@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -22,8 +23,16 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
     private GameObject skillTip;
     private TMP_Text skillTipDescription;
 
+    private Button skillButton;
+    private SkillDefinitionSO currentSkill;
+    private Action<SkillDefinitionSO> onSkillSelected;
+
     private void Awake()
     {
+        skillButton = GetComponent<Button>();
+        if (skillButton != null)
+            skillButton.onClick.AddListener(HandleSkillClicked);
+
         if (positionDiagram == null)
             positionDiagram = GetComponentInChildren<SkillPositionDiagram>(true);
 
@@ -43,8 +52,10 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
     }
 
-    public void Setup(SkillDefinitionSO skill)
+    public void Setup(SkillDefinitionSO skill, Action<SkillDefinitionSO> onSelected = null)
     {
+        currentSkill = skill;
+        onSkillSelected = onSelected;
         if (skill == null)
         {
             Clear();
@@ -75,6 +86,18 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         if (skillTipDescription != null)
             skillTipDescription.text = skill.Description ?? string.Empty;
+    }
+
+    private void HandleSkillClicked()
+    {
+        if (currentSkill != null)
+            onSkillSelected?.Invoke(currentSkill);
+    }
+
+    private void OnDestroy()
+    {
+        if (skillButton != null)
+            skillButton.onClick.RemoveListener(HandleSkillClicked);
     }
 
     public void OnSelect(BaseEventData eventData)
@@ -118,6 +141,8 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void Clear()
     {
+        currentSkill = null;
+        onSkillSelected = null;
         if (skillIcon != null)
         {
             skillIcon.sprite = null;
