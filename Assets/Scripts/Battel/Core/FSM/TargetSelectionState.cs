@@ -137,9 +137,9 @@ public class TargetSelectionState : BattleState
             _hasLoggedHoverResult = true;
             _lastLoggedHoveredTarget = hoveredTarget;
             if (hoveredTarget == null)
-                Debug.Log($"【目标选择】鼠标位置 {screenPosition} 未命中合法敌人。", this);
+                Debug.Log($"【目标选择】鼠标位置 {screenPosition} 未命中合法敌人。");
             else
-                Debug.Log($"【目标选择】鼠标命中合法敌人：{hoveredTarget.Definition.name}，逻辑站位：{_controller.GetLogicalPosition(hoveredTarget)}。", this);
+                Debug.Log($"【目标选择】鼠标命中合法敌人：{hoveredTarget.Definition.name}，逻辑站位：{_controller.GetLogicalPosition(hoveredTarget)}。");
         }
 
         // 每帧只允许一个合法目标显示提示；鼠标离开目标或移到无效目标时立即隐藏。
