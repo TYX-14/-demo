@@ -39,6 +39,13 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     [SerializeField, Min(0f)] private float targetCursorGap = 0.15f;
 
+    [Header("合法目标光圈")]
+    [SerializeField] private GameObject targetHighlight;
+    [SerializeField, Min(0f)] private float targetHighlightGroundOffset = 0.015f;
+    [SerializeField, Min(0.1f)] private float targetHighlightWidthMultiplier = 1.2f;
+    private SpriteRenderer targetHighlightRenderer;
+    private Vector3 targetHighlightBaseScale = Vector3.one;
+
     [Header("状态图标")]
     /// <summary>
     /// 击退期间显示的眩晕图标（Star）。
@@ -55,7 +62,86 @@ public class BattleUnit : MonoBehaviour
         if (star != null)
             star.SetActive(false);
 
+        InitializeTargetHighlight();
         UpdateTargetCursorPosition();
+    }
+
+    private void InitializeTargetHighlight()
+    {
+        // Prefab 中的光圈是 BattleUnit 的直接子物体，名称来自当前已提交的 prefab。
+        if (targetHighlight == null)
+        {
+            Transform highlightTransform = transform.Find("fire_front_activate_sheet_0");
+            if (highlightTransform != null)
+                targetHighlight = highlightTransform.gameObject;
+        }
+
+        // 防止误把 BattleUnit 根物体或其他外部物体当作光圈关闭。
+        if (targetHighlight == gameObject ||
+            (targetHighlight != null && !targetHighlight.transform.IsChildOf(transform)))
+        {
+            Debug.LogWarning("BattleUnit：目标光圈必须是本单位的子物体，已忽略错误引用。", this);
+            targetHighlight = null;
+            return;
+        }
+
+        if (targetHighlight == null)
+            return;
+
+        targetHighlightRenderer = targetHighlight.GetComponent<SpriteRenderer>();
+        targetHighlightBaseScale = targetHighlight.transform.localScale;
+        targetHighlight.SetActive(false);
+        UpdateTargetHighlightTransform();
+    }
+
+    private void LateUpdate()
+    {
+        // 精灵动画帧可能改变可见边界，因此光圈持续贴合脚底并调整大小。
+        if (targetHighlight != null && targetHighlight.activeSelf)
+            UpdateTargetHighlightTransform();
+    }
+
+    private void UpdateTargetHighlightTransform()
+    {
+        if (spriteRenderer == null || targetHighlight == null ||
+            targetHighlightRenderer == null || spriteRenderer.sprite == null ||
+            targetHighlightRenderer.sprite == null)
+            return;
+
+        Bounds bounds = spriteRenderer.bounds;
+        Vector3 worldPosition = targetHighlight.transform.position;
+        worldPosition.x = bounds.center.x;
+        worldPosition.y = bounds.min.y + targetHighlightGroundOffset;
+        worldPosition.z = bounds.center.z;
+        targetHighlight.transform.position = worldPosition;
+
+        float sourceWidth = targetHighlightRenderer.sprite.bounds.size.x *
+                            Mathf.Abs(transform.lossyScale.x) *
+                            Mathf.Abs(targetHighlightBaseScale.x);
+        if (sourceWidth <= 0.0001f)
+            return;
+
+        float desiredWidth = Mathf.Max(0.01f, bounds.size.x * targetHighlightWidthMultiplier);
+        float scaleRatio = desiredWidth / sourceWidth;
+        Vector3 scale = targetHighlightBaseScale;
+        scale.x *= scaleRatio;
+        scale.y *= scaleRatio;
+        targetHighlight.transform.localScale = scale;
+    }
+
+    /// <summary>
+    /// 显示或隐藏合法目标光圈。光圈对象必须是本单位的子物体。
+    /// </summary>
+    public void SetTargetHighlight(bool visible)
+    {
+        if (targetHighlight == null)
+            return;
+
+        if (visible)
+            UpdateTargetHighlightTransform();
+
+        if (targetHighlight.activeSelf != visible)
+            targetHighlight.SetActive(visible);
     }
 
     /// <summary>
