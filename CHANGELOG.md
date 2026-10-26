@@ -2,6 +2,7 @@
 
 - **生成时机：** `BattleHUDcontroller` 在收到 `BattleStartedEvent` 后，从 `BattleController.AllEntities` 中筛选我方实体，按 `CharacterRuntimeData.Position` 排序并实例化 `HealthBar.prefab`。敌方单位不会生成这种状态栏。
 - **状态栏职责：** 每条 `HealthBarController` 只绑定一名英雄，显示其姓名、HP、SP 和压力。状态栏留在屏幕左上角的 UI 容器内，不跟随角色的世界坐标。
+- **属性刷新：** `CharacterRuntimeData.ModifyMp()` 现在也会发出角色更新通知，确保 SP 消耗或恢复后，绑定的状态栏及时刷新。
 - **顺序维护：** 收到 `CurrentEntityChangedEvent` 时重新按英雄站位排序，并刷新当前行动者高亮。站位调整后，最迟会在下一次行动者切换时同步列表顺序。
 - **Inspector 配置：** 在 `BattleHUDcontroller` 上指定 `Health Bar Prefab`，并将左上角的状态栏排列容器拖入 `Health Bar Container`。容器建议使用 `Vertical Layout Group` 管理垂直排列；若不指定容器，则使用 `Health Bar Panel Root`。
 - **行动者样式：** `HealthBarController` 的 `Acting Background Sprite` 仍需在预制体 Inspector 中指定；未指定时只执行 `Root` 的缩放高亮。
