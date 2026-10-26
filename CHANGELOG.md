@@ -1,3 +1,16 @@
+## 2026-10-26：新增开发者控制面板
+
+- **统一入口：** 新增 `Assets/Scripts/Development/DeveloperControlPanel.cs`，在 Unity 编辑器的 Play 模式中自动创建开发者面板，不需要手动往场景里添加 GameObject。
+- **快捷键：** F8 显示/隐藏面板；F6 保留原有测试用途，在探索模式交换 1、2 号位，在战斗模式测试主动换位；F7 在战斗模式测试 2 → 3 号位击退。
+- **压力条测试：** 面板可在当前队伍角色之间切换，将选中角色压力值直接设为 0–200，并通过 `CharacterStressSystem.NotifyCharacterUpdated` 立即刷新已绑定的压力条。
+- **精神状态预览：** 可把选中角色切换为普通、美德或折磨状态，检查压力条颜色与美德显示。直接设置压力值不会触发 100/200 点压力阈值结算，也不会模拟心力衰竭。
+- **脚本职责：** 移除 `PartyManager.cs` 中原本的 F6/F7 输入监听，避免同一快捷键被两个脚本重复执行。位置操作仍调用原有 `BattleFieldManager` 接口。
+- **构建范围：** 面板代码由 `UNITY_EDITOR` 包裹，不会进入非编辑器发布构建。
+- **Unity 配置：** 无需手动拖拽引用。进入 Play 模式后按 F8 打开面板；当前版本仅提供队伍成员的压力条测试。
+- **验证状态：** 已提交到 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。请重点测试 F6 是否只交换一次、F7 是否只触发一次，以及调节压力后左上角压力条是否立即更新。
+
+---
+
 ## 2026-10-26：接入我方英雄状态栏生成与行动者高亮
 
 - **生成时机：** `BattleHUDcontroller` 在收到 `BattleStartedEvent` 后，从 `BattleController.AllEntities` 中筛选我方实体，按 `CharacterRuntimeData.Position` 排序并实例化 `HealthBar.prefab`。敌方单位不会生成这种状态栏。
