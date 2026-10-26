@@ -60,12 +60,18 @@ public class SkillPositionDiagram : MonoBehaviour
                         skill.TargetSelectionMode == SkillTargetSelectionMode.Self;
 
         if (targetsEnemy)
-            SetEnemyDots(skill.TargetPositions, targetableColor);
+            SetEnemyDots(skill.TargetRelation == SkillTargetRelation.AllEntities
+                ? new[] { 1, 2, 3, 4 }
+                : skill.TargetPositions, targetableColor);
         else
             SetEnemyDots(null, inactiveColor);
 
         if (targetsAlly)
-            SetDots(allyPositionDots, skill.TargetPositions, targetableColor);
+            SetDots(allyPositionDots,
+                skill.TargetRelation == SkillTargetRelation.AllEntities
+                    ? new[] { 1, 2, 3, 4 }
+                    : skill.TargetPositions,
+                targetableColor);
         else if (selfOnly)
             SetDots(allyPositionDots, new[] { 1, 2, 3, 4 }, targetableColor);
         else
@@ -74,12 +80,18 @@ public class SkillPositionDiagram : MonoBehaviour
         if (skill.TargetType == SkillTargetType.AoE)
         {
             if (targetsEnemy)
-                SetAreaConnections(enemyAreaConnections, skill.TargetPositions, true);
+                SetAreaConnections(enemyAreaConnections,
+                    skill.TargetRelation == SkillTargetRelation.AllEntities
+                        ? new[] { 1, 2, 3, 4 }
+                        : skill.TargetPositions, true);
             else
                 HideConnections(enemyAreaConnections);
 
             if (targetsAlly)
-                SetAreaConnections(allyAreaConnections, skill.TargetPositions, true);
+                SetAreaConnections(allyAreaConnections,
+                    skill.TargetRelation == SkillTargetRelation.AllEntities
+                        ? new[] { 1, 2, 3, 4 }
+                        : skill.TargetPositions, false);
             else if (selfOnly)
                 SetAreaConnections(allyAreaConnections, new[] { 1, 2, 3, 4 }, true);
             else

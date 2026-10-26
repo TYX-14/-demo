@@ -23,7 +23,8 @@ public class PerformActionState : BattleState
             _actionContext.Actor == null ||
             _actionContext.Skill == null ||
             _actionContext.ResolvedTargets == null ||
-            _actionContext.ResolvedTargets.Count == 0)
+            _actionContext.ResolvedTargets.Count == 0 &&
+            _actionContext.Skill.TargetSelectionMode != SkillTargetSelectionMode.None)
         {
             Debug.LogWarning("PerformActionState：行动数据不完整或没有有效目标。");
             _controller.CancelPendingAction();
