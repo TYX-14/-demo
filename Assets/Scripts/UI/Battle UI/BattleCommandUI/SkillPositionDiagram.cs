@@ -26,9 +26,16 @@ public class SkillPositionDiagram : MonoBehaviour
     [SerializeField] private Color inactiveColor = new Color(1f, 1f, 1f, 0.25f);
     [SerializeField] private Color selectedInactiveColor = new Color(0f, 0f, 0f, 0.25f);
     [SerializeField, Min(0.01f)] private float colorTransitionDuration = 0.15f;
-    [SerializeField] private Color targetableColor = new Color(1f, 0.35f, 0.3f, 1f);
-    [SerializeField] private Color usableColor = new Color(0.35f, 0.75f, 1f, 1f);
-    [SerializeField] private Color areaColor = new Color(1f, 0.75f, 0.2f, 1f);
+    [Tooltip("敌方单体目标点颜色。敌方 AoE 目标点使用 areaColor。")]
+    [SerializeField] private Color targetableColor = new Color(1f, 0.25f, 0.25f, 1f);
+    [Tooltip("可用施放位置颜色。使用紫色，避免按钮选中时的白色背景影响蓝色辨识。")]
+    [SerializeField] private Color usableColor = new Color(0.7f, 0.4f, 1f, 1f);
+    [Tooltip("敌方 AoE 目标点与敌方 AoE 连线颜色。")]
+    [SerializeField] private Color areaColor = new Color(1f, 0.6f, 0.15f, 1f);
+    [Tooltip("友方目标点颜色，友方单体与友方 AoE 均使用此颜色。")]
+    [SerializeField] private Color allyTargetableColor = new Color(0.25f, 0.65f, 1f, 1f);
+    [Tooltip("友方 AoE 连线颜色，默认与友方目标点同为蓝色。")]
+    [SerializeField] private Color allyAreaColor = new Color(0.25f, 0.65f, 1f, 1f);
 
     private readonly Dictionary<Image, Color> baseDotColors = new();
     private readonly HashSet<Image> inactiveDots = new();
@@ -65,9 +72,14 @@ public class SkillPositionDiagram : MonoBehaviour
                             selfOnly);
 
         if (targetsEnemy)
+        {
+            Color enemyTargetColor = skill.TargetType == SkillTargetType.AoE
+                ? areaColor
+                : targetableColor;
             SetEnemyDots(skill.TargetRelation == SkillTargetRelation.AllEntities
                 ? new[] { 1, 2, 3, 4 }
-                : skill.TargetPositions, targetableColor);
+                : skill.TargetPositions, enemyTargetColor);
+        }
         else
             SetEnemyDots(null, inactiveColor);
 
@@ -76,9 +88,9 @@ public class SkillPositionDiagram : MonoBehaviour
                 skill.TargetRelation == SkillTargetRelation.AllEntities
                     ? new[] { 1, 2, 3, 4 }
                     : skill.TargetPositions,
-                targetableColor);
+                allyTargetableColor);
         else if (selfOnly)
-            SetDots(allyPositionDots, new[] { 1, 2, 3, 4 }, targetableColor);
+            SetDots(allyPositionDots, new[] { 1, 2, 3, 4 }, allyTargetableColor);
         else if (!selfOnly && hasEntityTarget)
             SetDots(allyPositionDots, skill.UsablePositions, usableColor);
         else
@@ -90,7 +102,7 @@ public class SkillPositionDiagram : MonoBehaviour
                 SetAreaConnections(enemyAreaConnections,
                     skill.TargetRelation == SkillTargetRelation.AllEntities
                         ? new[] { 1, 2, 3, 4 }
-                        : skill.TargetPositions, true);
+                        : skill.TargetPositions, true, areaColor);
             else
                 HideConnections(enemyAreaConnections);
 
@@ -98,7 +110,7 @@ public class SkillPositionDiagram : MonoBehaviour
                 SetAreaConnections(allyAreaConnections,
                     skill.TargetRelation == SkillTargetRelation.AllEntities || selfOnly
                         ? new[] { 1, 2, 3, 4 }
-                        : skill.TargetPositions, false);
+                        : skill.TargetPositions, false, allyAreaColor);
             else
                 HideConnections(allyAreaConnections);
         }
@@ -252,7 +264,7 @@ public class SkillPositionDiagram : MonoBehaviour
         colorTransition = null;
     }
 
-    private void SetAreaConnections(Image[] connections, IReadOnlyList<int> positions, bool reverseOrder)
+    private void SetAreaConnections(Image[] connections, IReadOnlyList<int> positions, bool reverseOrder, Color connectionColor)
     {
         if (connections == null)
             return;
@@ -270,7 +282,7 @@ public class SkillPositionDiagram : MonoBehaviour
 
             connection.gameObject.SetActive(show);
             if (show)
-                connection.color = areaColor;
+                connection.color = connectionColor;
         }
     }
 
