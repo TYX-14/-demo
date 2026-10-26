@@ -54,12 +54,14 @@ public class SkillPositionDiagram : MonoBehaviour
 
         bool selfOnly = skill.TargetRelation == SkillTargetRelation.Self ||
                         skill.TargetSelectionMode == SkillTargetSelectionMode.Self;
-        bool targetsEnemy = !selfOnly &&
+        bool hasEntityTarget = skill.TargetSelectionMode != SkillTargetSelectionMode.None;
+        bool targetsEnemy = hasEntityTarget && !selfOnly &&
                             (skill.TargetRelation == SkillTargetRelation.Enemy ||
                              skill.TargetRelation == SkillTargetRelation.AllEntities);
-        bool targetsAlly = skill.TargetRelation == SkillTargetRelation.Ally ||
-                           skill.TargetRelation == SkillTargetRelation.AllEntities ||
-                           selfOnly;
+        bool targetsAlly = hasEntityTarget &&
+                           (skill.TargetRelation == SkillTargetRelation.Ally ||
+                            skill.TargetRelation == SkillTargetRelation.AllEntities ||
+                            selfOnly);
 
         if (targetsEnemy)
             SetEnemyDots(skill.TargetRelation == SkillTargetRelation.AllEntities
@@ -68,7 +70,7 @@ public class SkillPositionDiagram : MonoBehaviour
         else
             SetEnemyDots(null, inactiveColor);
 
-        if (targetsAlly)
+        if (targetsAlly && !selfOnly)
             SetDots(allyPositionDots,
                 skill.TargetRelation == SkillTargetRelation.AllEntities
                     ? new[] { 1, 2, 3, 4 }
@@ -76,8 +78,10 @@ public class SkillPositionDiagram : MonoBehaviour
                 targetableColor);
         else if (selfOnly)
             SetDots(allyPositionDots, new[] { 1, 2, 3, 4 }, targetableColor);
-        else
+        else if (!selfOnly && hasEntityTarget)
             SetDots(allyPositionDots, skill.UsablePositions, usableColor);
+        else
+            SetDots(allyPositionDots, null, inactiveColor);
 
         if (skill.TargetType == SkillTargetType.AoE)
         {
