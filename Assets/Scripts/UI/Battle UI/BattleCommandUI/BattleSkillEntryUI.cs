@@ -52,7 +52,7 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
     }
 
-    public void Setup(SkillDefinitionSO skill, Action<SkillDefinitionSO> onSelected = null)
+    public void Setup(SkillDefinitionSO skill, Action<SkillDefinitionSO> onSelected = null, bool interactable = true)
     {
         currentSkill = skill;
         onSkillSelected = onSelected;
@@ -61,6 +61,10 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
             Clear();
             return;
         }
+
+        // 站位不允许使用时禁用按钮，避免玩家点击后才收到拒绝反馈。
+        if (skillButton != null)
+            skillButton.interactable = interactable;
 
         if (skillIcon != null)
         {
@@ -90,7 +94,7 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void HandleSkillClicked()
     {
-        if (currentSkill != null)
+        if (currentSkill != null && skillButton != null && skillButton.interactable)
             onSkillSelected?.Invoke(currentSkill);
     }
 
