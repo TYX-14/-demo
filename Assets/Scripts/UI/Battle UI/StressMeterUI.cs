@@ -3,8 +3,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 五圆点压力显示组件。每个圆点代表 20 点压力，五个圆点对应 0-100。
-/// 100-200 阶段保持五点填满，并逐渐由红色转为暗红色。
-/// 请在 Inspector 中绑定 5 个 Image；若要显示逐点填充，请将 Image Type 设为 Filled。
+/// 100-200 阶段使用高亮珊瑚红到琥珀橙的渐变，避免与暗色背景融合。
+/// Outline 通过周期性改变透明度与扩散距离，产生呼吸灯式脉冲效果。
 /// </summary>
 public class StressMeterUI : MonoBehaviour
 {
@@ -12,12 +12,32 @@ public class StressMeterUI : MonoBehaviour
     [SerializeField] private Outline[] glowOutlines = new Outline[5];
 
     [Header("颜色")]
-    [SerializeField] private Color emptyColor = Color.white;
-    [SerializeField] private Color stressColor = new Color(0.9f, 0.12f, 0.12f, 1f);
-    [SerializeField] private Color afflictionColor = new Color(0.18f, 0.015f, 0.025f, 1f);
-    [SerializeField] private Color virtueColor = new Color(1f, 0.72f, 0.12f, 1f);
+    [SerializeField] private Color emptyColor = new Color(0.82f, 0.84f, 0.88f, 1f);
+    [SerializeField] private Color stressColor = new Color(1f, 0.29f, 0.25f, 1f);
+    [SerializeField] private Color afflictionColor = new Color(1f, 0.67f, 0.20f, 1f);
+    [SerializeField] private Color virtueColor = new Color(1f, 0.78f, 0.22f, 1f);
+
+    [Header("呼吸灯效果")]
+    [SerializeField, Min(0.1f)] private float pulseSpeed = 1.6f;
+    [SerializeField, Min(0f)] private float minGlowDistance = 1.5f;
+    [SerializeField, Min(0f)] private float maxGlowDistance = 5f;
+    [SerializeField, Range(0f, 1f)] private float minGlowAlpha = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float maxGlowAlpha = 1f;
 
     private CharacterRuntimeData boundCharacter;
+    private readonly Vector2[] baseGlowDistances = new Vector2[5];
+    private float pulseTime;
+
+    private void Awake()
+    {
+        for (int i = 0; i < baseGlowDistances.Length; i++)
+        {
+            if (glowOutlines != null && i < glowOutlines.Length && glowOutlines[i] != null)
+                baseGlowDistances[i] = glowOutlines[i].effectDistance;
+            else
+                baseGlowDistances[i] = Vector2.one * 2f;
+        }
+    }
 
     private void OnEnable()
     {
@@ -28,6 +48,36 @@ public class StressMeterUI : MonoBehaviour
     private void OnDisable()
     {
         CharacterStressSystem.CharacterUpdated -= HandleCharacterUpdated;
+    }
+
+    private void Update()
+    {
+        if (glowOutlines == null || boundCharacter == null)
+            return;
+
+        pulseTime += Time.unscaledDeltaTime * pulseSpeed * Mathf.PI * 2f;
+        float pulse = (Mathf.Sin(pulseTime) + 1f) * 0.5f;
+        float distance = Mathf.Lerp(minGlowDistance, maxGlowDistance, pulse);
+        float alpha = Mathf.Lerp(minGlowAlpha, maxGlowAlpha, pulse);
+
+        int stress = Mathf.Clamp(boundCharacter.CurrentStress, 0, 200);
+        bool virtue = boundCharacter.SpiritState == CharacterSpiritState.Virtue;
+        float secondStage = Mathf.Clamp01((stress - 100) / 100f);
+        Color glowBase = virtue
+            ? virtueColor
+            : (stress >= 100 ? Color.Lerp(stressColor, afflictionColor, secondStage) : stressColor);
+
+        for (int i = 0; i < Mathf.Min(5, glowOutlines.Length); i++)
+        {
+            Outline glow = glowOutlines[i];
+            if (glow == null || !glow.enabled)
+                continue;
+
+            Color pulseColor = glowBase;
+            pulseColor.a = alpha;
+            glow.effectColor = pulseColor;
+            glow.effectDistance = Vector2.one * distance;
+        }
     }
 
     /// <summary>将该压力条绑定到一个角色的运行时数据。</summary>
@@ -57,6 +107,7 @@ public class StressMeterUI : MonoBehaviour
                     stressCircles[i].fillAmount = 0f;
                     stressCircles[i].color = emptyColor;
                 }
+
                 if (glowOutlines != null && i < glowOutlines.Length && glowOutlines[i] != null)
                     glowOutlines[i].enabled = false;
             }
@@ -98,11 +149,8 @@ public class StressMeterUI : MonoBehaviour
             {
                 Outline glow = glowOutlines[i];
                 glow.enabled = virtue || stress >= (i + 1) * 20;
-                glow.effectColor = virtue
-                    ? virtueColor
-                    : (stress >= 100
-                        ? Color.Lerp(stressColor, afflictionColor, secondStage)
-                        : stressColor);
+                glow.effectColor = targetColor;
+                glow.effectDistance = baseGlowDistances[i];
             }
         }
     }
