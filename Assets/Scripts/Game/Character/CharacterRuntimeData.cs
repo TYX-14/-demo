@@ -76,9 +76,13 @@ public class CharacterRuntimeData
     #region 属性变化方法
     public void HealFull()
     {
+        if (IsDead)
+            return;
+
         CurrentHP = GetTotalStats().MaxHP;
         CurrentSP = GetTotalStats().MaxSP;
-
+        IsAtDeathsDoor = false;
+        CharacterStressSystem.NotifyCharacterUpdated(this);
     }
 
     /// <summary>
