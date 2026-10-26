@@ -17,6 +17,11 @@ public abstract class CharacterDefinitionSO : ScriptableObject
     public int BaseLevel = 1;
     public StatBlock BaseStats;
 
+    [Header("死门")]
+    [Range(0f, 1f)]
+    [Tooltip("角色在生命归零后再次受到伤害时，抵抗致死判定的基础概率。0.67 表示 67% 概率存活。")]
+    public float BaseDeathblowResistance = 0.67f;
+
     [Header("战斗机动性")]
     [Min(0)]
     [Tooltip("主动战斗换位时，角色一次最多跨越的阵型格数。")]
