@@ -14,6 +14,9 @@ public class BattleHUDcontroller : MonoBehaviour, IEventReceiver<BattleStartedEv
     [SerializeField, Tooltip("CTB UI 的根物体")]
     private GameObject ctbRoot;
 
+    [SerializeField, Tooltip("按队伍顺序排列的友方压力条。每个元素绑定一个 StressMeterUI。")]
+    private StressMeterUI[] allyStressMeters;
+
     private void OnEnable()
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
@@ -45,6 +48,20 @@ public class BattleHUDcontroller : MonoBehaviour, IEventReceiver<BattleStartedEv
         if (ctbRoot != null)
         {
             ctbRoot.SetActive(true);
+        }
+
+        // 战斗开始时，将持久化的队伍运行时数据绑定到对应压力条。
+        if (allyStressMeters != null && PartyManager.Instance != null)
+        {
+            var partyMembers = PartyManager.Instance.PartyMembers;
+            for (int i = 0; i < allyStressMeters.Length; i++)
+            {
+                if (allyStressMeters[i] == null)
+                    continue;
+
+                CharacterRuntimeData member = i < partyMembers.Count ? partyMembers[i] : null;
+                allyStressMeters[i].Bind(member);
+            }
         }
     }
 }
