@@ -45,8 +45,23 @@ public class StressMeterUI : MonoBehaviour
 
     private void Refresh()
     {
-        if (boundCharacter == null || stressCircles == null)
+        if (stressCircles == null)
             return;
+
+        if (boundCharacter == null)
+        {
+            for (int i = 0; i < stressCircles.Length; i++)
+            {
+                if (stressCircles[i] != null)
+                {
+                    stressCircles[i].fillAmount = 0f;
+                    stressCircles[i].color = emptyColor;
+                }
+                if (glowOutlines != null && i < glowOutlines.Length && glowOutlines[i] != null)
+                    glowOutlines[i].enabled = false;
+            }
+            return;
+        }
 
         int stress = Mathf.Clamp(boundCharacter.CurrentStress, 0, 200);
         bool virtue = boundCharacter.SpiritState == CharacterSpiritState.Virtue;
