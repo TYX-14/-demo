@@ -143,7 +143,11 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
                 continue;
 
             BattleSkillEntryUI entry = Instantiate(skillEntryPrefab, skillListContent);
-            entry.Setup(skill, OnSkillSelected);
+            int actorPosition = battleController != null
+                ? battleController.GetLogicalPosition(currentEntity)
+                : 0;
+            bool canUseFromPosition = BattleTargeting.CanUseFromPosition(skill, actorPosition);
+            entry.Setup(skill, OnSkillSelected, canUseFromPosition);
             spawnedEntries.Add(entry);
         }
 
