@@ -5,9 +5,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 技能按钮上的八点站位示意图。
-/// 敌方从左到右为 4、3、2、1 号位；友方从左到右为 1、2、3、4 号位。
-/// 单体技能只高亮可选目标；AoE 技能高亮攻击位置，并连接相邻的高亮点。
-/// 此组件只负责显示，不负责战斗目标选择或伤害计算。
+/// 目标关系决定目标点显示在哪一侧；此组件只负责显示，不负责目标合法性判断。
 /// </summary>
 public class SkillPositionDiagram : MonoBehaviour
 {
@@ -19,6 +17,9 @@ public class SkillPositionDiagram : MonoBehaviour
 
     [Header("敌方 AoE 连接线（从左到右连接 4-3、3-2、2-1 号位）")]
     [SerializeField] private Image[] enemyAreaConnections = new Image[3];
+
+    [Header("友方 AoE 连接线（从左到右连接 1-2、2-3、3-4 号位，可选绑定）")]
+    [SerializeField] private Image[] allyAreaConnections = new Image[3];
 
     [Header("显示颜色")]
     [SerializeField] private Color inactiveColor = new Color(1f, 1f, 1f, 0.25f);
@@ -51,27 +52,47 @@ public class SkillPositionDiagram : MonoBehaviour
             return;
         }
 
-        SetEnemyDots(skill.TargetPositions, targetableColor);
-        SetDots(allyPositionDots, skill.UsablePositions, usableColor);
+        bool targetsEnemy = skill.TargetRelation == SkillTargetRelation.Enemy ||
+                            skill.TargetRelation == SkillTargetRelation.AllEntities;
+        bool targetsAlly = skill.TargetRelation == SkillTargetRelation.Ally ||
+                           skill.TargetRelation == SkillTargetRelation.AllEntities;
+        bool selfOnly = skill.TargetRelation == SkillTargetRelation.Self ||
+                        skill.TargetSelectionMode == SkillTargetSelectionMode.Self;
+
+        if (targetsEnemy)
+            SetEnemyDots(skill.TargetPositions, targetableColor);
+        else
+            SetEnemyDots(null, inactiveColor);
+
+        if (targetsAlly)
+            SetDots(allyPositionDots, skill.TargetPositions, targetableColor);
+        else if (selfOnly)
+            SetDots(allyPositionDots, new[] { 1, 2, 3, 4 }, targetableColor);
+        else
+            SetDots(allyPositionDots, skill.UsablePositions, usableColor);
 
         if (skill.TargetType == SkillTargetType.AoE)
         {
-            SetEnemyDots(skill.TargetPositions, areaColor);
-            SetAreaConnections(skill.TargetPositions);
+            if (targetsEnemy)
+                SetAreaConnections(enemyAreaConnections, skill.TargetPositions, true);
+            else
+                HideConnections(enemyAreaConnections);
+
+            if (targetsAlly)
+                SetAreaConnections(allyAreaConnections, skill.TargetPositions, true);
+            else if (selfOnly)
+                SetAreaConnections(allyAreaConnections, new[] { 1, 2, 3, 4 }, true);
+            else
+                HideConnections(allyAreaConnections);
         }
         else
         {
             HideAreaConnections();
         }
 
-        // 新技能条目或技能数据刷新时直接应用当前状态，避免列表重建时播放多余动画。
         ApplyDotColorsImmediately(isSelected);
     }
 
-    /// <summary>
-    /// 由技能条目的选中/取消选中事件调用。
-    /// 只渐变未激活站位点，高亮的目标点、可用点和 AoE 点保持原色。
-    /// </summary>
     public void SetSelected(bool selected)
     {
         if (isSelected == selected)
@@ -87,7 +108,6 @@ public class SkillPositionDiagram : MonoBehaviour
         StopColorTransition();
         baseDotColors.Clear();
         inactiveDots.Clear();
-
         RegisterAllDotsAsInactive(enemyPositionDots);
         RegisterAllDotsAsInactive(allyPositionDots);
         ApplyDotColorsImmediately(isSelected);
@@ -145,7 +165,6 @@ public class SkillPositionDiagram : MonoBehaviour
     private void RegisterDotColor(Image dot, Color color, bool inactive)
     {
         baseDotColors[dot] = color;
-
         if (inactive)
             inactiveDots.Add(dot);
         else
@@ -163,19 +182,16 @@ public class SkillPositionDiagram : MonoBehaviour
     {
         foreach (KeyValuePair<Image, Color> pair in baseDotColors)
         {
-            if (pair.Key == null)
-                continue;
-
-            pair.Key.color = selected && inactiveDots.Contains(pair.Key)
-                ? selectedInactiveColor
-                : pair.Value;
+            if (pair.Key != null)
+                pair.Key.color = selected && inactiveDots.Contains(pair.Key)
+                    ? selectedInactiveColor
+                    : pair.Value;
         }
     }
 
     private IEnumerator TransitionInactiveDots(bool selected)
     {
         Dictionary<Image, Color> startColors = new();
-
         foreach (Image dot in inactiveDots)
         {
             if (dot != null)
@@ -184,7 +200,6 @@ public class SkillPositionDiagram : MonoBehaviour
 
         float elapsed = 0f;
         float duration = Mathf.Max(0.01f, colorTransitionDuration);
-
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
@@ -220,21 +235,21 @@ public class SkillPositionDiagram : MonoBehaviour
         colorTransition = null;
     }
 
-    private void SetAreaConnections(IReadOnlyList<int> positions)
+    private void SetAreaConnections(Image[] connections, IReadOnlyList<int> positions, bool reverseOrder)
     {
-        if (enemyAreaConnections == null)
+        if (connections == null)
             return;
 
-        for (int i = 0; i < enemyAreaConnections.Length; i++)
+        for (int i = 0; i < connections.Length; i++)
         {
-            Image connection = enemyAreaConnections[i];
+            Image connection = connections[i];
             if (connection == null)
                 continue;
 
-            int leftPosition = 4 - i;
-            int rightPosition = 3 - i;
-            bool show = ContainsPosition(positions, leftPosition) &&
-                        ContainsPosition(positions, rightPosition);
+            int firstPosition = reverseOrder ? 4 - i : i + 1;
+            int secondPosition = reverseOrder ? 3 - i : i + 2;
+            bool show = ContainsPosition(positions, firstPosition) &&
+                        ContainsPosition(positions, secondPosition);
 
             connection.gameObject.SetActive(show);
             if (show)
@@ -244,10 +259,16 @@ public class SkillPositionDiagram : MonoBehaviour
 
     private void HideAreaConnections()
     {
-        if (enemyAreaConnections == null)
+        HideConnections(enemyAreaConnections);
+        HideConnections(allyAreaConnections);
+    }
+
+    private void HideConnections(Image[] connections)
+    {
+        if (connections == null)
             return;
 
-        foreach (Image connection in enemyAreaConnections)
+        foreach (Image connection in connections)
         {
             if (connection != null)
                 connection.gameObject.SetActive(false);

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -8,8 +7,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 等待玩家选择行动目标。
-/// 鼠标悬停在合法敌人身上时，只显示该敌人身上的目标提示图标；
-/// Esc 或鼠标右键会取消选择并返回玩家输入状态，不消耗行动。
+/// 目标合法性与实际范围解析统一交给 BattleTargeting；本状态只处理输入、光圈和鼠标提示。
 /// </summary>
 public class TargetSelectionState : BattleState
 {
@@ -30,16 +28,15 @@ public class TargetSelectionState : BattleState
         if (_battleCamera == null)
             Debug.LogWarning("【目标选择】未找到 MainCamera，无法进行鼠标目标检测。");
 
-        if (_actionContext == null || _actionContext.Skill == null)
+        if (_actionContext == null || _actionContext.Skill == null ||
+            !BattleTargeting.RequiresManualSelection(_actionContext.Skill))
         {
-            Debug.LogWarning("TargetSelectionState：待选择行动或技能为空。");
+            Debug.LogWarning("TargetSelectionState：待选择行动或技能无效，或该技能不需要手动选择目标。");
             _controller.CancelPendingAction();
             _controller.SetState(new PlayerInputState(_controller));
             yield break;
         }
 
-        // 目标选择开始时，显示所有符合当前技能站位要求的敌人脚下光圈。
-        // 目标小手仍只在鼠标悬停到具体合法目标时显示。
         SetAllTargetCursors(false);
         SetLegalTargetHighlights(true);
         yield break;
@@ -60,11 +57,10 @@ public class TargetSelectionState : BattleState
             if (mouse != null)
             {
                 Vector2 mousePosition = mouse.position.ReadValue();
-                UpdateHoveredTargetCursor(mouse, mousePosition);
+                UpdateHoveredTargetCursor(mousePosition);
 
                 if (mouse.leftButton.wasPressedThisFrame)
                 {
-                    // 点击 UI 只操作 UI，不应同时被当作战场目标输入。
                     if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                     {
                         yield return null;
@@ -78,13 +74,17 @@ public class TargetSelectionState : BattleState
                     {
                         BattleEntity clickedTarget = FindTargetAtScreenPosition(mousePosition);
                         if (clickedTarget != null &&
-                            _actionContext.TrySetTarget(
+                            BattleTargeting.TryResolveManualTarget(
+                                _actionContext.Skill,
+                                _actionContext.Actor,
                                 clickedTarget,
                                 _controller.AllEntities,
-                                _controller.GetLogicalPosition))
+                                _controller.GetLogicalPosition,
+                                out int selectedPosition,
+                                out List<BattleEntity> resolvedTargets))
                         {
-                            // 只有玩家确认目标后才关闭技能二级面板。
-                            // 取消分支不关闭它，因此返回输入状态时可以继续选择技能。
+                            _actionContext.SetResolvedTargets(clickedTarget, selectedPosition, resolvedTargets);
+
                             if (BattleCommandUI.Instance != null)
                                 BattleCommandUI.Instance.HideSkillPanel();
 
@@ -105,7 +105,6 @@ public class TargetSelectionState : BattleState
 
     public override IEnumerator Exit()
     {
-        // 无论确认、取消还是战斗中断，都不能让目标提示残留。
         SetAllTargetCursors(false);
         SetLegalTargetHighlights(false);
         yield break;
@@ -120,10 +119,9 @@ public class TargetSelectionState : BattleState
                (mouse != null && mouse.rightButton.wasPressedThisFrame);
     }
 
-    private void UpdateHoveredTargetCursor(Mouse mouse, Vector2 screenPosition)
+    private void UpdateHoveredTargetCursor(Vector2 screenPosition)
     {
-        bool pointerOverUI = IsPointerOverUI(screenPosition);
-        if (pointerOverUI)
+        if (IsPointerOverUI(screenPosition))
         {
             SetAllTargetCursors(false);
             return;
@@ -135,7 +133,6 @@ public class TargetSelectionState : BattleState
         BattleEntity hoveredTarget = _battleCamera != null
             ? FindTargetAtScreenPosition(screenPosition)
             : null;
-
 
         foreach (BattleEntity entity in _controller.AllEntities)
         {
@@ -152,28 +149,18 @@ public class TargetSelectionState : BattleState
         if (eventSystem == null)
             return false;
 
-        var pointerData = new PointerEventData(eventSystem)
-        {
-            position = screenPosition
-        };
-
+        var pointerData = new PointerEventData(eventSystem) { position = screenPosition };
         _uiRaycastResults.Clear();
         eventSystem.RaycastAll(pointerData, _uiRaycastResults);
 
-        GameObject uiHit = null;
         foreach (RaycastResult result in _uiRaycastResults)
         {
             if (result.module is GraphicRaycaster)
-            {
-                uiHit = result.gameObject;
-                break;
-            }
+                return true;
         }
 
-        return uiHit != null;
+        return false;
     }
-
-
 
     private BattleEntity FindTargetAtScreenPosition(Vector2 screenPosition)
     {
@@ -182,7 +169,7 @@ public class TargetSelectionState : BattleState
 
         foreach (BattleEntity entity in _controller.AllEntities)
         {
-            if (!IsLegalTarget(entity))
+            if (entity == null || entity.Unit == null || !IsLegalTarget(entity))
                 continue;
 
             if (entity.Unit.ContainsScreenPoint(screenPosition, _battleCamera))
@@ -192,27 +179,22 @@ public class TargetSelectionState : BattleState
         return null;
     }
 
-    /// <summary>
-    /// 统一判断当前技能能否选择该实体。光圈与鼠标命中共用此规则。
-    /// </summary>
     private bool IsLegalTarget(BattleEntity entity)
     {
-        if (entity == null || !entity.IsAlive || entity.IsPlayer || entity.Unit == null ||
-            _actionContext == null || _actionContext.Skill == null)
-            return false;
-
-        return _actionContext.Skill.TargetPositions.Contains(
-            _controller.GetLogicalPosition(entity));
+        return entity != null && entity.Unit != null &&
+               BattleTargeting.IsLegalTarget(
+                   _actionContext?.Skill,
+                   _actionContext?.Actor,
+                   entity,
+                   _controller.GetLogicalPosition);
     }
 
     private void SetLegalTargetHighlights(bool visible)
     {
         foreach (BattleEntity entity in _controller.AllEntities)
         {
-            if (entity?.Unit == null)
-                continue;
-
-            entity.Unit.SetTargetHighlight(visible && IsLegalTarget(entity));
+            if (entity?.Unit != null)
+                entity.Unit.SetTargetHighlight(visible && IsLegalTarget(entity));
         }
     }
 

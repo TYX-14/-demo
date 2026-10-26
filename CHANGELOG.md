@@ -1,5 +1,18 @@
 # 更新日志（Changelog）
 
+## 2026-10-26：集中化技能目标规则
+
+- **新增 `Assets/Scripts/Battel/Core/Targeting/BattleTargeting.cs`：** 集中判断目标关系、目标站位、行动者施放站位限制、是否需要手动选目标，以及单体/AoE 的实际目标解析。
+- **`SkillDefinitionSO.cs`：** 新增目标关系（敌方、友方、自身、全体实体）和目标选择方式配置；目标关系、单体/AoE、选择方式分别配置。友方、自身、全体实体关系的技能不检查行动者站位；自身与全体实体关系不受目标站位列表限制。
+- **`TargetSelectionState.cs` 与 `BattleActionContext.cs`：** 移除重复的目标合法性与范围解析逻辑。状态只处理玩家输入和视觉提示；行动上下文只保存 BattleTargeting 解析后的结果。
+- **`BattleController.cs`：** 按技能配置决定进入手动目标选择，或直接解析自动目标并进入行动验证状态。
+- **`SkillPositionDiagram.cs`：** 按目标关系在敌方/友方侧展示目标站位；新增可选友方 AoE 连接线引用。
+- **已知限制：** Automatic + SingleTarget 暂时选择候选列表中的第一个合法目标；后续 AI 可先自行选择候选目标，再调用同一规则层。无目标技能目前只验证行动流程，不执行实际效果。
+- **验证状态：** 代码已提交到功能分支；尚未在 Unity 中编译或运行验证。新增的 `allyAreaConnections` 如需显示友方 AoE 连线，需在 Inspector 中绑定对应 Image。
+
+---
+
+
 ## 2026-10-26：目标选择中直接切换技能
 
 - **修复内容：** 已选中一个技能并进入目标选择时，点击技能面板中的另一个技能即可切换到新技能，不必先按 Esc 或右键取消。
