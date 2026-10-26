@@ -39,6 +39,21 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     [SerializeField, Min(0f)] private float targetCursorGap = 0.15f;
 
+    /// <summary>
+    /// 小手上下浮动的幅度（世界单位）。设为 0 可关闭浮动。
+    /// </summary>
+    [SerializeField, Min(0f)] private float targetCursorBobAmplitude = 0.05f;
+
+    /// <summary>
+    /// 小手每秒浮动的周期数。
+    /// </summary>
+    [SerializeField, Min(0f)] private float targetCursorBobFrequency = 1.1f;
+
+    /// <summary>
+    /// 小手静止时应处于的本地坐标。浮动只叠加在 Y 轴，不影响命中点。
+    /// </summary>
+    private Vector3 targetCursorBaseLocalPosition;
+
     [Header("合法目标光圈")]
     [SerializeField] private GameObject targetHighlight;
     [SerializeField, Min(0f)] private float targetHighlightGroundOffset = 0.015f;
@@ -99,6 +114,19 @@ public class BattleUnit : MonoBehaviour
         // 精灵动画帧可能改变可见边界，因此光圈持续贴合脚底并调整大小。
         if (targetHighlight != null && targetHighlight.activeSelf)
             UpdateTargetHighlightTransform();
+
+        // 在位置同步之后叠加轻柔的上下浮动，避免目标选择状态每帧刷新位置时覆盖动画。
+        if (targetCursorRenderer != null &&
+            targetCursorRenderer.enabled &&
+            targetCursorRenderer.gameObject.activeInHierarchy &&
+            targetCursorBobAmplitude > 0f &&
+            targetCursorBobFrequency > 0f)
+        {
+            Vector3 localPosition = targetCursorBaseLocalPosition;
+            localPosition.y += Mathf.Sin(Time.time * targetCursorBobFrequency * Mathf.PI * 2f)
+                               * targetCursorBobAmplitude;
+            targetCursorRenderer.transform.localPosition = localPosition;
+        }
     }
 
     private void UpdateTargetHighlightTransform()
@@ -169,9 +197,10 @@ public class BattleUnit : MonoBehaviour
         localPos.y = localTop.y;
         localPos.z = localTop.z;
 
-        targetCursorRenderer.transform.localPosition = localPos;
+        targetCursorBaseLocalPosition = localPos;
+        targetCursorRenderer.transform.localPosition = targetCursorBaseLocalPosition;
         if (hitPoint != null)
-            hitPoint.localPosition = localPos;
+            hitPoint.localPosition = targetCursorBaseLocalPosition;
     }
 
     /// <summary>
