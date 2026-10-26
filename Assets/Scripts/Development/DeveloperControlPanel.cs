@@ -17,6 +17,7 @@ public sealed class DeveloperControlPanel : MonoBehaviour
     private Rect windowRect = new Rect(20f, 80f, 360f, 390f);
     private int selectedCharacterIndex;
     private int stressSliderValue;
+    private string stressInputText = "0";
     private CharacterRuntimeData sliderCharacter;
     private Vector2 scrollPosition;
 
@@ -102,19 +103,26 @@ public sealed class DeveloperControlPanel : MonoBehaviour
                 {
                     sliderCharacter = character;
                     stressSliderValue = character.CurrentStress;
-                }
+                    stressInputText = stressSliderValue.ToString();
                 }
 
                 GUILayout.Label($"压力值：{stressSliderValue} / 200");
                 int nextValue = Mathf.RoundToInt(GUILayout.HorizontalSlider(stressSliderValue, 0f, 200f));
                 if (nextValue != stressSliderValue)
+                {
                     stressSliderValue = nextValue;
+                    stressInputText = stressSliderValue.ToString();
+                }
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("精确数值", GUILayout.Width(68f));
-                string stressInput = GUILayout.TextField(stressSliderValue.ToString(), GUILayout.Width(70f));
-                if (int.TryParse(stressInput, out int parsedStress))
-                    stressSliderValue = Mathf.Clamp(parsedStress, 0, 200);
+                string editedStressText = GUILayout.TextField(stressInputText, GUILayout.Width(70f));
+                if (editedStressText != stressInputText)
+                {
+                    stressInputText = editedStressText;
+                    if (int.TryParse(stressInputText, out int parsedStress))
+                        stressSliderValue = Mathf.Clamp(parsedStress, 0, 200);
+                }
                 GUILayout.Label("(0–200)");
                 GUILayout.EndHorizontal();
 
