@@ -13,6 +13,14 @@ public class CharacterRuntimeData
     public int CurrenEXP;
     public int Position;
 
+    [Header("远征精神状态")]
+    [Range(0, 200)] public int CurrentStress;
+    public CharacterSpiritState SpiritState = CharacterSpiritState.Normal;
+    [Min(0f)] public float VirtueChanceBonus;
+    [Range(-1f, 1f)] public float DeathblowResistanceBonus;
+    public bool IsAtDeathsDoor;
+    public bool IsDead;
+
     public string DisplayName => Definition.Name; 
 
     public StatBlock EquipmentStats;//装备属性
@@ -79,8 +87,110 @@ public class CharacterRuntimeData
     /// <param name="amount"></param>
     public void ModifyHp(int amount)
     {
-        CurrentHP += amount;
-        CurrentHP = Mathf.Clamp(CurrentHP, 0, GetTotalStats().MaxHP);
+        if (IsDead || amount == 0)
+            return;
+
+        if (amount > 0)
+        {
+            CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, GetTotalStats().MaxHP);
+            if (CurrentHP > 0)
+                IsAtDeathsDoor = false;
+            CharacterStressSystem.NotifyCharacterUpdated(this);
+            return;
+        }
+
+        // 角色已处于死门且生命仍为 0：下一次伤害交由致死判定处理。
+        if (CurrentHP <= 0 && IsAtDeathsDoor)
+        {
+            ResolveDeathblowCheck();
+            return;
+        }
+
+        CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, GetTotalStats().MaxHP);
+        if (CurrentHP <= 0)
+        {
+            CurrentHP = 0;
+            IsAtDeathsDoor = true;
+        }
+
+        CharacterStressSystem.NotifyCharacterUpdated(this);
+    }
+
+    /// <summary>
+    /// 修改压力。美德期间压力完全锁定；折磨状态一旦触发，会持续到远征结束。
+    /// </summary>
+    public void ModifyStress(int amount)
+    {
+        if (amount == 0 || SpiritState == CharacterSpiritState.Virtue || IsDead)
+            return;
+
+        CurrentStress = Mathf.Clamp(CurrentStress + amount, 0, 200);
+
+        if (SpiritState == CharacterSpiritState.Normal && CurrentStress >= 100)
+        {
+            float chance = ExpeditionManager.GetVirtueChance(this);
+            SpiritState = UnityEngine.Random.value < chance
+                ? CharacterSpiritState.Virtue
+                : CharacterSpiritState.Affliction;
+        }
+
+        if (SpiritState == CharacterSpiritState.Affliction && CurrentStress >= 200)
+        {
+            // 心力衰竭本身不直接判死，只造成一次无法闪避、无法减免的特殊伤害。
+            CurrentStress = 180;
+            ApplyHeartAttack();
+        }
+
+        CharacterStressSystem.NotifyCharacterUpdated(this);
+    }
+
+    /// <summary>
+    /// 心力衰竭：若仍有生命，直接将生命归零并进入死门；
+    /// 若已在死门且生命仍为零，则进行致死判定。
+    /// </summary>
+    private void ApplyHeartAttack()
+    {
+        if (IsDead)
+            return;
+
+        if (CurrentHP <= 0 && IsAtDeathsDoor)
+        {
+            ResolveDeathblowCheck();
+            return;
+        }
+
+        CurrentHP = 0;
+        IsAtDeathsDoor = true;
+    }
+
+    private void ResolveDeathblowCheck()
+    {
+        if (IsDead)
+            return;
+
+        float resistance = Definition != null
+            ? Definition.BaseDeathblowResistance + DeathblowResistanceBonus
+            : 0.67f;
+        resistance = Mathf.Clamp01(resistance);
+
+        if (UnityEngine.Random.value >= resistance)
+        {
+            IsDead = true;
+            CurrentHP = 0;
+            IsAtDeathsDoor = false;
+        }
+
+        CharacterStressSystem.NotifyCharacterUpdated(this);
+    }
+
+    /// <summary>
+    /// 开始新远征时清除本次远征的美德/折磨标记，不重置压力。
+    /// 压力结算由 ExpeditionManager.EndExpedition 统一处理。
+    /// </summary>
+    public void ResetExpeditionSpiritState()
+    {
+        SpiritState = CharacterSpiritState.Normal;
+        CharacterStressSystem.NotifyCharacterUpdated(this);
     }
     /// <summary>
     /// Mp改变
