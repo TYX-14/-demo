@@ -52,12 +52,14 @@ public class SkillPositionDiagram : MonoBehaviour
             return;
         }
 
-        bool targetsEnemy = skill.TargetRelation == SkillTargetRelation.Enemy ||
-                            skill.TargetRelation == SkillTargetRelation.AllEntities;
-        bool targetsAlly = skill.TargetRelation == SkillTargetRelation.Ally ||
-                           skill.TargetRelation == SkillTargetRelation.AllEntities;
         bool selfOnly = skill.TargetRelation == SkillTargetRelation.Self ||
                         skill.TargetSelectionMode == SkillTargetSelectionMode.Self;
+        bool targetsEnemy = !selfOnly &&
+                            (skill.TargetRelation == SkillTargetRelation.Enemy ||
+                             skill.TargetRelation == SkillTargetRelation.AllEntities);
+        bool targetsAlly = skill.TargetRelation == SkillTargetRelation.Ally ||
+                           skill.TargetRelation == SkillTargetRelation.AllEntities ||
+                           selfOnly;
 
         if (targetsEnemy)
             SetEnemyDots(skill.TargetRelation == SkillTargetRelation.AllEntities

@@ -25,7 +25,8 @@ public static class BattleTargeting
         if (skill == null)
             return false;
 
-        if (skill.TargetRelation != SkillTargetRelation.Enemy)
+        if (skill.TargetRelation != SkillTargetRelation.Enemy ||
+            skill.TargetSelectionMode == SkillTargetSelectionMode.Self)
             return true;
 
         return ContainsPosition(skill.UsablePositions, actorPosition);
