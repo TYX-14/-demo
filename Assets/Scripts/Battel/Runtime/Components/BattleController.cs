@@ -32,6 +32,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         {
             Debug.LogWarning(
                 $"当前角色站位 {actorPosition} 不允许使用技能「{skill.SkillName}」。", this);
+            CancelTargetSelectionAfterRejectedSkill();
             return false;
         }
 
@@ -51,7 +52,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
                 out List<BattleEntity> resolvedTargets))
         {
             Debug.LogWarning($"技能「{skill.SkillName}」没有符合规则的目标。", this);
-            PendingAction = null;
+            CancelTargetSelectionAfterRejectedSkill();
             return false;
         }
 
@@ -61,6 +62,19 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
 
         SetState(new PerformActionState(this, actionContext));
         return true;
+    }
+
+    /// <summary>
+    /// 玩家在目标选择期间尝试切换到不合法技能时，立即清除旧技能的视觉提示并退出旧选择状态。
+    /// </summary>
+    private void CancelTargetSelectionAfterRejectedSkill()
+    {
+        if (CurrentState is not TargetSelectionState targetSelectionState)
+            return;
+
+        targetSelectionState.ClearTargetFeedback();
+        PendingAction = null;
+        SetState(new PlayerInputState(this));
     }
 
     public void CancelPendingAction()
