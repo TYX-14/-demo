@@ -6,6 +6,7 @@
 - **顺序维护：** 收到 `CurrentEntityChangedEvent` 时重新按英雄站位排序，并刷新当前行动者高亮。站位调整后，最迟会在下一次行动者切换时同步列表顺序。
 - **Inspector 配置：** 在 `BattleHUDcontroller` 上指定 `Health Bar Prefab`，并将左上角的状态栏排列容器拖入 `Health Bar Container`。容器建议使用 `Vertical Layout Group` 管理垂直排列；若不指定容器，则使用 `Health Bar Panel Root`。
 - **行动者样式：** `HealthBarController` 的 `Acting Background Sprite` 仍需在预制体 Inspector 中指定；未指定时只执行 `Root` 的缩放高亮。
+- **背景尺寸：** `HealthBarController.SetActing()` 切换行动者背景图时调用 `Image.SetNativeSize()`；恢复默认背景时也同步恢复其原生尺寸。
 - **验证状态：** 已提交至 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。
 
 ---
