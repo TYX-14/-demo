@@ -18,7 +18,8 @@ public class SkillPositionDiagram : MonoBehaviour
     [Header("敌方 AoE 连接线（从左到右连接 4-3、3-2、2-1 号位）")]
     [SerializeField] private Image[] enemyAreaConnections = new Image[3];
 
-    [Header("友方 AoE 连接线（从左到右连接 1-2、2-3、3-4 号位，可选绑定）")]
+    [Header("友方 AoE 连接线（从左到右分别绑定 1-2、2-3、3-4 号位）")]
+    [Tooltip("与敌方 AoE 连接线相同：仅当技能为 AoE，且连接线两端的站位都在目标位置范围内时显示。")]
     [SerializeField] private Image[] allyAreaConnections = new Image[3];
 
     [Header("显示颜色")]
@@ -95,11 +96,9 @@ public class SkillPositionDiagram : MonoBehaviour
 
             if (targetsAlly)
                 SetAreaConnections(allyAreaConnections,
-                    skill.TargetRelation == SkillTargetRelation.AllEntities
+                    skill.TargetRelation == SkillTargetRelation.AllEntities || selfOnly
                         ? new[] { 1, 2, 3, 4 }
                         : skill.TargetPositions, false);
-            else if (selfOnly)
-                SetAreaConnections(allyAreaConnections, new[] { 1, 2, 3, 4 }, true);
             else
                 HideConnections(allyAreaConnections);
         }
