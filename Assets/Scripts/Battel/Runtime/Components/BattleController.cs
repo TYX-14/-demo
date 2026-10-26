@@ -45,7 +45,11 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     /// </summary>
     public bool BeginSkillTargetSelection(SkillDefinitionSO skill)
     {
-        if (!_battleRunning || !(CurrentState is PlayerInputState) ||
+        // 允许在首次选择技能或已有目标选择时再次点击技能。
+        // 后一种情况会用新技能上下文替换旧上下文，并重新进入目标选择状态。
+        bool canSelectSkill = CurrentState is PlayerInputState ||
+                              CurrentState is TargetSelectionState;
+        if (!_battleRunning || !canSelectSkill ||
             CurrentEntity == null || !CurrentEntity.IsPlayer || skill == null)
             return false;
 
