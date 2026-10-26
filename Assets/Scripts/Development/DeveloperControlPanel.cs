@@ -103,15 +103,20 @@ public sealed class DeveloperControlPanel : MonoBehaviour
                     sliderCharacter = character;
                     stressSliderValue = character.CurrentStress;
                 }
-                else if (!GUI.changed)
-                {
-                    stressSliderValue = character.CurrentStress;
                 }
 
                 GUILayout.Label($"压力值：{stressSliderValue} / 200");
                 int nextValue = Mathf.RoundToInt(GUILayout.HorizontalSlider(stressSliderValue, 0f, 200f));
                 if (nextValue != stressSliderValue)
                     stressSliderValue = nextValue;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("精确数值", GUILayout.Width(68f));
+                string stressInput = GUILayout.TextField(stressSliderValue.ToString(), GUILayout.Width(70f));
+                if (int.TryParse(stressInput, out int parsedStress))
+                    stressSliderValue = Mathf.Clamp(parsedStress, 0, 200);
+                GUILayout.Label("(0–200)");
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("应用压力值"))
