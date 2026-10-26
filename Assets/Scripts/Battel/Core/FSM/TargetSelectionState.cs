@@ -105,9 +105,15 @@ public class TargetSelectionState : BattleState
 
     public override IEnumerator Exit()
     {
+        ClearTargetFeedback();
+        yield break;
+    }
+
+    /// <summary>立即清除本状态负责的目标光圈和鼠标小手提示。</summary>
+    public void ClearTargetFeedback()
+    {
         SetAllTargetCursors(false);
         SetLegalTargetHighlights(false);
-        yield break;
     }
 
     private bool WasCancelPressed()
