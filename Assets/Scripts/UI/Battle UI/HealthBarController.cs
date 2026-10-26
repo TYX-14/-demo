@@ -68,9 +68,15 @@ public class HealthBarController : MonoBehaviour
         if (backgroundImage != null)
         {
             if (isActing && actingBackgroundSprite != null)
+            {
                 backgroundImage.sprite = actingBackgroundSprite;
+                backgroundImage.SetNativeSize();
+            }
             else
+            {
                 backgroundImage.sprite = defaultBackgroundSprite;
+                backgroundImage.SetNativeSize();
+            }
         }
 
         if (rootTransform != null)
