@@ -47,7 +47,8 @@ public static class BattleTargeting
                     return false;
                 break;
             case SkillTargetRelation.Ally:
-                if (candidate.IsPlayer != actor.IsPlayer || candidate == actor)
+                // Ally 表示同阵营实体，包含行动者自身；是否允许自身成为目标由 TargetPositions 等技能配置决定。
+                if (candidate.IsPlayer != actor.IsPlayer)
                     return false;
                 break;
             case SkillTargetRelation.Self:
