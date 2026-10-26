@@ -140,12 +140,21 @@ public class TargetSelectionState : BattleState
             ? FindTargetAtScreenPosition(screenPosition)
             : null;
 
+        // AoE 悬停任意一个合法目标时，所有实际会被该技能覆盖的合法目标同时显示小手。
+        // 单体技能仍然只在当前悬停目标上显示小手。
+        bool showAllAreaTargets = hoveredTarget != null &&
+                                  _actionContext?.Skill?.TargetType == SkillTargetType.AoE;
+
         foreach (BattleEntity entity in _controller.AllEntities)
         {
             if (entity == null || entity.Unit == null)
                 continue;
 
-            entity.Unit.SetTargetSelection(entity == hoveredTarget);
+            bool showCursor = showAllAreaTargets
+                ? IsLegalTarget(entity)
+                : entity == hoveredTarget;
+
+            entity.Unit.SetTargetSelection(showCursor);
         }
     }
 
