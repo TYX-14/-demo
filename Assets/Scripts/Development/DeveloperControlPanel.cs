@@ -17,6 +17,7 @@ public sealed class DeveloperControlPanel : MonoBehaviour
     private Rect windowRect = new Rect(20f, 80f, 360f, 390f);
     private int selectedCharacterIndex;
     private int stressSliderValue;
+    private CharacterRuntimeData sliderCharacter;
     private Vector2 scrollPosition;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -97,8 +98,15 @@ public sealed class DeveloperControlPanel : MonoBehaviour
             character = characters[selectedCharacterIndex];
             if (character != null)
             {
-                if (stressSliderValue != character.CurrentStress && !GUI.changed)
+                if (sliderCharacter != character)
+                {
+                    sliderCharacter = character;
                     stressSliderValue = character.CurrentStress;
+                }
+                else if (!GUI.changed)
+                {
+                    stressSliderValue = character.CurrentStress;
+                }
 
                 GUILayout.Label($"压力值：{stressSliderValue} / 200");
                 int nextValue = Mathf.RoundToInt(GUILayout.HorizontalSlider(stressSliderValue, 0f, 200f));
