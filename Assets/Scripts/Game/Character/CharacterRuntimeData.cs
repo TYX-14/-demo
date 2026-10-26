@@ -126,12 +126,19 @@ public class CharacterRuntimeData
 
         CurrentStress = Mathf.Clamp(CurrentStress + amount, 0, 200);
 
-        if (SpiritState == CharacterSpiritState.Normal && CurrentStress >= 100)
+        if (amount > 0 && SpiritState == CharacterSpiritState.Normal && CurrentStress >= 100)
         {
+            // 决心考验固定在 100 点发生。若一次增加跨过阈值，美德不会被溢出的压力推高。
+            int overflowStress = Mathf.Max(0, CurrentStress - 100);
+            CurrentStress = 100;
+
             float chance = ExpeditionManager.GetVirtueChance(this);
             SpiritState = UnityEngine.Random.value < chance
                 ? CharacterSpiritState.Virtue
                 : CharacterSpiritState.Affliction;
+
+            if (SpiritState == CharacterSpiritState.Affliction)
+                CurrentStress = Mathf.Min(200, 100 + overflowStress);
         }
 
         if (SpiritState == CharacterSpiritState.Affliction && CurrentStress >= 200)
