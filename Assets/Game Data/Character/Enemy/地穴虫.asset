@@ -18,7 +18,7 @@ MonoBehaviour:
   LeftIdle: {fileID: 0}
   BaseLevel: 1
   BaseStats:
-    MaxHP: 0
+    MaxHP: 10
     MaxSP: 0
     PAtk: 0
     PDef: 0

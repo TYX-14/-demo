@@ -24,10 +24,11 @@ MonoBehaviour:
     PDef: 50
     MAtk: 0
     MDef: 0
-    Speed: 5
+    Speed: 2
     Accuracy: 0
     Evasion: 0
   maxSwapDistance: 2
+  initialSkills: []
   filedAnimator: {fileID: 22100000, guid: b2214d084f3ea414889ad9ea3ec9822b, type: 2}
   battleAnimator: {fileID: 22100000, guid: d356795a59ac3994095b69b86ae5bfbb, type: 2}
   job: 1

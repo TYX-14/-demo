@@ -16,6 +16,8 @@ MonoBehaviour:
   skillIcon: {fileID: 21300000, guid: 888ca067b11a249f7beada02a83d7ca1, type: 3}
   description: "\u5BF9\u81EA\u8EAB\n3\u56DE\u5408"
   spCost: 20
-  targetType: 0
+  targetRelation: 1
+  targetType: 1
+  targetSelectionMode: 0
   usablePositions: 01000000020000000300000004000000
-  targetPositions: 
+  targetPositions: 01000000020000000300000004000000

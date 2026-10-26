@@ -17,5 +17,5 @@ MonoBehaviour:
   description: "\u4F24\u5BB3\u4FEE\u6B63+10%"
   spCost: 0
   targetType: 0
-  usablePositions: 01000000020000000300000004000000
-  targetPositions: 01000000020000000300000004000000
+  usablePositions: 0100000002000000
+  targetPositions: 0100000002000000
