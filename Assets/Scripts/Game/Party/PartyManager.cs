@@ -22,65 +22,6 @@ public class PartyManager : singleton<PartyManager>,IEventReceiver<GameModeChang
     /// </summary>
     private bool fieldActorsHidden;
 
-#if UNITY_EDITOR
-    // 临时快速检查入口：仅在 Unity 编辑器中生效，发布构建不会带入。
-    // F6：探索模式交换 1、2 号位；战斗模式测试主动换位。
-    // F7：战斗模式测试 2 号位队员被击退到 3 号位。
-    private void Update()
-    {
-        var keyboard = UnityEngine.InputSystem.Keyboard.current;
-        if (keyboard == null)
-            return;
-
-        bool testSwap = keyboard.f6Key.wasPressedThisFrame;
-        bool testKnockback = keyboard.f7Key.wasPressedThisFrame;
-        if (!testSwap && !testKnockback)
-            return;
-
-        if (GameModeManager.Instance == null)
-            return;
-
-        if (GameModeManager.Instance.CurrentGameMode == GameMode.Explore)
-        {
-            if (testSwap)
-            {
-                SwapPosition(1, 2);
-                Debug.Log("[换位测试] 探索模式：已请求交换 1、2 号位。");
-            }
-            return;
-        }
-
-        if (GameModeManager.Instance.CurrentGameMode != GameMode.Battle)
-            return;
-
-        BattleFieldManager battleField = FindAnyObjectByType<BattleFieldManager>();
-        if (battleField == null)
-        {
-            Debug.LogWarning("[换位测试] 找不到 BattleFieldManager。");
-            return;
-        }
-
-        int sourcePosition = testSwap ? 1 : 2;
-        int targetPosition = testSwap ? 2 : 3;
-        BattleUnit actorUnit = battleField.SpawnedAllyUnits
-            .FirstOrDefault(unit => unit != null && unit.Entity != null &&
-                                    unit.Entity.RuntimeData.Position == sourcePosition);
-        if (actorUnit == null)
-        {
-            Debug.LogWarning($"[换位测试] 找不到当前处于 {sourcePosition} 号位的友军。");
-            return;
-        }
-
-        bool started = testSwap
-            ? battleField.TrySwapAllyPositions(actorUnit.Entity, targetPosition)
-            : battleField.TryKnockbackAllyToPosition(actorUnit.Entity, targetPosition);
-
-        string actionName = testSwap ? "主动换位" : "击退";
-        Debug.Log(started
-            ? $"[换位测试] 战斗模式：已启动{actionName}测试（{sourcePosition} → {targetPosition}）。此调试入口不扣行动资源。"
-            : $"[换位测试] {actionName}未启动，请检查目标槽位、位置限制或是否正在移动。");
-    }
-#endif
     protected override void Awake()
     {
         base.Awake();
