@@ -74,7 +74,7 @@ public class TargetSelectionState : BattleState
                     {
                         BattleEntity clickedTarget = FindTargetAtScreenPosition(mousePosition);
                         if (clickedTarget != null &&
-                            BattleTargeting.TryResolveManualTarget(
+                            BattleTargeting.TryResolveSelectedTarget(
                                 _actionContext.Skill,
                                 _actionContext.Actor,
                                 clickedTarget,

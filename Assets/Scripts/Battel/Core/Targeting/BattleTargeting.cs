@@ -85,7 +85,7 @@ public static class BattleTargeting
     /// <summary>
     /// 解析玩家手动点击的目标。单体只解析被点击者；AoE 将关系与站位规则覆盖到的所有目标纳入结果。
     /// </summary>
-    public static bool TryResolveManualTarget(SkillDefinitionSO skill, BattleEntity actor,
+    public static bool TryResolveSelectedTarget(SkillDefinitionSO skill, BattleEntity actor,
         BattleEntity selectedTarget, IReadOnlyList<BattleEntity> allEntities,
         Func<BattleEntity, int> getPosition, out int selectedPosition,
         out List<BattleEntity> resolvedTargets)
@@ -93,7 +93,7 @@ public static class BattleTargeting
         selectedPosition = 0;
         resolvedTargets = new List<BattleEntity>();
 
-        if (!RequiresManualSelection(skill) || selectedTarget == null ||
+        if (skill == null || selectedTarget == null ||
             !IsLegalTarget(skill, actor, selectedTarget, getPosition))
             return false;
 
