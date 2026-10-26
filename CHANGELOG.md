@@ -1,3 +1,12 @@
+## 2026-10-26：禁用当前站位不可使用的技能按钮
+
+- **交互优化：** 技能面板生成条目时，使用 `BattleTargeting.CanUseFromPosition` 检查当前行动者的逻辑站位；不满足技能施放站位要求时，技能按钮会变为不可交互状态，不能被点击。
+- **实现位置：** `Assets/Scripts/UI/Battle UI/BattleCommandUI/BattleSkillPanelController.cs` 负责传入合法性结果；`BattleSkillEntryUI.cs` 设置 `Button.interactable`，并在点击回调中增加防护。
+- **规则一致性：** 复用现有集中规则，不另写一套 `UsablePositions` 判断。点击入口 `BattleController.BeginSkillTargetSelection` 中原有的合法性检查仍保留，作为第二道保护。
+- **验证状态：** 已提交到 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。
+
+---
+
 ## 2026-10-26：目标选择小手增加上下浮动
 
 - **交互表现：** 合法目标上方的小手显示时，会轻柔地上下浮动；隐藏时停止更新动画。
