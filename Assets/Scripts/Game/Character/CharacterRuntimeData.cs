@@ -209,8 +209,12 @@ public class CharacterRuntimeData
     /// <param name="amount"></param>
     public void ModifyMp(int amount)
     {
+        if (IsDead || amount == 0)
+            return;
+
         CurrentSP += amount;
         CurrentSP = Mathf.Clamp(CurrentSP, 0, GetTotalStats().MaxSP);
+        CharacterStressSystem.NotifyCharacterUpdated(this);
     }
     public void ResetBattleBP()
     {
