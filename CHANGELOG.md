@@ -1,3 +1,16 @@
+## 2026-10-26：建立压力、美德/折磨与死门的基础规则
+
+- **角色运行时数据：** `CharacterRuntimeData` 新增压力值、远征精神状态、美德概率加成、死门与死亡标记。状态保存在角色数据上，不依赖某一场战斗的 `BattleUnit`。
+- **压力规则：** 压力范围为 0-200；普通状态达到 100 时进行一次决心考验，基础美德概率为 25%，可通过角色的 `VirtueChanceBonus` 加成并将最终概率限制在 0-100%。美德状态锁定压力变化；折磨状态在本次远征持续有效，压力达到 200 时触发心力衰竭并回落到 180。
+- **心力衰竭与死门：** 心力衰竭不会直接判死。角色尚有生命时会被特殊伤害直接归零并进入死门；角色生命仍为 0 且已在死门时再次受到伤害，则进行致死判定。角色被治疗至正生命值后离开死门。基础死门抵抗率可在角色定义中配置，默认 67%。
+- **远征结算：** 新增 `ExpeditionManager` 的 `BeginExpedition()` / `EndExpedition()`。远征结束时，美德者压力归零、折磨者压力设为 100、未触发两种状态者保留压力。战斗结束不会自动结算压力。
+- **压力显示组件：** 新增 `StressMeterUI`，支持五个圆点、逐点填充、100-200 阶段红色向暗红色过渡、美德金色显示，以及可选的 Outline 发光轮廓。
+- **涉及文件：** `CharacterDefinitionSO.cs`、`CharacterRuntimeData.cs`、`CharacterStressSystem.cs`、`ExpeditionManager.cs`、`StressMeterUI.cs`。
+- **当前边界：** 现有战斗行动执行仍未实现完整伤害结算，因此本次提供了可调用的压力与生命值接口，但尚未把压力来源接入技能/事件结算，也未将 `StressMeterUI.Bind()` 自动连接到现有血条预制体。需在 Unity 中绑定圆点 Image/Outline，并由对应角色血条初始化时调用 `Bind(CharacterRuntimeData)`。
+- **验证状态：** 已提交到 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。
+
+---
+
 ## 2026-10-26：禁用当前站位不可使用的技能按钮
 
 - **交互优化：** 技能面板生成条目时，使用 `BattleTargeting.CanUseFromPosition` 检查当前行动者的逻辑站位；不满足技能施放站位要求时，技能按钮会变为不可交互状态，不能被点击。
