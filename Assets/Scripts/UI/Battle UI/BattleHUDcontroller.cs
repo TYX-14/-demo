@@ -10,12 +10,17 @@ using UnityEngine;
 /// </summary>
 public class BattleHUDcontroller : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
-    IEventReceiver<CurrentEntityChangedEvent>
+    IEventReceiver<CurrentEntityChangedEvent>,
+    IEventReceiver<GameModeChangedEvent>
 {
     [Header("战斗 HUD 根节点")]
     [SerializeField, Tooltip("英雄状态栏列表所在的根物体")]
     private GameObject healthBarPanelRoot;
 
+
+    [Header("CTB 显隐")]
+    [SerializeField, Tooltip("Battle UI 下的 CTB 根节点，由 BattleHUDcontroller 统一控制显隐。")]
+    private GameObject ctbRoot;
 
     [Header("英雄状态栏生成")]
     [SerializeField, Tooltip("仅用于我方英雄的状态栏预制体")]
@@ -31,12 +36,14 @@ public class BattleHUDcontroller : MonoBehaviour,
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Subscribe<GameModeChangedEvent>(this);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Unsubscribe<GameModeChangedEvent>(this);
     }
 
     /// <summary>
@@ -45,6 +52,8 @@ public class BattleHUDcontroller : MonoBehaviour,
     public void OnEvent(BattleStartedEvent evt)
     {
         SetupHUD();
+        if (ctbRoot != null)
+            ctbRoot.SetActive(true);
         BuildAllyHealthBars();
         RefreshActingHighlight();
     }
@@ -57,6 +66,21 @@ public class BattleHUDcontroller : MonoBehaviour,
         currentActingEntity = evt.Entity;
         SortHealthBarsByPosition();
         RefreshActingHighlight();
+    }
+
+    public void OnEvent(GameModeChangedEvent evt)
+    {
+        bool showBattleUI = evt.newMode == GameMode.Battle;
+        if (ctbRoot != null)
+            ctbRoot.SetActive(showBattleUI);
+        if (healthBarPanelRoot != null)
+            healthBarPanelRoot.SetActive(showBattleUI);
+
+        if (!showBattleUI)
+        {
+            currentActingEntity = null;
+            ClearHealthBars();
+        }
     }
 
     private void SetupHUD()
