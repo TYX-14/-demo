@@ -217,7 +217,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     {
         _battleRunning = false;
         _currentState = null;
-        CurrentEntity = null;
+        SetCurrentEntity(null);
         _roundScheduler = null;
 
         if (_battleLoopRoutine != null)
