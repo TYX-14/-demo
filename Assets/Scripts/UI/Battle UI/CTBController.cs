@@ -317,6 +317,8 @@ public sealed class CTBController : MonoBehaviour,
             else
             {
                 icon = GetIcon(container);
+                if (icon == null)
+                    continue;
                 icon.Bind(node);
                 icon.transform.SetSiblingIndex(i);
                 entering.Add(icon);
