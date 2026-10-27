@@ -46,6 +46,9 @@ public class BattleSetupState : BattleState
         _controller.AllEntities.AddRange(allyEntities);
         _controller.AllEntities.AddRange(CreateEntities(_startPayload.Enemies, _controller.FieldManager.SpawnedEnemyUnits, false));
 
+        // 双方实体已完整创建，初始化本场战斗的 CTB 调度状态。
+        _controller.InitializeRoundScheduler();
+
         // 3. 战斗开始时，友方跑位。
         float runtime = 1f; // TODO：以后统一管理
         if (runtime > 0f)
