@@ -35,7 +35,7 @@ public sealed class CTBController : MonoBehaviour,
 
     private readonly List<TimelineIconController> currentRoundIcons = new();
     private readonly List<TimelineIconController> nextRoundIcons = new();
-    private readonly Stack<TimelineIconController> iconPool = new();
+    private TimelineIconPool iconPool;
     private readonly HashSet<TimelineIconController> exitingIcons = new();
 
     private BattleEntity currentActingEntity;
@@ -48,6 +48,10 @@ public sealed class CTBController : MonoBehaviour,
     private void Awake()
     {
         CachePortraitRestingPosition();
+        iconPool = GetComponent<TimelineIconPool>();
+        if (iconPool == null)
+            iconPool = gameObject.AddComponent<TimelineIconPool>();
+        iconPool.Initialize(timelineIconPrefab, transform);
     }
 
     private void CachePortraitRestingPosition()
@@ -361,28 +365,7 @@ public sealed class CTBController : MonoBehaviour,
 
     private TimelineIconController GetIcon(Transform container)
     {
-        TimelineIconController icon = null;
-        while (iconPool.Count > 0 && icon == null)
-            icon = iconPool.Pop();
-
-        if (icon == null)
-        {
-            GameObject instance = Instantiate(timelineIconPrefab, container, false);
-            icon = instance.GetComponent<TimelineIconController>();
-            if (icon == null)
-            {
-                Debug.LogError("CTBController：Timeline Icon 预制体缺少 TimelineIconController 组件。", instance);
-                Destroy(instance);
-                return null;
-            }
-        }
-        else
-        {
-            icon.gameObject.SetActive(true);
-            icon.PrepareForReuse(container);
-        }
-
-        return icon;
+        return iconPool != null ? iconPool.Get(container) : null;
     }
 
     private IEnumerator ExitAndRecycle(TimelineIconController icon)
@@ -399,12 +382,8 @@ public sealed class CTBController : MonoBehaviour,
 
     private void ReturnIcon(TimelineIconController icon)
     {
-        if (icon == null)
-            return;
-        icon.PrepareForReuse(transform);
-        icon.gameObject.SetActive(false);
-        if (!iconPool.Contains(icon))
-            iconPool.Push(icon);
+        if (iconPool != null)
+            iconPool.Release(icon);
     }
 
     private void RecyclePool(List<TimelineIconController> icons)
