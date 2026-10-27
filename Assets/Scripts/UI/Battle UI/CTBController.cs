@@ -64,6 +64,11 @@ public sealed class CTBController : MonoBehaviour,
 
     private void OnEnable()
     {
+        // 如果上次禁用时动画被中断，等父级重新激活后再回收图标。
+        // 不能在 OnDisable 中回收：此时 CTB 的父容器可能正在停用，
+        // TimelineIconPool.Release() 的 SetParent 会触发 Unity 错误。
+        RecycleAllVisibleIcons();
+
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
         EventBus.Subscribe<CTBQueueUpdatedEvent>(this);
@@ -81,7 +86,10 @@ public sealed class CTBController : MonoBehaviour,
         StopAllCoroutines();
         portraitRoutine = null;
         openingRoutine = null;
-        RecycleAllVisibleIcons();
+
+        // 此处只停止动画，不移动/停用头像对象。
+        // 当父级正在停用时，Unity 不允许在这里重设子对象的 parent。
+        // 图标列表保留到下一次 OnEnable，由上方在层级恢复激活后统一回收。
         isOpeningSequence = true;
         currentActingEntity = null;
         SetPortraitBlank();
