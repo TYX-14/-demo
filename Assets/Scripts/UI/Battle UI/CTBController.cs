@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using MFrameork.Event;
 using UnityEngine;
@@ -5,9 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// CTB 显示控制器。
-/// 当前行动者使用场景中已有的大头像 Image；两个后续行动池使用 Timeline Icon 预制体。
-/// 本脚本不计算行动顺序，后续由 CTB 行动顺序系统调用对应的 Set 方法填充池子。
+/// CTB 展示控制器。行动顺序由 BattleRoundScheduler 提供；本类只负责头像复用、队列过渡与大头像动画。
 /// </summary>
 public sealed class CTBController : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
@@ -17,31 +16,42 @@ public sealed class CTBController : MonoBehaviour,
     [Header("当前行动者")]
     [SerializeField, Tooltip("场景中已有的大头像 Image，不需要制作头像预制体。")]
     private Image currentActingPortraitImage;
-
     [SerializeField, Tooltip("当前行动者大头像下方显示实体名称的 TMP_Text。")]
     private TMP_Text currentActingNameText;
 
     [Header("当前回合后续行动池")]
-    [SerializeField, Tooltip("显示本回合当前行动者之后的行动者。顺序由外部行动顺序系统传入。")]
-    private Transform currentRoundUpcomingContainer;
-
+    [SerializeField] private Transform currentRoundUpcomingContainer;
     [Header("下一回合行动池")]
-    [SerializeField, Tooltip("显示下一回合行动顺序。当前不自动计算，由后续行动顺序系统传入。")]
-    private Transform nextRoundContainer;
+    [SerializeField] private Transform nextRoundContainer;
 
     [Header("后续行动头像")]
-    [SerializeField, Tooltip("Timeline Icon 预制体。友方/敌方背景由预制体上的 TimelineIconController 切换。")]
-    private GameObject timelineIconPrefab;
+    [SerializeField] private GameObject timelineIconPrefab;
+    [SerializeField, Min(0f)] private float enterDuration = 0.22f;
+    [SerializeField, Min(0f)] private float exitDuration = 0.15f;
+    [SerializeField, Min(0f)] private float moveDuration = 0.22f;
+    [SerializeField, Min(0f)] private float iconEnterOffset = 18f;
+    [SerializeField, Min(0f)] private float iconExitOffset = 14f;
+    [SerializeField, Min(0f)] private float portraitSlideDistance = 90f;
 
     private readonly List<TimelineIconController> currentRoundIcons = new();
     private readonly List<TimelineIconController> nextRoundIcons = new();
+    private readonly Stack<TimelineIconController> iconPool = new();
+    private readonly HashSet<TimelineIconController> exitingIcons = new();
+
     private BattleEntity currentActingEntity;
+    private bool isOpeningSequence = true;
+    private Coroutine portraitRoutine;
+    private Coroutine openingRoutine;
 
     private void OnEnable()
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
         EventBus.Subscribe<CTBQueueUpdatedEvent>(this);
+        isOpeningSequence = true;
+        currentActingEntity = null;
+        RefreshCurrentActingName();
+        SetPortraitBlank();
     }
 
     private void OnDisable()
@@ -49,42 +59,183 @@ public sealed class CTBController : MonoBehaviour,
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
         EventBus.Unsubscribe<CTBQueueUpdatedEvent>(this);
-        ClearIcons(currentRoundIcons);
-        ClearIcons(nextRoundIcons);
+        StopAllCoroutines();
+        portraitRoutine = null;
+        openingRoutine = null;
+        RecycleAllVisibleIcons();
+        isOpeningSequence = true;
+        currentActingEntity = null;
+        SetPortraitBlank();
+        RefreshCurrentActingName();
     }
 
+    /// <summary>战斗 UI 显示事件到来时，大头像先保持空白，等待真正选出第一名行动者。</summary>
     public void OnEvent(BattleStartedEvent evt)
     {
+        isOpeningSequence = true;
         currentActingEntity = null;
-        RefreshCurrentActingPortrait();
-        ClearIcons(currentRoundIcons);
-        ClearIcons(nextRoundIcons);
+        if (openingRoutine != null)
+            StopCoroutine(openingRoutine);
+        openingRoutine = null;
+        if (portraitRoutine != null)
+            StopCoroutine(portraitRoutine);
+        portraitRoutine = null;
+        RecycleAllVisibleIcons();
+        SetPortraitBlank();
+        RefreshCurrentActingName();
     }
 
     public void OnEvent(CurrentEntityChangedEvent evt)
     {
         currentActingEntity = evt.Entity;
-        RefreshCurrentActingPortrait();
+        RefreshCurrentActingName();
+
+        // 首次显示时，当前行动者先作为普通队首图标出现，不能直接填进大头像。
+        if (isOpeningSequence)
+            return;
+
+        if (portraitRoutine != null)
+            StopCoroutine(portraitRoutine);
+        portraitRoutine = StartCoroutine(TransitionPortrait(currentActingEntity, false));
     }
 
     public void OnEvent(CTBQueueUpdatedEvent evt)
     {
-        SetCurrentRoundUpcomingEntities(evt.CurrentRoundNodes);
-        SetNextRoundEntities(evt.NextRoundNodes);
-    }
-
-    private void RefreshCurrentActingPortrait()
-    {
-        Sprite portrait = currentActingEntity != null && currentActingEntity.Definition != null
-            ? currentActingEntity.Definition.LeftBattleIdle
-            : null;
-
-        if (currentActingPortraitImage != null)
+        if (isOpeningSequence && currentActingEntity != null)
         {
-            currentActingPortraitImage.sprite = portrait;
-            currentActingPortraitImage.enabled = portrait != null;
+            CTBDisplayNode[] openingNodes = PrependCurrentActor(currentActingEntity, evt.CurrentRoundNodes);
+            SyncPool(openingNodes, currentRoundUpcomingContainer, currentRoundIcons);
+            SyncPool(evt.NextRoundNodes, nextRoundContainer, nextRoundIcons);
+
+            if (openingRoutine != null)
+                StopCoroutine(openingRoutine);
+            openingRoutine = StartCoroutine(PlayOpeningSequence());
+            return;
         }
 
+        SyncPool(evt.CurrentRoundNodes, currentRoundUpcomingContainer, currentRoundIcons);
+        SyncPool(evt.NextRoundNodes, nextRoundContainer, nextRoundIcons);
+    }
+
+    public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities) =>
+        SyncPool(ToArray(entities), currentRoundUpcomingContainer, currentRoundIcons);
+
+    public void SetNextRoundEntities(IEnumerable<CTBDisplayNode> entities) =>
+        SyncPool(ToArray(entities), nextRoundContainer, nextRoundIcons);
+
+    public void ClearCurrentRoundUpcomingPool() => RecyclePool(currentRoundIcons);
+    public void ClearNextRoundPool() => RecyclePool(nextRoundIcons);
+
+    private IEnumerator PlayOpeningSequence()
+    {
+        // 先让当前行动者以普通小头像入场，随后立即向左退出并由大头像接棒。
+        if (enterDuration > 0f)
+            yield return new WaitForSecondsRealtime(enterDuration);
+
+        if (currentRoundIcons.Count > 0 &&
+            currentRoundIcons[0] != null &&
+            currentRoundIcons[0].BoundEntity == currentActingEntity)
+        {
+            TimelineIconController actorIcon = currentRoundIcons[0];
+            currentRoundIcons.RemoveAt(0);
+            actorIcon.SetIgnoredByLayout(true);
+            float step = GetSlotStep(currentRoundUpcomingContainer, actorIcon);
+            for (int i = 0; i < currentRoundIcons.Count; i++)
+            {
+                TimelineIconController icon = currentRoundIcons[i];
+                if (icon == null)
+                    continue;
+                icon.transform.SetSiblingIndex(i);
+                icon.SetVisualOffset(new Vector2(step, 0f));
+                StartCoroutine(icon.PlayMoveAnimation(new Vector2(step, 0f), moveDuration));
+            }
+
+            ForceLayout(currentRoundUpcomingContainer);
+            exitingIcons.Add(actorIcon);
+            StartCoroutine(ExitAndRecycle(actorIcon));
+        }
+
+        yield return TransitionPortrait(currentActingEntity, true);
+        isOpeningSequence = false;
+        openingRoutine = null;
+    }
+
+    private IEnumerator TransitionPortrait(BattleEntity nextEntity, bool opening)
+    {
+        if (currentActingPortraitImage == null)
+            yield break;
+
+        RectTransform imageRect = currentActingPortraitImage.rectTransform;
+        Vector2 restingPosition = imageRect.anchoredPosition;
+        Color color = currentActingPortraitImage.color;
+
+        if (!opening && currentActingPortraitImage.enabled && currentActingPortraitImage.sprite != null)
+        {
+            yield return AnimatePortrait(imageRect, restingPosition + Vector2.left * portraitSlideDistance,
+                0f, moveDuration * 0.5f, color.a);
+        }
+
+        Sprite nextSprite = nextEntity != null && nextEntity.Definition != null
+            ? nextEntity.Definition.LeftBattleIdle
+            : null;
+
+        currentActingPortraitImage.sprite = nextSprite;
+        currentActingPortraitImage.enabled = nextSprite != null;
+        if (nextSprite == null)
+        {
+            imageRect.anchoredPosition = restingPosition;
+            currentActingPortraitImage.color = new Color(color.r, color.g, color.b, color.a);
+            yield break;
+        }
+
+        imageRect.anchoredPosition = restingPosition + Vector2.right * portraitSlideDistance;
+        currentActingPortraitImage.color = new Color(color.r, color.g, color.b, 0f);
+        yield return AnimatePortrait(imageRect, restingPosition, 1f, moveDuration, color.a);
+        portraitRoutine = null;
+    }
+
+    private IEnumerator AnimatePortrait(RectTransform imageRect, Vector2 targetPosition, float targetAlpha, float duration, float finalAlpha)
+    {
+        Vector2 startPosition = imageRect.anchoredPosition;
+        float startAlpha = currentActingPortraitImage.color.a;
+        Color color = currentActingPortraitImage.color;
+
+        if (duration <= 0f)
+        {
+            imageRect.anchoredPosition = targetPosition;
+            currentActingPortraitImage.color = new Color(color.r, color.g, color.b, targetAlpha > 0f ? finalAlpha : 0f);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+            imageRect.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, eased);
+            currentActingPortraitImage.color = new Color(
+                color.r, color.g, color.b, Mathf.Lerp(startAlpha, targetAlpha > 0f ? finalAlpha : 0f, eased));
+            yield return null;
+        }
+
+        imageRect.anchoredPosition = targetPosition;
+        currentActingPortraitImage.color = new Color(color.r, color.g, color.b, targetAlpha > 0f ? finalAlpha : 0f);
+    }
+
+    private void SetPortraitBlank()
+    {
+        if (currentActingPortraitImage == null)
+            return;
+
+        currentActingPortraitImage.sprite = null;
+        currentActingPortraitImage.enabled = false;
+        Color color = currentActingPortraitImage.color;
+        currentActingPortraitImage.color = new Color(color.r, color.g, color.b, 1f);
+    }
+
+    private void RefreshCurrentActingName()
+    {
         if (currentActingNameText != null)
             currentActingNameText.text = GetEntityDisplayName(currentActingEntity);
     }
@@ -93,84 +244,206 @@ public sealed class CTBController : MonoBehaviour,
     {
         if (entity == null)
             return string.Empty;
-
         if (entity.RuntimeData != null && !string.IsNullOrWhiteSpace(entity.RuntimeData.DisplayName))
             return entity.RuntimeData.DisplayName;
-
         if (entity.Definition != null && !string.IsNullOrWhiteSpace(entity.Definition.Name))
             return entity.Definition.Name;
-
         return entity.ID ?? string.Empty;
     }
 
-    /// <summary>
-    /// 由行动顺序系统传入当前回合尚待行动的实体.此方法不自行排序或计算行动顺序。
-    /// </summary>
-    public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities)
+    private void SyncPool(CTBDisplayNode[] nodes, Transform container, List<TimelineIconController> destination)
     {
-        PopulatePool(entities, currentRoundUpcomingContainer, currentRoundIcons);
-    }
-
-    /// <summary>
-    /// 由行动顺序系统传入下一回合的实体顺序。当前阶段不自行计算下一回合顺序。
-    /// </summary>
-    public void SetNextRoundEntities(IEnumerable<CTBDisplayNode> entities)
-    {
-        PopulatePool(entities, nextRoundContainer, nextRoundIcons);
-    }
-
-    public void ClearCurrentRoundUpcomingPool() => ClearIcons(currentRoundIcons);
-    public void ClearNextRoundPool() => ClearIcons(nextRoundIcons);
-
-    private void PopulatePool(
-        IEnumerable<CTBDisplayNode> entities,
-        Transform container,
-        List<TimelineIconController> destination)
-    {
-        ClearIcons(destination);
-
-        if (entities == null)
-            return;
-
-        if (container == null)
+        if (container == null || timelineIconPrefab == null)
         {
-            Debug.LogError("CTBController：未指定对应的头像池容器。", this);
+            if (container == null)
+                Debug.LogError("CTBController：未指定对应的头像池容器。", this);
+            if (timelineIconPrefab == null)
+                Debug.LogError("CTBController：未指定 Timeline Icon Prefab。", this);
             return;
         }
 
-        if (timelineIconPrefab == null)
+        nodes ??= System.Array.Empty<CTBDisplayNode>();
+        var oldIcons = new List<TimelineIconController>(destination);
+        var oldIndices = new Dictionary<string, int>();
+        var available = new Dictionary<string, TimelineIconController>();
+        for (int i = 0; i < oldIcons.Count; i++)
         {
-            Debug.LogError("CTBController：未指定 Timeline Icon Prefab。", this);
-            return;
+            TimelineIconController icon = oldIcons[i];
+            if (icon == null || string.IsNullOrEmpty(icon.BoundEntityId))
+                continue;
+            available[icon.BoundEntityId] = icon;
+            oldIndices[icon.BoundEntityId] = i;
         }
 
-        foreach (CTBDisplayNode node in entities)
+        // 先把不再出现在队列中的头像标记为忽略布局，让剩余头像立即获得新槽位。
+        var desiredIds = new HashSet<string>();
+        foreach (CTBDisplayNode node in nodes)
+            if (node.Entity != null)
+                desiredIds.Add(node.EntityId);
+
+        foreach (TimelineIconController oldIcon in oldIcons)
         {
+            if (oldIcon == null || desiredIds.Contains(oldIcon.BoundEntityId))
+                continue;
+            oldIcon.SetIgnoredByLayout(true);
+            exitingIcons.Add(oldIcon);
+            StartCoroutine(ExitAndRecycle(oldIcon));
+        }
+
+        var nextIcons = new List<TimelineIconController>(nodes.Length);
+        var moved = new List<(TimelineIconController icon, Vector2 offset)>();
+        var entering = new List<TimelineIconController>();
+        float step = GetSlotStep(container, null);
+
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            CTBDisplayNode node = nodes[i];
             if (node.Entity == null)
                 continue;
 
-            GameObject iconObject = Instantiate(timelineIconPrefab, container, false);
-            TimelineIconController icon = iconObject.GetComponent<TimelineIconController>();
-            if (icon == null)
+            TimelineIconController icon;
+            if (available.TryGetValue(node.EntityId, out icon))
             {
-                Debug.LogError("CTBController：Timeline Icon 预制体缺少 TimelineIconController 组件。请将组件添加到预制体上。", iconObject);
-                Destroy(iconObject);
-                continue;
+                available.Remove(node.EntityId);
+                int oldIndex = oldIndices[node.EntityId];
+                icon.Bind(node);
+                icon.transform.SetParent(container, false);
+                icon.SetIgnoredByLayout(false);
+                icon.transform.SetSiblingIndex(i);
+                Vector2 offset = new Vector2((oldIndex - i) * step, 0f);
+                if (oldIndex != i)
+                    moved.Add((icon, offset));
+            }
+            else
+            {
+                icon = GetIcon(container);
+                icon.Bind(node);
+                icon.transform.SetSiblingIndex(i);
+                entering.Add(icon);
             }
 
-            icon.Bind(node);
-            destination.Add(icon);
+            nextIcons.Add(icon);
+        }
+
+        destination.Clear();
+        destination.AddRange(nextIcons);
+        ForceLayout(container);
+
+        foreach (var movement in moved)
+        {
+            movement.icon.SetVisualOffset(movement.offset);
+            StartCoroutine(movement.icon.PlayMoveAnimation(movement.offset, moveDuration));
+        }
+
+        foreach (TimelineIconController icon in entering)
+            StartCoroutine(icon.PlayEnterAnimation(iconEnterOffset, enterDuration));
+    }
+
+    private TimelineIconController GetIcon(Transform container)
+    {
+        TimelineIconController icon = null;
+        while (iconPool.Count > 0 && icon == null)
+            icon = iconPool.Pop();
+
+        if (icon == null)
+        {
+            GameObject instance = Instantiate(timelineIconPrefab, container, false);
+            icon = instance.GetComponent<TimelineIconController>();
+            if (icon == null)
+            {
+                Debug.LogError("CTBController：Timeline Icon 预制体缺少 TimelineIconController 组件。", instance);
+                Destroy(instance);
+                return null;
+            }
+        }
+        else
+        {
+            icon.gameObject.SetActive(true);
+            icon.PrepareForReuse(container);
+        }
+
+        return icon;
+    }
+
+    private IEnumerator ExitAndRecycle(TimelineIconController icon)
+    {
+        if (icon != null)
+            yield return icon.PlayExitAnimation(-iconExitOffset, exitDuration);
+
+        if (icon != null)
+        {
+            exitingIcons.Remove(icon);
+            ReturnIcon(icon);
         }
     }
 
-    private static void ClearIcons(List<TimelineIconController> icons)
+    private void ReturnIcon(TimelineIconController icon)
+    {
+        if (icon == null)
+            return;
+        icon.PrepareForReuse(transform);
+        icon.gameObject.SetActive(false);
+        if (!iconPool.Contains(icon))
+            iconPool.Push(icon);
+    }
+
+    private void RecyclePool(List<TimelineIconController> icons)
     {
         foreach (TimelineIconController icon in icons)
-        {
-            if (icon != null)
-                Destroy(icon.gameObject);
-        }
-
+            ReturnIcon(icon);
         icons.Clear();
+    }
+
+    private void RecycleAllVisibleIcons()
+    {
+        var all = new HashSet<TimelineIconController>();
+        foreach (TimelineIconController icon in currentRoundIcons)
+            if (icon != null) all.Add(icon);
+        foreach (TimelineIconController icon in nextRoundIcons)
+            if (icon != null) all.Add(icon);
+        foreach (TimelineIconController icon in exitingIcons)
+            if (icon != null) all.Add(icon);
+
+        currentRoundIcons.Clear();
+        nextRoundIcons.Clear();
+        exitingIcons.Clear();
+        foreach (TimelineIconController icon in all)
+            ReturnIcon(icon);
+    }
+
+    private float GetSlotStep(Transform container, TimelineIconController fallback)
+    {
+        float width = 100f;
+        if (fallback != null && fallback.transform is RectTransform fallbackRect && fallbackRect.rect.width > 0f)
+            width = fallbackRect.rect.width;
+        else if (container != null && container.childCount > 0 &&
+                 container.GetChild(0) is RectTransform childRect && childRect.rect.width > 0f)
+            width = childRect.rect.width;
+
+        HorizontalLayoutGroup layout = container != null ? container.GetComponent<HorizontalLayoutGroup>() : null;
+        return width + (layout != null ? layout.spacing : 0f);
+    }
+
+    private static void ForceLayout(Transform container)
+    {
+        if (container is RectTransform rect)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+    }
+
+    private static CTBDisplayNode[] PrependCurrentActor(BattleEntity actor, CTBDisplayNode[] remaining)
+    {
+        int remainingCount = remaining != null ? remaining.Length : 0;
+        var result = new CTBDisplayNode[remainingCount + 1];
+        result[0] = new CTBDisplayNode(actor);
+        if (remainingCount > 0)
+            System.Array.Copy(remaining, 0, result, 1, remainingCount);
+        return result;
+    }
+
+    private static CTBDisplayNode[] ToArray(IEnumerable<CTBDisplayNode> nodes)
+    {
+        if (nodes == null)
+            return System.Array.Empty<CTBDisplayNode>();
+        return nodes is CTBDisplayNode[] array ? array : new List<CTBDisplayNode>(nodes).ToArray();
     }
 }
