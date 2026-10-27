@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 战斗技能二级面板。
-/// 监听当前行动者变化，并根据角色定义动态生成技能条目。
+/// 监听当前行动者变化，并根据角色运行数据中的已装备技能动态生成技能条目。
 /// 当前版本只展示技能信息，不执行技能或消耗 SP。
 /// 建议将本控制器挂在始终激活的一级指令面板对象上，panelRoot 指向攻击按钮下的技能面板子物体。
 /// </summary>
@@ -117,7 +117,8 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
         if (statusText != null)
             statusText.text = string.Empty;
 
-        if (currentEntity == null || !currentEntity.IsPlayer || currentEntity.Definition == null)
+        if (currentEntity == null || !currentEntity.IsPlayer ||
+            currentEntity.Definition == null || currentEntity.RuntimeData == null)
         {
             SetStatus("无法读取当前行动角色的技能。");
             return;
@@ -130,10 +131,10 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
             return;
         }
 
-        List<SkillDefinitionSO> skills = currentEntity.Definition.initialSkills;
+        IReadOnlyList<SkillDefinitionSO> skills = currentEntity.RuntimeData.EquippedSkills;
         if (skills == null || skills.Count == 0)
         {
-            SetStatus("该角色尚未配置技能。");
+            SetStatus("该角色尚未装备战斗技能。");
             return;
         }
 
