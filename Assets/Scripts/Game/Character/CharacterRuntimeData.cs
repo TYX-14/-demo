@@ -35,9 +35,18 @@ public class CharacterRuntimeData
 
     public List<EquipedItemEntry> EquipedItems = new();
 
+    private const int MaxEquippedSkills = 4;
+
+    [SerializeField]
+    private List<SkillDefinitionSO> equippedSkills = new();
+
+    /// <summary>当前装备的战斗技能，最多四个；菜单 UI 应通过 TrySetEquippedSkills 修改。</summary>
+    public IReadOnlyList<SkillDefinitionSO> EquippedSkills => equippedSkills;
+
     public  CharacterRuntimeData(CharacterDefinitionSO definition)
     { 
         Definition = definition;
+        InitializeDefaultEquippedSkills();
         EquipmentStats = StatBlock.Zero;
         Level = definition.BaseLevel;
 
@@ -51,6 +60,62 @@ public class CharacterRuntimeData
 
         ApplyIntialEquipment();
     }
+    /// <summary>
+    /// 首次创建角色运行数据时，从技能池中按原有顺序选取前四个有效且不重复的技能。
+    /// </summary>
+    private void InitializeDefaultEquippedSkills()
+    {
+        equippedSkills.Clear();
+
+        if (Definition == null || Definition.initialSkills == null)
+            return;
+
+        foreach (SkillDefinitionSO skill in Definition.initialSkills)
+        {
+            if (skill == null || equippedSkills.Contains(skill))
+                continue;
+
+            equippedSkills.Add(skill);
+            if (equippedSkills.Count >= MaxEquippedSkills)
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 更换当前装备技能。仅接受技能池内的技能，不允许重复或超过四个。
+    /// 校验失败时保留原有配置。菜单技能配置 UI 后续应调用此方法。
+    /// </summary>
+    public bool TrySetEquippedSkills(IEnumerable<SkillDefinitionSO> skills)
+    {
+        if (skills == null)
+            return false;
+
+        List<SkillDefinitionSO> requestedSkills = new();
+        HashSet<SkillDefinitionSO> uniqueSkills = new();
+
+        foreach (SkillDefinitionSO skill in skills)
+        {
+            // 允许 UI 用 null 表示空技能槽。
+            if (skill == null)
+                continue;
+
+            if (Definition == null ||
+                Definition.initialSkills == null ||
+                !Definition.initialSkills.Contains(skill) ||
+                !uniqueSkills.Add(skill) ||
+                requestedSkills.Count >= MaxEquippedSkills)
+            {
+                return false;
+            }
+
+            requestedSkills.Add(skill);
+        }
+
+        equippedSkills.Clear();
+        equippedSkills.AddRange(requestedSkills);
+        return true;
+    }
+
     /// <summary>
     /// 拿到友军或者敌人的基本属性（计算后）
     /// </summary>
