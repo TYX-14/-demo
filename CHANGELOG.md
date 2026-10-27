@@ -1,12 +1,12 @@
 ## 2026-10-27：CTB 队列动画与头像对象池
 
-- **开场时机：** `BattleSetupState` 现在等待所有友军 `MoveToPosition` 协程真实完成后才发布 `BattleStartedEvent`；切入 `GameMode.Battle` 本身不再提前显示战斗 HUD。跑位期间 CTB 保持隐藏。
+- **开场时机：** `BattleSetupState` 现在等待所有友军 `MoveToPosition` 协程真实完成后才发布 `BattleStartedEvent`；`BattleController.InitializeRoundScheduler` 只初始化顺序，不在跑位期间提前发布队列。切入 `GameMode.Battle` 本身不再提前显示战斗 HUD。跑位期间 CTB 保持隐藏。
 - **首次 CTB 入场：** 大头像先保持空白。第一名行动者先作为普通队首小头像出现在大头像右侧，完成轻位移/淡入后向左淡出回收；大头像内部图片从右向左进入现有 Mask。
 - **对象池：** 新增独立的 `TimelineIconPool`，负责头像实例的创建、回收与复用；`CTBController` 不再每次收到队列事件就销毁并重新实例化全部头像。旧图标淡出结束后回收到共享对象池。
 - **队列更新：** 仍留在队列中的图标按实体 ID 复用并平滑滑动到新槽位；新图标轻位移加淡入，离场图标轻位移加淡出，离场时临时忽略 Layout Group，避免挤占队列位置。
 - **Layout Group 兼容：** 小头像预制体外层仍由 `Horizontal Layout Group` 排列，动画只移动预制体内部的 `Root` 视觉节点，避免与布局组件争夺外层 `RectTransform`。
 - **可调参数：** `CTBController` Inspector 新增入场、离场、队列移动时长与位移幅度，以及大头像滑动距离。
-- **涉及文件：** `CTBController.cs`、`TimelineIconController.cs`、`TimelineIconPool.cs`、`BattleHUDcontroller.cs`、`BattleSetupState.cs`。
+- **涉及文件：** `CTBController.cs`、`TimelineIconController.cs`、`TimelineIconPool.cs`、`BattleHUDcontroller.cs`、`BattleSetupState.cs`、`BattleController.cs`。
 - **验证状态：** 已提交到 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。请重点测试跑位结束时机、首次队首进入大头像、两池队列移动/离场回收，以及隐藏/再次进入战斗时对象池状态是否干净。
 
 ---
