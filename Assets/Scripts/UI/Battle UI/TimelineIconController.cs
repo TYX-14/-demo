@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 单个 CTB 时间轴头像的显示控制。
-/// 通过 Bind 绑定一个 BattleEntity，头像、阵营背景与行动高亮始终来自同一个实体。
+/// 单个 CTB 时间轴头像。
+/// 角色头像与阵营背景均从绑定的实体及预制体自身配置读取。
 /// </summary>
 public sealed class TimelineIconController : MonoBehaviour
 {
@@ -14,14 +14,10 @@ public sealed class TimelineIconController : MonoBehaviour
     [SerializeField, Tooltip("角色头像 Image；为空时自动查找 Root/Mask/Image。")]
     private Image portraitImage;
 
+    [Header("阵营背景 Sprite（在 Timeline Icon 预制体上配置）")]
+    [SerializeField] private Sprite allyBackgroundSprite;
+    [SerializeField] private Sprite enemyBackgroundSprite;
 
-    [Header("行动高亮")]
-    [SerializeField, Min(1f)] private float actingScale = 1.12f;
-    [SerializeField, Range(0.1f, 1f)] private float idleAlpha = 0.72f;
-
-    private RectTransform _rectTransform;
-    private CanvasGroup _canvasGroup;
-    private Vector3 _defaultScale;
     private BattleEntity _boundEntity;
 
     public BattleEntity BoundEntity => _boundEntity;
@@ -33,12 +29,6 @@ public sealed class TimelineIconController : MonoBehaviour
 
     private void CacheComponents()
     {
-        if (_rectTransform == null)
-            _rectTransform = transform as RectTransform;
-
-        if (_canvasGroup == null)
-            _canvasGroup = GetComponent<CanvasGroup>();
-
         if (backgroundImage == null)
         {
             Transform border = transform.Find("Root/Border");
@@ -52,12 +42,9 @@ public sealed class TimelineIconController : MonoBehaviour
             if (portrait != null)
                 portraitImage = portrait.GetComponent<Image>();
         }
-
-        if (_rectTransform != null && _defaultScale == Vector3.zero)
-            _defaultScale = _rectTransform.localScale;
     }
 
-    /// <summary>将此头像绑定到一个战斗实体，并刷新头像与阵营背景。</summary>
+    /// <summary>绑定实体，并根据阵营切换预制体上配置的背景 Sprite。</summary>
     public void Bind(BattleEntity entity)
     {
         CacheComponents();
@@ -66,8 +53,10 @@ public sealed class TimelineIconController : MonoBehaviour
         if (entity == null)
         {
             if (portraitImage != null)
+            {
                 portraitImage.sprite = null;
-            SetActing(false);
+                portraitImage.enabled = false;
+            }
             return;
         }
 
@@ -81,27 +70,19 @@ public sealed class TimelineIconController : MonoBehaviour
             Debug.LogWarning("TimelineIconController：找不到头像 Image。请确认预制体路径为 Root/Mask/Image。", this);
         }
 
-        // 阵营背景由 Timeline Icon 预制体自身配置，控制脚本不覆盖该 Sprite。
-        if (backgroundImage == null)
-            Debug.LogWarning("TimelineIconController：找不到背景 Image。请确认预制体路径为 Root/Border。", this);
-    }
-
-    /// <summary>高亮当前行动实体；非当前行动者降低透明度。</summary>
-    public void SetActing(bool isActing)
-    {
-        CacheComponents();
-
-        if (_rectTransform != null)
+        if (backgroundImage != null)
         {
-            if (_defaultScale == Vector3.zero)
-                _defaultScale = _rectTransform.localScale;
-
-            _rectTransform.localScale = isActing
-                ? _defaultScale * actingScale
-                : _defaultScale;
+            Sprite sideBackground = entity.IsPlayer ? allyBackgroundSprite : enemyBackgroundSprite;
+            if (sideBackground != null)
+                backgroundImage.sprite = sideBackground;
+            else
+                Debug.LogWarning(
+                    $"TimelineIconController：{(entity.IsPlayer ? "友方" : "敌方")}背景 Sprite 未在 Timeline Icon 预制体上配置。",
+                    this);
         }
-
-        if (_canvasGroup != null)
-            _canvasGroup.alpha = isActing ? 1f : idleAlpha;
+        else
+        {
+            Debug.LogWarning("TimelineIconController：找不到背景 Image。请确认预制体路径为 Root/Border。", this);
+        }
     }
 }
