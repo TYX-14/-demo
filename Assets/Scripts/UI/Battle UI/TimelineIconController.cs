@@ -62,7 +62,7 @@ public sealed class TimelineIconController : MonoBehaviour
 
         if (portraitImage != null)
         {
-            portraitImage.sprite = entity.Definition != null ? entity.Definition.Portrait : null;
+            portraitImage.sprite = entity.Definition != null ? entity.Definition.LeftBattleIdle : null;
             portraitImage.enabled = portraitImage.sprite != null;
         }
         else
