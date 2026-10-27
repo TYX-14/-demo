@@ -31,7 +31,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     {
         _roundScheduler = new BattleRoundScheduler();
         _roundScheduler.Initialize(_allEntities);
-        PublishCTBQueueUpdate();
+        // 此处只准备行动顺序，不提前向 UI 推送队列；跑位完成后选出首位行动者时再发布显示快照。
     }
 
     /// <summary>供行动者分发状态取得调度器选出的下一位实体。</summary>
