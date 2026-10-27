@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using MFrameork.Event;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// CTB 显示控制器。
@@ -13,13 +14,12 @@ public sealed class CTBController : MonoBehaviour,
     IEventReceiver<CurrentEntityChangedEvent>,
     IEventReceiver<CTBQueueUpdatedEvent>
 {
-    [Header("CTB 根节点")]
-    [SerializeField, Tooltip("CTB UI 根物体。此脚本应挂在不会随该根节点一起禁用的活动物体上。")]
-    private GameObject ctbRoot;
-
     [Header("当前行动者")]
     [SerializeField, Tooltip("场景中已有的大头像 Image，不需要制作头像预制体。")]
     private Image currentActingPortraitImage;
+
+    [SerializeField, Tooltip("当前行动者大头像下方显示实体名称的 TMP_Text。")]
+    private TMP_Text currentActingNameText;
 
     [Header("当前回合后续行动池")]
     [SerializeField, Tooltip("显示本回合当前行动者之后的行动者。顺序由外部行动顺序系统传入。")]
@@ -55,9 +55,6 @@ public sealed class CTBController : MonoBehaviour,
 
     public void OnEvent(BattleStartedEvent evt)
     {
-        if (ctbRoot != null)
-            ctbRoot.SetActive(true);
-
         currentActingEntity = null;
         RefreshCurrentActingPortrait();
         ClearIcons(currentRoundIcons);
@@ -87,10 +84,27 @@ public sealed class CTBController : MonoBehaviour,
 
         currentActingPortraitImage.sprite = portrait;
         currentActingPortraitImage.enabled = portrait != null;
+
+        if (currentActingNameText != null)
+            currentActingNameText.text = GetEntityDisplayName(currentActingEntity);
+    }
+
+    private static string GetEntityDisplayName(BattleEntity entity)
+    {
+        if (entity == null)
+            return string.Empty;
+
+        if (entity.RuntimeData != null && !string.IsNullOrWhiteSpace(entity.RuntimeData.DisplayName))
+            return entity.RuntimeData.DisplayName;
+
+        if (entity.Definition != null && !string.IsNullOrWhiteSpace(entity.Definition.Name))
+            return entity.Definition.Name;
+
+        return entity.ID ?? string.Empty;
     }
 
     /// <summary>
-    /// 由行动顺序系统传入当前回合尚待行动的实体。此方法不自行排序或计算行动顺序。
+    /// 由行动顺序系统传入当前回合尚待行动的实体.此方法不自行排序或计算行动顺序。
     /// </summary>
     public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities)
     {
