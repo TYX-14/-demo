@@ -12,6 +12,10 @@ public sealed class CTBController : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
     IEventReceiver<CurrentEntityChangedEvent>
 {
+    [Header("CTB 根节点")]
+    [SerializeField, Tooltip("CTB UI 根物体，用于战斗开始时显示 CTB。此脚本应挂在不会随该根节点一起禁用的活动物体上。")]
+    private GameObject ctbRoot;
+
     [Header("CTB 时间轴")]
     [SerializeField, Tooltip("Timeline Icon 预制体，阵营背景应直接配置在该预制体上。")]
     private GameObject timelineIconPrefab;
@@ -37,6 +41,9 @@ public sealed class CTBController : MonoBehaviour,
 
     public void OnEvent(BattleStartedEvent evt)
     {
+        if (ctbRoot != null)
+            ctbRoot.SetActive(true);
+
         BuildTimelineIcons();
         RefreshActingHighlight();
     }
