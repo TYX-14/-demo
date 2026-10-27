@@ -10,7 +10,8 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class CTBController : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
-    IEventReceiver<CurrentEntityChangedEvent>
+    IEventReceiver<CurrentEntityChangedEvent>,
+    IEventReceiver<CTBQueueUpdatedEvent>
 {
     [Header("CTB 根节点")]
     [SerializeField, Tooltip("CTB UI 根物体。此脚本应挂在不会随该根节点一起禁用的活动物体上。")]
@@ -40,12 +41,14 @@ public sealed class CTBController : MonoBehaviour,
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Subscribe<CTBQueueUpdatedEvent>(this);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Unsubscribe<CTBQueueUpdatedEvent>(this);
         ClearIcons(currentRoundIcons);
         ClearIcons(nextRoundIcons);
     }
@@ -67,6 +70,12 @@ public sealed class CTBController : MonoBehaviour,
         RefreshCurrentActingPortrait();
     }
 
+    public void OnEvent(CTBQueueUpdatedEvent evt)
+    {
+        SetCurrentRoundUpcomingEntities(evt.CurrentRoundNodes);
+        SetNextRoundEntities(evt.NextRoundNodes);
+    }
+
     private void RefreshCurrentActingPortrait()
     {
         if (currentActingPortraitImage == null)
@@ -83,7 +92,7 @@ public sealed class CTBController : MonoBehaviour,
     /// <summary>
     /// 由行动顺序系统传入当前回合尚待行动的实体。此方法不自行排序或计算行动顺序。
     /// </summary>
-    public void SetCurrentRoundUpcomingEntities(IEnumerable<BattleEntity> entities)
+    public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities)
     {
         PopulatePool(entities, currentRoundUpcomingContainer, currentRoundIcons);
     }
@@ -91,7 +100,7 @@ public sealed class CTBController : MonoBehaviour,
     /// <summary>
     /// 由行动顺序系统传入下一回合的实体顺序。当前阶段不自行计算下一回合顺序。
     /// </summary>
-    public void SetNextRoundEntities(IEnumerable<BattleEntity> entities)
+    public void SetNextRoundEntities(IEnumerable<CTBDisplayNode> entities)
     {
         PopulatePool(entities, nextRoundContainer, nextRoundIcons);
     }
@@ -100,7 +109,7 @@ public sealed class CTBController : MonoBehaviour,
     public void ClearNextRoundPool() => ClearIcons(nextRoundIcons);
 
     private void PopulatePool(
-        IEnumerable<BattleEntity> entities,
+        IEnumerable<CTBDisplayNode> entities,
         Transform container,
         List<TimelineIconController> destination)
     {
@@ -121,9 +130,9 @@ public sealed class CTBController : MonoBehaviour,
             return;
         }
 
-        foreach (BattleEntity entity in entities)
+        foreach (CTBDisplayNode node in entities)
         {
-            if (entity == null || entity.Definition == null)
+            if (node.Entity == null)
                 continue;
 
             GameObject iconObject = Instantiate(timelineIconPrefab, container, false);
@@ -135,7 +144,7 @@ public sealed class CTBController : MonoBehaviour,
                 continue;
             }
 
-            icon.Bind(entity);
+            icon.Bind(node);
             destination.Add(icon);
         }
     }
