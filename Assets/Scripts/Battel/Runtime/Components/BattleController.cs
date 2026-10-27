@@ -15,8 +15,44 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
 
     private readonly List<BattleEntity> _allEntities = new();
     public List<BattleEntity> AllEntities => _allEntities;
-    public BattleEntity CurrentEntity { get; set; }
+    public BattleEntity CurrentEntity { get; private set; }
+    private BattleRoundScheduler _roundScheduler;
     public BattleActionContext PendingAction { get; private set; }
+
+    /// <summary>战斗流程的当前行动者唯一写入入口，并统一发布变更事件。</summary>
+    public void SetCurrentEntity(BattleEntity entity)
+    {
+        CurrentEntity = entity;
+        EventBus.Publish(new CurrentEntityChangedEvent(entity));
+    }
+
+    /// <summary>战斗实体生成完成后初始化 CTB 调度器。</summary>
+    public void InitializeRoundScheduler()
+    {
+        _roundScheduler = new BattleRoundScheduler();
+        _roundScheduler.Initialize(_allEntities);
+        PublishCTBQueueUpdate();
+    }
+
+    /// <summary>供行动者分发状态取得调度器选出的下一位实体。</summary>
+    public BattleEntity TakeNextScheduledEntity()
+    {
+        if (_roundScheduler == null)
+            InitializeRoundScheduler();
+
+        return _roundScheduler != null ? _roundScheduler.TakeNextEntity() : null;
+    }
+
+    /// <summary>把调度器的两个队列转换为 UI 节点并发布，不让 UI 自行排序。</summary>
+    public void PublishCTBQueueUpdate()
+    {
+        if (_roundScheduler == null)
+            return;
+
+        EventBus.Publish(new CTBQueueUpdatedEvent(
+            _roundScheduler.GetCurrentRoundDisplayNodes(),
+            _roundScheduler.GetNextRoundPredictionNodes()));
+    }
 
     /// <summary>从技能 UI 发起行动。目标选择方式由技能数据决定。</summary>
     public bool BeginSkillTargetSelection(SkillDefinitionSO skill)
@@ -181,6 +217,8 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     {
         _battleRunning = false;
         _currentState = null;
+        CurrentEntity = null;
+        _roundScheduler = null;
 
         if (_battleLoopRoutine != null)
         {
