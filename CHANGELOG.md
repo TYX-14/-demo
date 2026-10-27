@@ -1,3 +1,11 @@
+## 2026-10-27：CTB 统一使用角色战斗左侧待机图
+
+- **角色定义：** `CharacterDefinitionSO` 新增 `LeftBattleIdle` Sprite 字段，与通用头像 `Portrait` 和探索待机图 `LeftIdle` 分开。
+- **当前行动者大头像：** `CTBController` 改为读取当前实体 `Definition.LeftBattleIdle`。
+- **两个后续行动池：** `TimelineIconController` 改为读取实体 `Definition.LeftBattleIdle`，因此当前回合池与下一回合池实例化出的头像统一使用该图。
+- **Unity 配置：** 需要在每个角色对应的 Character Definition 资源中，为新增的 `LeftBattleIdle` 字段指定图片；未配置时 CTB 对应图片会被隐藏。
+- **验证状态：** 代码已提交到功能分支，尚未在 Unity 中编译或运行验证。
+
 ## 2026-10-27：重构 CTB 为当前行动者与双行动池结构
 
 - **当前行动者大头像：** `CTBController` 直接更新场景中指定的 Image Sprite，使用当前实体的 `Definition.Portrait`，不实例化头像预制体。
