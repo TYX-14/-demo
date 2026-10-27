@@ -45,9 +45,12 @@ public sealed class TimelineIconController : MonoBehaviour
     }
 
     /// <summary>绑定实体，并根据阵营切换预制体上配置的背景 Sprite。</summary>
-    public void Bind(BattleEntity entity)
+    public void Bind(BattleEntity entity) => Bind(new CTBDisplayNode(entity));
+
+    public void Bind(CTBDisplayNode node)
     {
         CacheComponents();
+        BattleEntity entity = node.Entity;
         _boundEntity = entity;
 
         if (entity == null)
@@ -62,7 +65,7 @@ public sealed class TimelineIconController : MonoBehaviour
 
         if (portraitImage != null)
         {
-            portraitImage.sprite = entity.Definition != null ? entity.Definition.LeftBattleIdle : null;
+            portraitImage.sprite = node.BattleIdleSprite;
             portraitImage.enabled = portraitImage.sprite != null;
         }
         else
@@ -72,12 +75,12 @@ public sealed class TimelineIconController : MonoBehaviour
 
         if (backgroundImage != null)
         {
-            Sprite sideBackground = entity.IsPlayer ? allyBackgroundSprite : enemyBackgroundSprite;
+            Sprite sideBackground = node.IsPlayer ? allyBackgroundSprite : enemyBackgroundSprite;
             if (sideBackground != null)
                 backgroundImage.sprite = sideBackground;
             else
                 Debug.LogWarning(
-                    $"TimelineIconController：{(entity.IsPlayer ? "友方" : "敌方")}背景 Sprite 未在 Timeline Icon 预制体上配置。",
+                    $"TimelineIconController：{(node.IsPlayer ? "友方" : "敌方")}背景 Sprite 未在 Timeline Icon 预制体上配置。",
                     this);
         }
         else
