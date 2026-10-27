@@ -13,7 +13,14 @@ public static class BattleTargeting
     /// </summary>
     public static bool RequiresManualSelection(SkillDefinitionSO skill)
     {
-        return skill != null && skill.TargetSelectionMode == SkillTargetSelectionMode.Manual;
+        if (skill == null)
+            return false;
+
+        // 自身目标也必须由玩家确认，不能因为目标只有施法者本人就自动发动。
+        // 同时兼容目标选择模式与目标关系两种配置入口。
+        return skill.TargetSelectionMode == SkillTargetSelectionMode.Manual ||
+               skill.TargetSelectionMode == SkillTargetSelectionMode.Self ||
+               skill.TargetRelation == SkillTargetRelation.Self;
     }
 
     /// <summary>
