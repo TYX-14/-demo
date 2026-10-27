@@ -73,7 +73,7 @@ public sealed class CTBController : MonoBehaviour,
             return;
 
         Sprite portrait = currentActingEntity != null && currentActingEntity.Definition != null
-            ? currentActingEntity.Definition.Portrait
+            ? currentActingEntity.Definition.LeftBattleIdle
             : null;
 
         currentActingPortraitImage.sprite = portrait;
