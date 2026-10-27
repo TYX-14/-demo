@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c81d4c8b23c84f44aefbf25a9a74a101, type: 3}
   m_Name: "\u9ED1\u4E4B\u8F70\u51FB"
   m_EditorClassIdentifier: 
-  skillName: 
-  skillIcon: {fileID: 0}
-  description: 
-  spCost: 0
+  skillName: "\u9ED1\u4E4B\u8F70\u51FB"
+  skillIcon: {fileID: 21300000, guid: 42d4ee87e76b44f8ea234ed2f2a77134, type: 3}
+  description: "\u4F24\u5BB3\u4FEE\u6B63-20%\uFF0C\u7CBE\u51C6\u4FEE\u6B63-10%\n\u540E\u90001"
+  spCost: 50
   targetRelation: 0
-  targetType: 0
+  targetType: 1
   targetSelectionMode: 0
-  usablePositions: 01000000020000000300000004000000
+  usablePositions: 01000000
   targetPositions: 01000000020000000300000004000000

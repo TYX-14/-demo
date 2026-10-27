@@ -27,8 +27,10 @@ MonoBehaviour:
     Speed: 7
     Accuracy: 0
     Evasion: 0
+  BaseDeathblowResistance: 0.67
   maxSwapDistance: 3
   initialSkills:
+  - {fileID: 11400000, guid: 0a3067ee8c394d64ba08500e5eb8e80d, type: 2}
   - {fileID: 11400000, guid: 997ec25a09978e544b2fee93184f91cd, type: 2}
   filedAnimator: {fileID: 22100000, guid: 15b95794c8a2bc7438a1ad6aa9f0c2a9, type: 2}
   battleAnimator: {fileID: 22100000, guid: 8e7f8d6e6651a6842b1bc051b0652066, type: 2}
