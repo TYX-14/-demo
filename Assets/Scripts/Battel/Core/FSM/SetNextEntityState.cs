@@ -100,40 +100,10 @@ public class SetNextEntityState : BattleState
     }
 
     /// <summary>
-    /// 演示阶段的临时选人算法：
-    /// 先选速度最高者；速度相同则选择站位数字更小、也就是更靠前的实体。
-    /// 当角色没有有效 Position 时，使用其在同阵营列表中的顺序作为备用站位。
+    /// 返回用于调试日志的显示站位；没有有效 Position 时，使用同阵营列表顺序。
     /// </summary>
-    private BattleEntity FindNextEntity()
-    {
-        BattleEntity bestEntity = null;
-        int bestSpeed = int.MinValue;
-        int bestPosition = int.MaxValue;
-
-        for (int i = 0; i < _controller.AllEntities.Count; i++)
-        {
-            BattleEntity candidate = _controller.AllEntities[i];
-            if (candidate == null || !candidate.IsAlive)
-                continue;
-
-            int speed = candidate.TotalStats.Speed;
-            int position = GetPositionPriority(candidate, i);
-
-            if (bestEntity == null ||
-                speed > bestSpeed ||
-                (speed == bestSpeed && position < bestPosition))
-            {
-                bestEntity = candidate;
-                bestSpeed = speed;
-                bestPosition = position;
-            }
-        }
-
-        return bestEntity;
-    }
-
     /// <summary>
-    /// 返回用于同速排序的站位优先级。
+    /// 返回用于调试日志的显示站位。
     /// Position 大于 0 时优先使用角色数据中的固定站位；
     /// 否则使用该实体在同阵营实体列表中的先后顺序。
     /// </summary>
