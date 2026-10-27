@@ -1,5 +1,4 @@
 using System.Collections;
-using MFrameork.Event;
 using UnityEngine;
 
 /// <summary>
@@ -36,7 +35,7 @@ public class SetNextEntityState : BattleState
             yield break;
         }
 
-        BattleEntity nextEntity = FindNextEntity();
+        BattleEntity nextEntity = _controller.TakeNextScheduledEntity();
         if (nextEntity == null)
         {
             Debug.LogWarning("SetNextEntityState：没有找到可行动的存活实体，停止战斗以避免状态机空转。");
@@ -57,8 +56,8 @@ public class SetNextEntityState : BattleState
         Debug.Log($"[战斗行动] 当前选中：{characterName} | 阵营：{factionName} | 站位：第 {displayedPosition} 位 | 速度：{nextEntity.TotalStats.Speed}", nextEntity.Unit);
 
         // 更新当前行动者，并通知 UI / 时间轴同步显示。
-        _controller.CurrentEntity = nextEntity;
-        EventBus.Publish(new CurrentEntityChangedEvent(nextEntity));
+        _controller.SetCurrentEntity(nextEntity);
+        _controller.PublishCTBQueueUpdate();
 
         // 根据阵营把状态机控制权交给玩家输入或敌方 AI。
         if (nextEntity.IsPlayer)
