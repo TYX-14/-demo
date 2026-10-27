@@ -5,8 +5,8 @@ using UnityEngine;
 
 /// <summary>
 /// 战斗 HUD 控制器。
-/// 负责控制战斗状态栏列表与 CTB UI 的显隐，并将每条状态栏绑定到一名友军。
-/// 状态栏位于屏幕 UI 中，不跟随战场角色的世界坐标。
+/// 负责在 BattleStartedEvent 到来时显示战斗 UI，并在离开战斗模式时隐藏 UI。
+/// Battle 模式切换本身不代表跑位已经完成，因此不能单靠 GameModeChangedEvent 显示 HUD。
 /// </summary>
 public class BattleHUDcontroller : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
@@ -16,7 +16,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     [Header("战斗 HUD 根节点")]
     [SerializeField, Tooltip("英雄状态栏列表所在的根物体")]
     private GameObject healthBarPanelRoot;
-
 
     [Header("CTB 显隐")]
     [SerializeField, Tooltip("Battle UI 下的 CTB 根节点，由 BattleHUDcontroller 统一控制显隐。")]
@@ -31,12 +30,16 @@ public class BattleHUDcontroller : MonoBehaviour,
 
     private readonly List<HealthBarController> spawnedHealthBars = new();
     private BattleEntity currentActingEntity;
+    private bool battleUIStarted;
 
     private void OnEnable()
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
         EventBus.Subscribe<GameModeChangedEvent>(this);
+
+        battleUIStarted = false;
+        SetBattleUIVisible(false);
     }
 
     private void OnDisable()
@@ -47,20 +50,16 @@ public class BattleHUDcontroller : MonoBehaviour,
     }
 
     /// <summary>
-    /// 战斗正式开始、友军入场跑位结束后，生成我方英雄状态栏。
+    /// 只在 BattleSetupState 确认入场跑位完成后显示战斗 HUD。
     /// </summary>
     public void OnEvent(BattleStartedEvent evt)
     {
-        SetupHUD();
-        if (ctbRoot != null)
-            ctbRoot.SetActive(true);
+        battleUIStarted = true;
+        SetBattleUIVisible(true);
         BuildAllyHealthBars();
         RefreshActingHighlight();
     }
 
-    /// <summary>
-    /// 回合分发器切换行动者时，更新状态栏高亮和站位排序。
-    /// </summary>
     public void OnEvent(CurrentEntityChangedEvent evt)
     {
         currentActingEntity = evt.Entity;
@@ -70,23 +69,26 @@ public class BattleHUDcontroller : MonoBehaviour,
 
     public void OnEvent(GameModeChangedEvent evt)
     {
-        bool showBattleUI = evt.newMode == GameMode.Battle;
-        if (ctbRoot != null)
-            ctbRoot.SetActive(showBattleUI);
-        if (healthBarPanelRoot != null)
-            healthBarPanelRoot.SetActive(showBattleUI);
-
-        if (!showBattleUI)
+        if (evt.newMode != GameMode.Battle)
         {
+            battleUIStarted = false;
             currentActingEntity = null;
+            SetBattleUIVisible(false);
             ClearHealthBars();
+            return;
         }
+
+        // 切入战斗模式后仍需等待跑位完成事件，不能在这里提前显示 CTB。
+        if (!battleUIStarted)
+            SetBattleUIVisible(false);
     }
 
-    private void SetupHUD()
+    private void SetBattleUIVisible(bool visible)
     {
-        if (healthBarPanelRoot != null)
-            healthBarPanelRoot.SetActive(true);
+        if (healthBarPanelRoot != null && healthBarPanelRoot.activeSelf != visible)
+            healthBarPanelRoot.SetActive(visible);
+        if (ctbRoot != null && ctbRoot.activeSelf != visible)
+            ctbRoot.SetActive(visible);
     }
 
     private void BuildAllyHealthBars()
@@ -118,7 +120,7 @@ public class BattleHUDcontroller : MonoBehaviour,
 
         List<BattleEntity> allies = battleController.AllEntities
             .Where(entity => entity != null && entity.IsPlayer && entity.RuntimeData != null)
-            .OrderBy(entity => GetPosition(entity))
+            .OrderBy(GetPosition)
             .ToList();
 
         foreach (BattleEntity ally in allies)
@@ -132,7 +134,6 @@ public class BattleHUDcontroller : MonoBehaviour,
         SortHealthBarsByPosition();
     }
 
-
     private void ClearHealthBars()
     {
         foreach (HealthBarController bar in spawnedHealthBars)
@@ -140,14 +141,12 @@ public class BattleHUDcontroller : MonoBehaviour,
             if (bar != null)
                 Destroy(bar.gameObject);
         }
-
         spawnedHealthBars.Clear();
     }
 
     private void SortHealthBarsByPosition()
     {
         spawnedHealthBars.RemoveAll(bar => bar == null);
-
         spawnedHealthBars.Sort((a, b) =>
         {
             int positionA = a.BoundCharacter != null ? a.BoundCharacter.Position : int.MaxValue;
