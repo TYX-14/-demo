@@ -1,13 +1,13 @@
-## 2026-10-27：拆分 CTB 时间轴控制职责
+## 2026-10-27：重构 CTB 为当前行动者与双行动池结构
 
-- **独立控制器：** 新增 `Assets/Scripts/UI/Battle UI/CTBController.cs`，独立监听战斗开始与当前行动者变化事件，负责 CTB 根节点显隐、生成时间轴头像、初始排序和行动者高亮。
-- **单头像职责：** `TimelineIconController.cs` 只绑定一个 `BattleEntity`，显示角色肖像并处理当前行动高亮，不再接收或设置阵营背景 Sprite。
-- **预制体背景：** 友方/敌方背景由 `Timeline Icon.prefab` 自身的 Image 配置决定，代码不再覆盖背景；因此无需在 HUD 或 CTB Inspector 重复指定背景图。
-- **HUD 解耦：** `BattleHUDcontroller.cs` 仅保留英雄状态栏生成与显示，不再管理 CTB 根节点或创建、排序、刷新时间轴头像。
-- **Unity 配置：** 在独立的 `CTBController` 上指定 CTB Root、Timeline Icon Prefab 和 CTB 内负责排列头像的容器。由于 CTB Root 可能被隐藏，`CTBController` 应挂在不会随 CTB Root 一起禁用的活动物体上。建议头像容器使用 Horizontal Layout Group。
-- **当前边界：** 初始头像顺序仍按现有临时行动逻辑排序（速度降序、位置作为次级排序）；尚未实现完整 CTB 未来行动预测或推进算法。
-- **验证状态：** 已提交至功能分支；尚未在 Unity 中编译或运行验证。
-
+- **当前行动者大头像：** `CTBController` 直接更新场景中指定的 Image Sprite，使用当前实体的 `Definition.Portrait`，不实例化头像预制体。
+- **双行动池：** 新增当前回合后续行动池与下一回合行动池两个独立容器。通过 `SetCurrentRoundUpcomingEntities` / `SetNextRoundEntities` 接收外部提供的实体顺序并生成头像；本次不计算行动顺序。
+- **预制体阵营背景：** `TimelineIconController` 已挂到 `Timeline Icon.prefab`，预制体上分别配置友方与敌方背景 Sprite。绑定实体时根据 `BattleEntity.IsPlayer` 切换背景，角色头像仍读取 `Definition.Portrait`。
+- **HUD 解耦：** `BattleHUDcontroller` 只负责英雄状态栏，不管理 CTB。
+- **Unity 配置：** 在 `CTBController` 上设置 CTB Root、当前行动者大头像 Image、当前回合后续池容器、下一回合池容器和 Timeline Icon Prefab。CTB 控制器必须位于不会随 CTB Root 一起禁用的活动物体上。
+- **待补资源：** 当前预制体原有背景 Sprite 已保留为友方背景；敌方背景 Sprite 尚未能从现有预制体配置中识别，需在 `Timeline Icon.prefab` 的 `TimelineIconController` 上补选敌方背景。
+- **行动顺序边界：** 两个池子只接受外部传入的顺序，不自行排序或推算；后续与 CTB 行动顺序系统一起接入。
+- **验证状态：** 已提交到功能分支，尚未在 Unity 中编译或运行验证。
 ---
 
 ## 2026-10-27：自身目标技能改为玩家手动确认
