@@ -1,3 +1,10 @@
+## 2026-10-27：CTB 显隐归属与当前行动者名称
+
+- **Battle UI 控制 CTB 显隐：** `BattleHUDcontroller` 新增 CTB 根节点引用，战斗开始时显示，并在离开战斗模式时隐藏；`CTBController` 不再自行控制根节点显隐。
+- **当前行动者名称：** `CTBController` 新增 `TMP_Text` 引用，在大头像下方显示名称。优先使用运行时角色名，其次使用角色定义名称，最后回退到实体 ID。
+- **Unity 配置：** 在 `BattleHUDcontroller` Inspector 中将 Battle UI 下的 CTB 根节点拖入 `Ctb Root`；在 `CTBController` Inspector 中将大头像下方的 TMP 文本拖入 `Current Acting Name Text`。
+- **验证状态：** 已提交到功能分支，尚未在 Unity 中编译或运行验证。
+
 ## 2026-10-27：建立 CTB 调度器与 UI 展示节点
 
 - **UI 数据结构：** 新增 `Assets/Scripts/Battel/Core/Models/CTBDisplayNode.cs`，封装实体引用、稳定 ID、战斗左侧待机图和阵营标记。CTB UI 直接读取该结构，不自行查角色定义或推断阵营。
