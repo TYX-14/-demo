@@ -1,12 +1,12 @@
-## 2026-10-27：CTB 时间轴头像绑定
+## 2026-10-27：拆分 CTB 时间轴控制职责
 
-- **头像绑定：** 新增 `Assets/Scripts/UI/Battle UI/TimelineIconController.cs`，每个时间轴头像绑定一个明确的 `BattleEntity`，头像读取该实体 `Definition.Portrait`，避免按列表索引或队伍顺序误绑头像。
-- **阵营背景：** 友方与敌方头像分别使用 `allyTimelineBackground` 和 `enemyTimelineBackground`，设置到预制体的 `Root/Border` Image。背景图片由 `BattleHUDcontroller` 的 Inspector 字段提供。
-- **生成与排序：** `BattleHUDcontroller` 在 `BattleStartedEvent` 后为本场战斗的所有实体生成头像。初始显示顺序按当前临时行动分发器规则排序：速度降序，同速按逻辑站位优先。
-- **行动者提示：** 监听 `CurrentEntityChangedEvent`，当前行动者的时间轴头像放大并保持完全不透明，其余头像降低透明度。
-- **Unity 配置：** 在 `BattleHUDcontroller` 中指定 `Timeline Icon Prefab`、`Timeline Icon Container`、友方背景 Sprite、敌方背景 Sprite。容器应是 CTB 内专门用于排列头像的子物体；建议由水平布局组件控制间距。预制体层级沿用现有的 `Root/Border` 与 `Root/Mask/Image`，无需手动给预制体添加脚本。
-- **当前边界：** 这一步只生成本场战斗的初始头像列表并更新行动者高亮，不实现完整 CTB 预测/推进算法。当前项目的行动分发器仍是临时的速度优先选择逻辑，因此时间轴显示顺序与该规则保持一致。
-- **验证状态：** 已提交至 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。
+- **独立控制器：** 新增 `Assets/Scripts/UI/Battle UI/CTBController.cs`，独立监听战斗开始与当前行动者变化事件，负责生成时间轴头像、初始排序和行动者高亮。
+- **单头像职责：** `TimelineIconController.cs` 只绑定一个 `BattleEntity`，显示角色肖像并处理当前行动高亮，不再接收或设置阵营背景 Sprite。
+- **预制体背景：** 友方/敌方背景由 `Timeline Icon.prefab` 自身的 Image 配置决定，代码不再覆盖背景；因此无需在 HUD 或 CTB Inspector 重复指定背景图。
+- **HUD 解耦：** `BattleHUDcontroller.cs` 仅保留状态栏生成与 HUD 显隐，不再创建、排序或刷新时间轴头像。
+- **Unity 配置：** 在独立的 `CTBController` 上指定 Timeline Icon Prefab 和 CTB 内负责排列头像的容器。建议容器使用 Horizontal Layout Group。
+- **当前边界：** 初始头像顺序仍按现有临时行动逻辑排序（速度降序、位置作为次级排序）；尚未实现完整 CTB 未来行动预测或推进算法。
+- **验证状态：** 已提交至功能分支；尚未在 Unity 中编译或运行验证。
 
 ---
 
