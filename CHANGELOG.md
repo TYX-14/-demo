@@ -1,3 +1,13 @@
+## 2026-10-27：建立 CTB 调度器与 UI 展示节点
+
+- **UI 数据结构：** 新增 `Assets/Scripts/Battel/Core/Models/CTBDisplayNode.cs`，封装实体引用、稳定 ID、战斗左侧待机图和阵营标记。CTB UI 直接读取该结构，不自行查角色定义或推断阵营。
+- **CTB 调度器：** 新增纯 C# 类 `BattleRoundScheduler`，维护当前行动轮剩余队列、每个实体的下一行动时间，并生成下一行动轮预测。当前基础时间模型为 `100 / Speed`，同时间按站位与初始实体顺序稳定排序。
+- **当前行动者唯一入口：** `BattleController.CurrentEntity` 改为只读属性，统一通过 `SetCurrentEntity` 更新并发布 `CurrentEntityChangedEvent`。真正选出下一位实体由调度器负责，`SetNextEntityState` 不再自行按速度扫描选人。
+- **UI 更新事件：** 新增 `CTBQueueUpdatedEvent`，将当前行动轮剩余节点和下一轮预测节点一起发送给 `CTBController`；两个头像池不自行计算行动顺序。
+- **时间轴头像：** `TimelineIconController` 新增对 `CTBDisplayNode` 的绑定入口，继续使用 `LeftBattleIdle` 并根据节点阵营切换背景。
+- **当前边界：** 调度器接口与初次行动者选择已接入；目前技能结算仍是占位验证，`PerformActionState` 尚未推进到下一行动者，因此完整的连续回合推进需要在正式行动结束流程中接入。速度变化、加速/延迟、额外行动和状态变化后的重排规则也尚未实现。
+- **验证状态：** 代码已提交至功能分支，尚未在 Unity 中编译或运行验证。
+
 ## 2026-10-27：CTB 统一使用角色战斗左侧待机图
 
 - **角色定义：** `CharacterDefinitionSO` 新增 `LeftBattleIdle` Sprite 字段，与通用头像 `Portrait` 和探索待机图 `LeftIdle` 分开。
