@@ -67,10 +67,11 @@
      <Compile Include="Assets\Scripts\Game\Interaction\InteractionEvent.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\ActionMeunButton.cs" />
      <Compile Include="Assets\Scripts\Game\Character\CharacterRuntimeData.cs" />
+     <Compile Include="Assets\Scripts\Development\DeveloperControlPanel.cs" />
      <Compile Include="Assets\Scripts\Game\Path Acton\InquireAction.cs" />
      <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleFieldManager.cs" />
-     <Compile Include="Assets\Scripts\Game\SceneTranstion\SceneLoadCompleteEvent.cs" />
      <Compile Include="Assets\Scripts\UI\Battle UI\StressMeterUI.cs" />
+     <Compile Include="Assets\Scripts\Game\SceneTranstion\SceneLoadCompleteEvent.cs" />
      <Compile Include="Assets\Scripts\Game\Party\CharacterRosterManager.cs" />
      <Compile Include="Assets\Scripts\Game\Character\AllyDefinitionSO.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
@@ -105,6 +106,7 @@
      <Compile Include="Assets\Scripts\UI\Field Panel\ShopPanelController.cs" />
      <Compile Include="Assets\Scripts\Game\Inventory\EquipmentItemSO.cs" />
      <Compile Include="Assets\Scripts\Battel\Core\FSM\SetNextEntityState.cs" />
+     <Compile Include="Assets\Scripts\UI\Battle UI\HealthBarController.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_ExampleScript_01.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
      <Compile Include="Assets\Scripts\Battel\Core\FSM\BattleState.cs" />

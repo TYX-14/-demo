@@ -280,7 +280,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 34.40001, y: -5.8841004}
-  m_SizeDelta: {x: 55.5078, y: 27.1349}
+  m_SizeDelta: {x: 72.1, y: 27.1349}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &3011962405623187136
 CanvasRenderer:
@@ -821,7 +821,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1065084696920690639}
   - {fileID: 8387171651717583451}
@@ -1014,6 +1014,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1065084696920690639}
   - component: {fileID: 3701342259807292139}
+  - component: {fileID: 7896429191831541806}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: StressMeterUI
@@ -1072,6 +1073,39 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &7896429191831541806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3837102093478859470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5913fbd126217a14da16a2d2d1a53ee1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stressCircles:
+  - {fileID: 3576825497561364460}
+  - {fileID: 6616261039913469619}
+  - {fileID: 890465218083912211}
+  - {fileID: 3393462013330985482}
+  - {fileID: 5470915856189288512}
+  glowOutlines:
+  - {fileID: 4699634340240325371}
+  - {fileID: 2860723142510535126}
+  - {fileID: 2986875548610102933}
+  - {fileID: 7952379077838140601}
+  - {fileID: 8940079046398301516}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  stressColor: {r: 0.9, g: 0.12, b: 0.12, a: 1}
+  afflictionColor: {r: 0.33527014, g: 0.10030261, b: 0.4339623, a: 1}
+  virtueColor: {r: 1, g: 0.72, b: 0.12, a: 1}
+  pulseSpeed: 0.5
+  minGlowDistance: 1
+  maxGlowDistance: 1.5
+  minGlowAlpha: 0.3
+  maxGlowAlpha: 1
 --- !u!1 &4158434241591321640
 GameObject:
   m_ObjectHideFlags: 0
@@ -1313,7 +1347,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 134.9, y: -5.8841004}
-  m_SizeDelta: {x: 55.5078, y: 27.1349}
+  m_SizeDelta: {x: 75.22, y: 27.1349}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &4454855340497524412
 CanvasRenderer:
@@ -1713,6 +1747,29 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7329104856172309945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6614590188926186795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f6a8b2d9c1e47a5b3d6f8092c7e1a54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nameText: {fileID: 2762843796408844752}
+  hpText: {fileID: 9125816839290312387}
+  spText: {fileID: 7496687295422962344}
+  hpSlider: {fileID: 8418401122360049456}
+  spSlider: {fileID: 686172415382243341}
+  stressMeter: {fileID: 7896429191831541806}
+  backgroundImage: {fileID: 7824928987724417390}
+  rootTransform: {fileID: 5466985192888001021}
+  actingBackgroundSprite: {fileID: 21300000, guid: c7aa0c78001854e8086d57fea3755410,
+    type: 3}
+  actingScale: 1.2
 --- !u!1 &7033055747489761427
 GameObject:
   m_ObjectHideFlags: 0
@@ -2123,26 +2180,3 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
-
---- !u!114 &7329104856172309945
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6614590188926186795}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f6a8b2d9c1e47a5b3d6f8092c7e1a54, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  nameText: {fileID: 0}
-  hpText: {fileID: 0}
-  spText: {fileID: 0}
-  hpSlider: {fileID: 0}
-  spSlider: {fileID: 0}
-  stressMeter: {fileID: 0}
-  backgroundImage: {fileID: 0}
-  rootTransform: {fileID: 0}
-  actingBackgroundSprite: {fileID: 0}
-  actingScale: 1.2
