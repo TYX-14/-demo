@@ -1,29 +1,39 @@
 using System.Collections.Generic;
-using System.Linq;
 using MFrameork.Event;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// CTB 时间轴控制器。
-/// 独立负责时间轴头像的创建、实体绑定、初始排序和当前行动者高亮。
-/// 单个头像的显示由 TimelineIconController 负责；阵营背景沿用 Timeline Icon 预制体自身配置。
+/// CTB 显示控制器。
+/// 当前行动者使用场景中已有的大头像 Image；两个后续行动池使用 Timeline Icon 预制体。
+/// 本脚本不计算行动顺序，后续由 CTB 行动顺序系统调用对应的 Set 方法填充池子。
 /// </summary>
 public sealed class CTBController : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
     IEventReceiver<CurrentEntityChangedEvent>
 {
     [Header("CTB 根节点")]
-    [SerializeField, Tooltip("CTB UI 根物体，用于战斗开始时显示 CTB。此脚本应挂在不会随该根节点一起禁用的活动物体上。")]
+    [SerializeField, Tooltip("CTB UI 根物体。此脚本应挂在不会随该根节点一起禁用的活动物体上。")]
     private GameObject ctbRoot;
 
-    [Header("CTB 时间轴")]
-    [SerializeField, Tooltip("Timeline Icon 预制体，阵营背景应直接配置在该预制体上。")]
+    [Header("当前行动者")]
+    [SerializeField, Tooltip("场景中已有的大头像 Image，不需要制作头像预制体。")]
+    private Image currentActingPortraitImage;
+
+    [Header("当前回合后续行动池")]
+    [SerializeField, Tooltip("显示本回合当前行动者之后的行动者。顺序由外部行动顺序系统传入。")]
+    private Transform currentRoundUpcomingContainer;
+
+    [Header("下一回合行动池")]
+    [SerializeField, Tooltip("显示下一回合行动顺序。当前不自动计算，由后续行动顺序系统传入。")]
+    private Transform nextRoundContainer;
+
+    [Header("后续行动头像")]
+    [SerializeField, Tooltip("Timeline Icon 预制体。友方/敌方背景由预制体上的 TimelineIconController 切换。")]
     private GameObject timelineIconPrefab;
 
-    [SerializeField, Tooltip("CTB 内专门排列时间轴头像的容器。建议使用 Horizontal Layout Group。")]
-    private Transform timelineIconContainer;
-
-    private readonly List<TimelineIconController> spawnedIcons = new();
+    private readonly List<TimelineIconController> currentRoundIcons = new();
+    private readonly List<TimelineIconController> nextRoundIcons = new();
     private BattleEntity currentActingEntity;
 
     private void OnEnable()
@@ -36,7 +46,8 @@ public sealed class CTBController : MonoBehaviour,
     {
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
-        ClearTimelineIcons();
+        ClearIcons(currentRoundIcons);
+        ClearIcons(nextRoundIcons);
     }
 
     public void OnEvent(BattleStartedEvent evt)
@@ -44,23 +55,65 @@ public sealed class CTBController : MonoBehaviour,
         if (ctbRoot != null)
             ctbRoot.SetActive(true);
 
-        BuildTimelineIcons();
-        RefreshActingHighlight();
+        currentActingEntity = null;
+        RefreshCurrentActingPortrait();
+        ClearIcons(currentRoundIcons);
+        ClearIcons(nextRoundIcons);
     }
 
     public void OnEvent(CurrentEntityChangedEvent evt)
     {
         currentActingEntity = evt.Entity;
-        RefreshActingHighlight();
+        RefreshCurrentActingPortrait();
+    }
+
+    private void RefreshCurrentActingPortrait()
+    {
+        if (currentActingPortraitImage == null)
+            return;
+
+        Sprite portrait = currentActingEntity != null && currentActingEntity.Definition != null
+            ? currentActingEntity.Definition.Portrait
+            : null;
+
+        currentActingPortraitImage.sprite = portrait;
+        currentActingPortraitImage.enabled = portrait != null;
     }
 
     /// <summary>
-    /// 根据当前战斗实体建立初始时间轴。
-    /// 当前行动系统仍是临时的速度优先选择，因此初始顺序按速度降序、再按位置排序。
+    /// 由行动顺序系统传入当前回合尚待行动的实体。此方法不自行排序或计算行动顺序。
     /// </summary>
-    public void BuildTimelineIcons()
+    public void SetCurrentRoundUpcomingEntities(IEnumerable<BattleEntity> entities)
     {
-        ClearTimelineIcons();
+        PopulatePool(entities, currentRoundUpcomingContainer, currentRoundIcons);
+    }
+
+    /// <summary>
+    /// 由行动顺序系统传入下一回合的实体顺序。当前阶段不自行计算下一回合顺序。
+    /// </summary>
+    public void SetNextRoundEntities(IEnumerable<BattleEntity> entities)
+    {
+        PopulatePool(entities, nextRoundContainer, nextRoundIcons);
+    }
+
+    public void ClearCurrentRoundUpcomingPool() => ClearIcons(currentRoundIcons);
+    public void ClearNextRoundPool() => ClearIcons(nextRoundIcons);
+
+    private void PopulatePool(
+        IEnumerable<BattleEntity> entities,
+        Transform container,
+        List<TimelineIconController> destination)
+    {
+        ClearIcons(destination);
+
+        if (entities == null)
+            return;
+
+        if (container == null)
+        {
+            Debug.LogError("CTBController：未指定对应的头像池容器。", this);
+            return;
+        }
 
         if (timelineIconPrefab == null)
         {
@@ -68,77 +121,33 @@ public sealed class CTBController : MonoBehaviour,
             return;
         }
 
-        if (timelineIconContainer == null)
-        {
-            Debug.LogError("CTBController：未指定 Timeline Icon Container。请指定 CTB 内负责排列头像的子物体。", this);
-            return;
-        }
-
-        BattleController battleController = FindAnyObjectByType<BattleController>();
-        if (battleController == null)
-        {
-            Debug.LogError("CTBController：找不到 BattleController，无法建立时间轴。", this);
-            return;
-        }
-
-        List<BattleEntity> entities = battleController.AllEntities
-            .Where(entity => entity != null && entity.RuntimeData != null && entity.Definition != null)
-            .OrderByDescending(entity => entity.TotalStats.Speed)
-            .ThenBy(entity => GetPositionPriority(entity, battleController.AllEntities))
-            .ToList();
-
         foreach (BattleEntity entity in entities)
         {
-            GameObject iconObject = Instantiate(timelineIconPrefab, timelineIconContainer, false);
+            if (entity == null || entity.Definition == null)
+                continue;
+
+            GameObject iconObject = Instantiate(timelineIconPrefab, container, false);
             TimelineIconController icon = iconObject.GetComponent<TimelineIconController>();
             if (icon == null)
-                icon = iconObject.AddComponent<TimelineIconController>();
+            {
+                Debug.LogError("CTBController：Timeline Icon 预制体缺少 TimelineIconController 组件。请将组件添加到预制体上。", iconObject);
+                Destroy(iconObject);
+                continue;
+            }
 
             icon.Bind(entity);
-            icon.SetActing(entity == currentActingEntity);
-            spawnedIcons.Add(icon);
+            destination.Add(icon);
         }
     }
 
-    private void ClearTimelineIcons()
+    private static void ClearIcons(List<TimelineIconController> icons)
     {
-        foreach (TimelineIconController icon in spawnedIcons)
+        foreach (TimelineIconController icon in icons)
         {
             if (icon != null)
                 Destroy(icon.gameObject);
         }
 
-        spawnedIcons.Clear();
-    }
-
-    private void RefreshActingHighlight()
-    {
-        foreach (TimelineIconController icon in spawnedIcons)
-        {
-            if (icon != null)
-                icon.SetActing(icon.BoundEntity != null && icon.BoundEntity == currentActingEntity);
-        }
-    }
-
-    private static int GetPositionPriority(BattleEntity entity, IReadOnlyList<BattleEntity> allEntities)
-    {
-        if (entity?.RuntimeData != null && entity.RuntimeData.Position > 0)
-            return entity.RuntimeData.Position;
-
-        int sideOrder = 1;
-        if (allEntities == null)
-            return sideOrder;
-
-        for (int i = 0; i < allEntities.Count; i++)
-        {
-            BattleEntity previous = allEntities[i];
-            if (previous == entity)
-                break;
-
-            if (previous != null && entity != null && previous.IsPlayer == entity.IsPlayer)
-                sideOrder++;
-        }
-
-        return sideOrder;
+        icons.Clear();
     }
 }
