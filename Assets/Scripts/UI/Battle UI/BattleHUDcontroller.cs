@@ -16,9 +16,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     [SerializeField, Tooltip("英雄状态栏列表所在的根物体")]
     private GameObject healthBarPanelRoot;
 
-    [SerializeField, Tooltip("CTB UI 的根物体")]
-    private GameObject ctbRoot;
-
 
     [Header("英雄状态栏生成")]
     [SerializeField, Tooltip("仅用于我方英雄的状态栏预制体")]
@@ -66,9 +63,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     {
         if (healthBarPanelRoot != null)
             healthBarPanelRoot.SetActive(true);
-
-        if (ctbRoot != null)
-            ctbRoot.SetActive(true);
     }
 
     private void BuildAllyHealthBars()
