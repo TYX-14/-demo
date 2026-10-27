@@ -14,9 +14,6 @@ public sealed class TimelineIconController : MonoBehaviour
     [SerializeField, Tooltip("角色头像 Image；为空时自动查找 Root/Mask/Image。")]
     private Image portraitImage;
 
-    [Header("阵营背景")]
-    [SerializeField] private Sprite allyBackground;
-    [SerializeField] private Sprite enemyBackground;
 
     [Header("行动高亮")]
     [SerializeField, Min(1f)] private float actingScale = 1.12f;
@@ -61,20 +58,15 @@ public sealed class TimelineIconController : MonoBehaviour
     }
 
     /// <summary>将此头像绑定到一个战斗实体，并刷新头像与阵营背景。</summary>
-    public void Bind(BattleEntity entity, Sprite allyBackgroundSprite, Sprite enemyBackgroundSprite)
+    public void Bind(BattleEntity entity)
     {
         CacheComponents();
         _boundEntity = entity;
-
-        allyBackground = allyBackgroundSprite;
-        enemyBackground = enemyBackgroundSprite;
 
         if (entity == null)
         {
             if (portraitImage != null)
                 portraitImage.sprite = null;
-            if (backgroundImage != null)
-                backgroundImage.sprite = null;
             SetActing(false);
             return;
         }
@@ -89,16 +81,9 @@ public sealed class TimelineIconController : MonoBehaviour
             Debug.LogWarning("TimelineIconController：找不到头像 Image。请确认预制体路径为 Root/Mask/Image。", this);
         }
 
-        Sprite sideBackground = entity.IsPlayer ? allyBackground : enemyBackground;
-        if (backgroundImage != null)
-        {
-            if (sideBackground != null)
-                backgroundImage.sprite = sideBackground;
-        }
-        else
-        {
-            Debug.LogWarning("TimelineIconController：找不到阵营背景 Image。请确认预制体路径为 Root/Border。", this);
-        }
+        // 阵营背景由 Timeline Icon 预制体自身配置，控制脚本不覆盖该 Sprite。
+        if (backgroundImage == null)
+            Debug.LogWarning("TimelineIconController：找不到背景 Image。请确认预制体路径为 Root/Border。", this);
     }
 
     /// <summary>高亮当前行动实体；非当前行动者降低透明度。</summary>
