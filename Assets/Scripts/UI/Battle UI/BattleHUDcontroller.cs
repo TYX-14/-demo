@@ -19,18 +19,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     [SerializeField, Tooltip("CTB UI 的根物体")]
     private GameObject ctbRoot;
 
-    [Header("CTB 时间轴头像")]
-    [SerializeField, Tooltip("Timeline Icon 预制体。")]
-    private GameObject timelineIconPrefab;
-
-    [SerializeField, Tooltip("时间轴头像的排列容器。请指定 CTB 内负责排列头像的子物体，而不是整个 CTB 根节点。")]
-    private Transform timelineIconContainer;
-
-    [SerializeField, Tooltip("友方头像使用的背景图片。")]
-    private Sprite allyTimelineBackground;
-
-    [SerializeField, Tooltip("敌方头像使用的背景图片。")]
-    private Sprite enemyTimelineBackground;
 
     [Header("英雄状态栏生成")]
     [SerializeField, Tooltip("仅用于我方英雄的状态栏预制体")]
@@ -40,7 +28,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     private Transform healthBarContainer;
 
     private readonly List<HealthBarController> spawnedHealthBars = new();
-    private readonly List<TimelineIconController> spawnedTimelineIcons = new();
     private BattleEntity currentActingEntity;
 
     private void OnEnable()
@@ -62,9 +49,7 @@ public class BattleHUDcontroller : MonoBehaviour,
     {
         SetupHUD();
         BuildAllyHealthBars();
-        BuildTimelineIcons();
         RefreshActingHighlight();
-        RefreshTimelineActingHighlight();
     }
 
     /// <summary>
@@ -75,7 +60,6 @@ public class BattleHUDcontroller : MonoBehaviour,
         currentActingEntity = evt.Entity;
         SortHealthBarsByPosition();
         RefreshActingHighlight();
-        RefreshTimelineActingHighlight();
     }
 
     private void SetupHUD()
