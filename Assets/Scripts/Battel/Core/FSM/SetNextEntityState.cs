@@ -6,10 +6,8 @@ using UnityEngine;
 ///
 /// 主要职责：
 /// 1. 检查战斗是否已经结束：任意一方没有存活实体时停止当前战斗循环。
-/// 2. 从当前战斗实体中选出下一位真正要行动的实体。
-///    当前演示阶段暂用速度从高到低排序；速度相同时，站位靠前者优先。
-///    后续接入 BattleRoundScheduler 后，应由调度器提供下一位行动者。
-/// 3. 更新 BattleController.CurrentEntity，并发布 CurrentEntityChangedEvent，
+/// 2. 从 BattleRoundScheduler 取得下一位真正要行动的实体。
+/// 3. 通过 BattleController 的统一入口更新当前行动者，并发布 CurrentEntityChangedEvent，
 ///    供当前行动者 UI 与时间轴显示订阅同步。
 /// 4. 根据行动者阵营切换到玩家输入状态或敌方 AI 状态。
 /// </summary>
