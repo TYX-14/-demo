@@ -1,10 +1,10 @@
 ## 2026-10-27：拆分 CTB 时间轴控制职责
 
-- **独立控制器：** 新增 `Assets/Scripts/UI/Battle UI/CTBController.cs`，独立监听战斗开始与当前行动者变化事件，负责生成时间轴头像、初始排序和行动者高亮。
+- **独立控制器：** 新增 `Assets/Scripts/UI/Battle UI/CTBController.cs`，独立监听战斗开始与当前行动者变化事件，负责 CTB 根节点显隐、生成时间轴头像、初始排序和行动者高亮。
 - **单头像职责：** `TimelineIconController.cs` 只绑定一个 `BattleEntity`，显示角色肖像并处理当前行动高亮，不再接收或设置阵营背景 Sprite。
 - **预制体背景：** 友方/敌方背景由 `Timeline Icon.prefab` 自身的 Image 配置决定，代码不再覆盖背景；因此无需在 HUD 或 CTB Inspector 重复指定背景图。
-- **HUD 解耦：** `BattleHUDcontroller.cs` 仅保留状态栏生成与 HUD 显隐，不再创建、排序或刷新时间轴头像。
-- **Unity 配置：** 在独立的 `CTBController` 上指定 Timeline Icon Prefab 和 CTB 内负责排列头像的容器。建议容器使用 Horizontal Layout Group。
+- **HUD 解耦：** `BattleHUDcontroller.cs` 仅保留英雄状态栏生成与显示，不再管理 CTB 根节点或创建、排序、刷新时间轴头像。
+- **Unity 配置：** 在独立的 `CTBController` 上指定 CTB Root、Timeline Icon Prefab 和 CTB 内负责排列头像的容器。由于 CTB Root 可能被隐藏，`CTBController` 应挂在不会随 CTB Root 一起禁用的活动物体上。建议头像容器使用 Horizontal Layout Group。
 - **当前边界：** 初始头像顺序仍按现有临时行动逻辑排序（速度降序、位置作为次级排序）；尚未实现完整 CTB 未来行动预测或推进算法。
 - **验证状态：** 已提交至功能分支；尚未在 Unity 中编译或运行验证。
 
