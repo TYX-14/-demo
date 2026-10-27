@@ -12,6 +12,8 @@ public abstract class CharacterDefinitionSO : ScriptableObject
     public string Name;
     public Sprite Portrait;
     public Sprite LeftIdle;
+    [Tooltip("CTB 时间轴使用的战斗左侧待机图。当前行动者大头像与两个行动池头像统一使用此图片。")]
+    public Sprite LeftBattleIdle;
 
     [Header("属性")]
     public int BaseLevel = 1;
