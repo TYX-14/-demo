@@ -22,3 +22,18 @@ public readonly struct CurrentEntityChangedEvent : IEvent
         Entity = entity;
     }
 }
+
+/// <summary>
+/// CTB 两个行动池更新事件。数据已由调度器转换为 UI 可直接使用的节点。
+/// </summary>
+public readonly struct CTBQueueUpdatedEvent : IEvent
+{
+    public CTBDisplayNode[] CurrentRoundNodes { get; }
+    public CTBDisplayNode[] NextRoundNodes { get; }
+
+    public CTBQueueUpdatedEvent(CTBDisplayNode[] currentRoundNodes, CTBDisplayNode[] nextRoundNodes)
+    {
+        CurrentRoundNodes = currentRoundNodes ?? System.Array.Empty<CTBDisplayNode>();
+        NextRoundNodes = nextRoundNodes ?? System.Array.Empty<CTBDisplayNode>();
+    }
+}
