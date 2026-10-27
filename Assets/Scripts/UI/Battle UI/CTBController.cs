@@ -75,15 +75,15 @@ public sealed class CTBController : MonoBehaviour,
 
     private void RefreshCurrentActingPortrait()
     {
-        if (currentActingPortraitImage == null)
-            return;
-
         Sprite portrait = currentActingEntity != null && currentActingEntity.Definition != null
             ? currentActingEntity.Definition.LeftBattleIdle
             : null;
 
-        currentActingPortraitImage.sprite = portrait;
-        currentActingPortraitImage.enabled = portrait != null;
+        if (currentActingPortraitImage != null)
+        {
+            currentActingPortraitImage.sprite = portrait;
+            currentActingPortraitImage.enabled = portrait != null;
+        }
 
         if (currentActingNameText != null)
             currentActingNameText.text = GetEntityDisplayName(currentActingEntity);
