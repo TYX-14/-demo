@@ -19,6 +19,19 @@ public class BattleHUDcontroller : MonoBehaviour,
     [SerializeField, Tooltip("CTB UI 的根物体")]
     private GameObject ctbRoot;
 
+    [Header("CTB 时间轴头像")]
+    [SerializeField, Tooltip("Timeline Icon 预制体。")]
+    private GameObject timelineIconPrefab;
+
+    [SerializeField, Tooltip("时间轴头像的排列容器。请指定 CTB 内负责排列头像的子物体，而不是整个 CTB 根节点。")]
+    private Transform timelineIconContainer;
+
+    [SerializeField, Tooltip("友方头像使用的背景图片。")]
+    private Sprite allyTimelineBackground;
+
+    [SerializeField, Tooltip("敌方头像使用的背景图片。")]
+    private Sprite enemyTimelineBackground;
+
     [Header("英雄状态栏生成")]
     [SerializeField, Tooltip("仅用于我方英雄的状态栏预制体")]
     private HealthBarController healthBarPrefab;
@@ -27,6 +40,7 @@ public class BattleHUDcontroller : MonoBehaviour,
     private Transform healthBarContainer;
 
     private readonly List<HealthBarController> spawnedHealthBars = new();
+    private readonly List<TimelineIconController> spawnedTimelineIcons = new();
     private BattleEntity currentActingEntity;
 
     private void OnEnable()
@@ -48,7 +62,9 @@ public class BattleHUDcontroller : MonoBehaviour,
     {
         SetupHUD();
         BuildAllyHealthBars();
+        BuildTimelineIcons();
         RefreshActingHighlight();
+        RefreshTimelineActingHighlight();
     }
 
     /// <summary>
@@ -59,6 +75,7 @@ public class BattleHUDcontroller : MonoBehaviour,
         currentActingEntity = evt.Entity;
         SortHealthBarsByPosition();
         RefreshActingHighlight();
+        RefreshTimelineActingHighlight();
     }
 
     private void SetupHUD()
@@ -111,6 +128,95 @@ public class BattleHUDcontroller : MonoBehaviour,
         }
 
         SortHealthBarsByPosition();
+    }
+
+
+    /// <summary>
+    /// 为本场战斗的每个实体生成一个时间轴头像。
+    /// 初始排列沿用当前临时行动分发器的规则：速度降序，同速时按逻辑站位优先。
+    /// </summary>
+    private void BuildTimelineIcons()
+    {
+        ClearTimelineIcons();
+
+        if (timelineIconPrefab == null)
+        {
+            Debug.LogError("BattleHUDcontroller：未指定 Timeline Icon Prefab，无法生成 CTB 时间轴头像。", this);
+            return;
+        }
+
+        if (timelineIconContainer == null)
+        {
+            Debug.LogError("BattleHUDcontroller：未指定 Timeline Icon Container。请把 CTB 内用于排列头像的容器拖入该字段。", this);
+            return;
+        }
+
+        BattleController battleController = FindAnyObjectByType<BattleController>();
+        if (battleController == null)
+        {
+            Debug.LogError("BattleHUDcontroller：找不到 BattleController，无法生成时间轴头像。", this);
+            return;
+        }
+
+        List<BattleEntity> orderedEntities = battleController.AllEntities
+            .Where(entity => entity != null && entity.RuntimeData != null && entity.Definition != null)
+            .OrderByDescending(entity => entity.TotalStats.Speed)
+            .ThenBy(entity => GetTimelinePositionPriority(entity, battleController.AllEntities))
+            .ToList();
+
+        foreach (BattleEntity entity in orderedEntities)
+        {
+            GameObject iconObject = Instantiate(timelineIconPrefab, timelineIconContainer, false);
+            TimelineIconController icon = iconObject.GetComponent<TimelineIconController>();
+            if (icon == null)
+                icon = iconObject.AddComponent<TimelineIconController>();
+
+            icon.Bind(entity, allyTimelineBackground, enemyTimelineBackground);
+            icon.SetActing(entity == currentActingEntity);
+            spawnedTimelineIcons.Add(icon);
+        }
+    }
+
+    private void ClearTimelineIcons()
+    {
+        foreach (TimelineIconController icon in spawnedTimelineIcons)
+        {
+            if (icon != null)
+                Destroy(icon.gameObject);
+        }
+
+        spawnedTimelineIcons.Clear();
+    }
+
+    private void RefreshTimelineActingHighlight()
+    {
+        foreach (TimelineIconController icon in spawnedTimelineIcons)
+        {
+            if (icon != null)
+                icon.SetActing(icon.BoundEntity != null && icon.BoundEntity == currentActingEntity);
+        }
+    }
+
+    private static int GetTimelinePositionPriority(BattleEntity entity, IReadOnlyList<BattleEntity> allEntities)
+    {
+        if (entity?.RuntimeData != null && entity.RuntimeData.Position > 0)
+            return entity.RuntimeData.Position;
+
+        int sideOrder = 1;
+        if (allEntities == null)
+            return sideOrder;
+
+        for (int i = 0; i < allEntities.Count; i++)
+        {
+            BattleEntity previous = allEntities[i];
+            if (previous == entity)
+                break;
+
+            if (previous != null && entity != null && previous.IsPlayer == entity.IsPlayer)
+                sideOrder++;
+        }
+
+        return sideOrder;
     }
 
     private void ClearHealthBars()
