@@ -1,3 +1,15 @@
+## 2026-10-27：区分英雄技能池与战斗已装备技能
+
+- **技能池保留：** `CharacterDefinitionSO.initialSkills` 继续作为角色可用技能池，不修改现有角色资源中的技能配置。
+- **运行时配装：** `CharacterRuntimeData` 新增已装备技能列表。首次创建运行数据时，按技能池原始顺序选择前四个有效且不重复的技能；技能池不足四个时，装备实际可用的技能数量。
+- **统一校验入口：** 新增 `TrySetEquippedSkills`，供未来菜单配置 UI 使用。它只接受技能池内的技能，拒绝重复技能和超过四个的配置；校验失败会保留原有装备列表。允许传入少于四个技能或用 null 表示空槽。
+- **战斗面板：** `BattleSkillPanelController` 改为只读取当前行动角色运行数据里的已装备技能，不再直接遍历完整技能池。目标选择和站位合法性逻辑保持不变。
+- **涉及文件：** `Assets/Scripts/Game/Character/CharacterRuntimeData.cs`、`Assets/Scripts/UI/Battle UI/BattleCommandUI/BattleSkillPanelController.cs`。
+- **范围说明：** 本次只处理战斗中使用哪四个技能，不新增菜单 UI，也暂不加入战斗中禁止改配装的状态锁。
+- **验证状态：** 已提交到 `feature/battle-position-system`；尚未在 Unity 中编译或运行验证。建议测试技能池有 6 个技能时战斗面板只显示前 4 个、技能池少于 4 个时正常显示，以及切换行动角色后技能列表正确刷新。
+
+---
+
 ## 2026-10-26：修复开发者面板压力滑块并增强呼吸灯效果
 
 - **滑块修复：** 修正每帧把滑块值重置为角色当前压力值的问题；现在拖动时会保留待应用的数值，只有切换角色时才初始化滑块。
