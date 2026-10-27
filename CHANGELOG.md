@@ -1,3 +1,12 @@
+## 2026-10-27：修复 CTB 关闭时对象池回收错误
+
+- **问题原因：** CTB 父级（例如 Next Round 容器或整个战斗 UI）正在停用时，CTBController.OnDisable() 立即回收头像；TimelineIconPool.Release() 又通过 TimelineIconController.PrepareForReuse() 调用 transform.SetParent()，触发 Unity 错误：不能在父对象正在激活/停用时修改子对象层级。
+- **修复方案：** CTBController.OnDisable() 只停止动画与事件订阅，不再回收/重设头像父级；保留对象引用。下一次 OnEnable() 在层级重新激活后统一调用 RecycleAllVisibleIcons()，再将头像安全归还对象池。
+- **涉及脚本：** Assets/Scripts/UI/Battle UI/CTBController.cs。
+- **影响范围：** 只调整 CTB 头像的禁用/启用生命周期，不改变队列排序、开场动画或正常行动推进。
+- **验证状态：** 已提交代码；尚未在 Unity 中复现退出流程并验证。请重点测试退出 Play Mode、关闭/重新打开战斗 UI，以及连续进入两场战斗时是否仍有异常或遗留头像。
+
+---
 ## 2026-10-27：CTB 队列动画与头像对象池
 
 - **开场时机：** `BattleSetupState` 现在等待所有友军 `MoveToPosition` 协程真实完成后才发布 `BattleStartedEvent`；`BattleController.InitializeRoundScheduler` 只初始化顺序，不在跑位期间提前发布队列。切入 `GameMode.Battle` 本身不再提前显示战斗 HUD。跑位期间 CTB 保持隐藏。
