@@ -42,6 +42,21 @@ public sealed class CTBController : MonoBehaviour,
     private bool isOpeningSequence = true;
     private Coroutine portraitRoutine;
     private Coroutine openingRoutine;
+    private Vector2 portraitRestingPosition;
+    private bool portraitPositionCached;
+
+    private void Awake()
+    {
+        CachePortraitRestingPosition();
+    }
+
+    private void CachePortraitRestingPosition()
+    {
+        if (portraitPositionCached || currentActingPortraitImage == null)
+            return;
+        portraitRestingPosition = currentActingPortraitImage.rectTransform.anchoredPosition;
+        portraitPositionCached = true;
+    }
 
     private void OnEnable()
     {
@@ -165,8 +180,9 @@ public sealed class CTBController : MonoBehaviour,
         if (currentActingPortraitImage == null)
             yield break;
 
+        CachePortraitRestingPosition();
         RectTransform imageRect = currentActingPortraitImage.rectTransform;
-        Vector2 restingPosition = imageRect.anchoredPosition;
+        Vector2 restingPosition = portraitRestingPosition;
         Color color = currentActingPortraitImage.color;
 
         if (!opening && currentActingPortraitImage.enabled && currentActingPortraitImage.sprite != null)
@@ -228,8 +244,10 @@ public sealed class CTBController : MonoBehaviour,
         if (currentActingPortraitImage == null)
             return;
 
+        CachePortraitRestingPosition();
         currentActingPortraitImage.sprite = null;
         currentActingPortraitImage.enabled = false;
+        currentActingPortraitImage.rectTransform.anchoredPosition = portraitRestingPosition;
         Color color = currentActingPortraitImage.color;
         currentActingPortraitImage.color = new Color(color.r, color.g, color.b, 1f);
     }
