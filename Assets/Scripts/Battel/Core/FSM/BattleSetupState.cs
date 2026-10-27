@@ -46,7 +46,7 @@ public class BattleSetupState : BattleState
                 int index = i;
                 BattleEntity entity = allyEntities[index];
                 Vector3 homePos = _controller.FieldManager.GetHomePos(entity.Unit);
-                StartCoroutine(MoveUnitAndSignal(entity, homePos, runtime, movementFinished, index));
+                _controller.StartCoroutine(MoveUnitAndSignal(entity, homePos, runtime, movementFinished, index));
             }
 
             // 等待每个移动协程真实结束，而不是假定固定等待时间就一定跑位完成。
