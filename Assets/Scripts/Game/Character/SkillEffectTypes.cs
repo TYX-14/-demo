@@ -23,11 +23,11 @@ public abstract class SkillEffectBase
     }
 }
 
-/// <summary>表示执行一次攻击，不保存固定伤害值。</summary>
+/// <summary>表示执行一次伤害结算，不保存固定伤害值；该标记不单独生成技能说明文本。</summary>
 [Serializable]
 public sealed class DamageEffect : SkillEffectBase
 {
-    public override string BuildDescription() => "攻击";
+    public override string BuildDescription() => string.Empty;
 }
 
 /// <summary>治疗效果的配置值。实际恢复量与暴击结算由执行器处理。</summary>
