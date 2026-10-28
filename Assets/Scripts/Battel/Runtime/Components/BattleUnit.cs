@@ -342,6 +342,32 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
+    /// 技能前进/后退专用的迅猛平移：不触发走路动画，不使用缓动或到达后的阻尼。
+    /// 以固定短时长线性抵达目标点，结束时立即停稳。
+    /// </summary>
+    public IEnumerator FastMoveToPosition(Vector3 targetPos, float duration = 0.12f)
+    {
+        if (animator != null)
+            animator.SetBool("isMoving", false);
+
+        Vector3 startPos = transform.position;
+        duration = Mathf.Max(0.01f, duration);
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            float t = Mathf.Clamp01(elapsedTime / duration);
+            transform.position = Vector3.LerpUnclamped(startPos, targetPos, t);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = targetPos;
+        if (animator != null)
+            animator.SetBool("isMoving", false);
+    }
+
+    /// <summary>
     /// 击退位移：快速抵达目标点，再沿击退方向做短暂衰减振荡。
     /// 全程不触发跑步动画，结束时精确停在目标站位。
     /// </summary>
