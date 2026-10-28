@@ -68,17 +68,17 @@ public static class BattleSkillEffectExecutor
     }
 
     private static float GetDamageModifier(
-        IReadOnlyList<SkillEffectData> effects,
+        IReadOnlyList<SkillEffectBase> effects,
         BattleEntity target)
     {
         float modifier = 0f;
         foreach (SkillEffectData effect in effects)
         {
-            if (effect == null || effect.EffectType != SkillEffectType.DamageModifier)
+            if (effect is not DamageModifierEffect damageModifierEffect)
                 continue;
 
-            if (MatchesCondition(effect.Condition, target))
-                modifier += effect.Value;
+            if (MatchesCondition(damageModifierEffect.Condition, target))
+                modifier += damageModifierEffect.Percent;
         }
 
         return modifier;
