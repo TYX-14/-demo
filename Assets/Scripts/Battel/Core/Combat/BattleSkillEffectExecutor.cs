@@ -2,83 +2,123 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 执行技能等级中已支持的即时效果。
-/// 当前只结算 Damage 与 DamageModifier；其他效果类型留给后续阶段实现。
-/// 不负责命中、暴击概率、SP 消耗、行动推进或动画。
+/// 结算技能中的即时效果。持续状态类效果暂不在此执行；所有即时效果共享同一行动上下文。
 /// </summary>
 public static class BattleSkillEffectExecutor
 {
-    /// <summary>
-    /// 执行技能的攻击效果。每个 Damage 项代表一次攻击；
-    /// 本次攻击的 DamageModifier 会先按目标条件汇总，再传入伤害计算器。
-    /// </summary>
     public static int Execute(
+        BattleController controller,
         BattleEntity actor,
         SkillDefinitionSO skill,
         int skillLevel,
-        IReadOnlyList<BattleEntity> targets)
+        IReadOnlyList<BattleEntity> targets,
+        BattleEntity selectedInputTarget,
+        out bool movementTriggered)
     {
-        if (actor == null || actor.RuntimeData == null ||
+        movementTriggered = false;
+        if (controller == null || actor == null || actor.RuntimeData == null ||
             skill == null || targets == null || !actor.IsAlive)
-        {
             return 0;
-        }
 
         SkillLevelConfig levelConfig = skill.GetLevelConfig(skillLevel);
         if (levelConfig == null || levelConfig.Effects == null)
             return 0;
 
         int totalCalculatedDamage = 0;
+        IReadOnlyList<SkillEffectBase> effects = levelConfig.Effects;
+
+        // 换位是行动者与被选中的一个目标之间的关系操作，不对 AoE 目标列表逐个执行。
+        foreach (SkillEffectBase effect in effects)
+        {
+            if (effect is SwapPositionEffect)
+            {
+                if (selectedInputTarget != null &&
+                    controller.FieldManager != null &&
+                    controller.FieldManager.TrySwapEntities(actor, selectedInputTarget))
+                    movementTriggered = true;
+            }
+        }
 
         foreach (BattleEntity target in targets)
         {
             if (target == null || target.RuntimeData == null || !target.IsAlive)
                 continue;
 
-            float damageModifier = GetDamageModifier(levelConfig.Effects, target);
-            foreach (SkillEffectBase effect in levelConfig.Effects)
+            float damageModifier = GetDamageModifier(effects, target);
+
+            foreach (SkillEffectBase effect in effects)
             {
-                if (!(effect is DamageEffect))
+                if (effect == null)
                     continue;
 
-                int damage = BattleDamageCalculator.CalculateDamage(
-                    actor.RuntimeData,
-                    target.RuntimeData,
-                    skill.DamageType,
-                    damageModifier,
-                    isCritical: false);
+                if (effect is DamageEffect)
+                {
+                    int damage = BattleDamageCalculator.CalculateDamage(
+                        actor.RuntimeData, target.RuntimeData, skill.DamageType,
+                        damageModifier, isCritical: false);
 
-                // 0 伤害不能调用 ModifyHp，否则目标处于死门时会错误地触发致死判定。
-                if (damage <= 0)
-                    continue;
+                    // 零伤害不调用 ModifyHp，避免误触发死门判定。
+                    if (damage > 0)
+                    {
+                        target.RuntimeData.ModifyHp(-damage);
+                        totalCalculatedDamage += damage;
+                        target.Unit?.UpdateVisuals();
+                    }
 
-                target.RuntimeData.ModifyHp(-damage);
-                totalCalculatedDamage += damage;
-
-                if (target.Unit != null)
-                    target.Unit.UpdateVisuals();
-
-                // ModifyHp 可能通过死门判定改变死亡状态。死亡后不再结算该目标的后续多段攻击。
-                if (!target.IsAlive)
-                    break;
+                    if (!target.IsAlive)
+                        break;
+                }
+                else if (effect is HealEffect heal)
+                {
+                    target.RuntimeData.ModifyHp(Mathf.Abs(Mathf.RoundToInt(heal.Value)));
+                    target.Unit?.UpdateVisuals();
+                }
+                else if (effect is StressDamageEffect stressDamage)
+                {
+                    target.RuntimeData.ModifyStress(Mathf.Abs(Mathf.RoundToInt(stressDamage.Value)));
+                }
+                else if (effect is StressHealEffect stressHeal)
+                {
+                    target.RuntimeData.ModifyStress(-Mathf.Abs(Mathf.RoundToInt(stressHeal.Value)));
+                }
+                else if (effect is MoveForwardEffect moveForward)
+                {
+                    if (controller.FieldManager != null &&
+                        controller.FieldManager.TryMoveEntityBySlots(target, -Mathf.Abs(Mathf.RoundToInt(moveForward.Distance))))
+                        movementTriggered = true;
+                }
+                else if (effect is MoveBackwardEffect moveBackward)
+                {
+                    if (controller.FieldManager != null &&
+                        controller.FieldManager.TryMoveEntityBySlots(target, Mathf.Abs(Mathf.RoundToInt(moveBackward.Distance))))
+                        movementTriggered = true;
+                }
+                else if (effect is KnockbackEffect knockback)
+                {
+                    if (controller.FieldManager != null &&
+                        controller.FieldManager.TryMoveEntityBySlots(target, knockback.Distance, true))
+                        movementTriggered = true;
+                }
+                else if (effect is StunEffect stun)
+                {
+                    target.RuntimeData.StunActionsRemaining = Mathf.Max(
+                        target.RuntimeData.StunActionsRemaining, stun.Actions);
+                    target.Unit?.RefreshStunVisual();
+                }
+                // ApplyStatusEffect 与命中/暴击修正不在本阶段执行。
             }
         }
 
         return totalCalculatedDamage;
     }
 
-    private static float GetDamageModifier(
-        IReadOnlyList<SkillEffectBase> effects,
-        BattleEntity target)
+    private static float GetDamageModifier(IReadOnlyList<SkillEffectBase> effects, BattleEntity target)
     {
         float modifier = 0f;
         foreach (SkillEffectBase effect in effects)
         {
-            DamageModifierEffect damageModifierEffect = effect as DamageModifierEffect;
-            if (damageModifierEffect == null)
-                continue;
-
-            if (MatchesCondition(damageModifierEffect.Condition, target))
+            if (effect is DamageModifierEffect damageModifierEffect &&
+                MatchesCondition(damageModifierEffect.Condition, target))
                 modifier += damageModifierEffect.Percent;
         }
 
