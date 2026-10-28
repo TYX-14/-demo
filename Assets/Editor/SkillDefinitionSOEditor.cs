@@ -227,8 +227,7 @@ public class SkillDefinitionSOEditor : Editor
 
     private static void MigrateLegacyEffects(SerializedProperty legacyEffects, SerializedProperty typedEffects)
     {
-        typedEffects.ClearArray();
-
+        // 该按钮只在新列表为空时显示，因此无需清空新列表，避免破坏旧属性迭代器。
         for (int i = 0; i < legacyEffects.arraySize; i++)
         {
             SerializedProperty oldEffect = legacyEffects.GetArrayElementAtIndex(i);
