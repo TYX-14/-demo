@@ -9,6 +9,17 @@ public readonly struct BattleStartedEvent : IEvent
 {
 }
 
+/// <summary>调度器确认进入新一轮时发布。</summary>
+public readonly struct BattleRoundChangedEvent : IEvent
+{
+    public int RoundNumber { get; }
+
+    public BattleRoundChangedEvent(int roundNumber)
+    {
+        RoundNumber = roundNumber;
+    }
+}
+
 /// <summary>
 /// 当前行动者发生变化时发布的事件。
 /// UI 和时间轴可以订阅该事件，同步当前行动者的高亮、头像或行动顺序显示。
