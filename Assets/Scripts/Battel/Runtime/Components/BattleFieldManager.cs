@@ -122,21 +122,41 @@ public class BattleFieldManager : MonoBehaviour
         if (!PartyManager.Instance.MoveMemberToPosition(entity.RuntimeData, targetPosition))
             return false;
 
+        duration = Mathf.Max(0.01f, duration);
+        var movingUnits = new List<BattleUnit>();
+        var destinations = new List<Vector3>();
+
         foreach (BattleUnit unit in _spawnedAllyUnits)
         {
-            if (unit == null || unit.Entity == null)
+            if (unit == null || unit.Entity == null || unit.Entity.RuntimeData == null)
                 continue;
 
             Vector3 targetPos = layout.GetAllySlotPos(unit.Entity.RuntimeData.Position);
             _homePos[unit] = targetPos;
-            StartCoroutine(unit.MoveToPosition(targetPos, duration));
+            movingUnits.Add(unit);
+            destinations.Add(targetPos);
         }
 
+        _formationMovementInProgress = true;
+        StartCoroutine(AnimateAllyFormationMove(movingUnits, destinations, duration));
         return true;
     }
 
+    private System.Collections.IEnumerator AnimateAllyFormationMove(
+        List<BattleUnit> units, List<Vector3> destinations, float duration)
+    {
+        for (int i = 0; i < units.Count; i++)
+        {
+            if (units[i] != null)
+                StartCoroutine(units[i].MoveToPosition(destinations[i], duration));
+        }
+
+        yield return new WaitForSeconds(duration);
+        _formationMovementInProgress = false;
+    }
+
     /// <summary>
-    /// 主动交换指定友军与目标位置上的队友。
+    /// 主动交换指定友军与目标位置上的队友.
     /// 距离限制由主动发起者的 CharacterDefinitionSO.maxSwapDistance 决定。
     /// 注意：当前项目尚无完整回合行动系统，本方法暂不扣除行动机会。
     /// </summary>
