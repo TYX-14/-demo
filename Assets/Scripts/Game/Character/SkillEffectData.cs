@@ -8,7 +8,6 @@ using UnityEngine;
 /// </summary>
 public enum SkillEffectType
 {
-    Damage,
     Heal,
     StressDamage,
     StressHeal,
@@ -36,8 +35,6 @@ public class SkillEffectData
 {
     [SerializeField] private SkillEffectType effectType;
     [SerializeField] private float value;
-    [SerializeField] private int minValue;
-    [SerializeField] private int maxValue;
     [SerializeField] private SkillEffectCondition condition;
     [SerializeField] private StatusEffectDefinitionSO statusEffect;
     [Min(0)] [SerializeField] private int durationRounds;
@@ -45,8 +42,6 @@ public class SkillEffectData
 
     public SkillEffectType EffectType => effectType;
     public float Value => value;
-    public int MinValue => minValue;
-    public int MaxValue => maxValue;
     public SkillEffectCondition Condition => condition;
     public StatusEffectDefinitionSO StatusEffect => statusEffect;
     public int DurationRounds => durationRounds;
@@ -60,14 +55,12 @@ public class SkillEffectData
     {
         switch (effectType)
         {
-            case SkillEffectType.Damage:
-                return "伤害" + FormatRange(minValue, maxValue);
             case SkillEffectType.Heal:
-                return "恢复" + FormatRange(minValue, maxValue);
+                return "恢复" + Mathf.Abs(Mathf.RoundToInt(value));
             case SkillEffectType.StressDamage:
-                return "压力伤害" + FormatRange(minValue, maxValue);
+                return "压力伤害" + Mathf.Abs(Mathf.RoundToInt(value));
             case SkillEffectType.StressHeal:
-                return "压力恢复" + FormatRange(minValue, maxValue);
+                return "压力恢复" + Mathf.Abs(Mathf.RoundToInt(value));
             case SkillEffectType.MoveForward:
                 return "前进" + Mathf.Abs(Mathf.RoundToInt(value));
             case SkillEffectType.MoveBackward:
@@ -93,11 +86,6 @@ public class SkillEffectData
     private string BuildConditionSuffix()
     {
         return condition == SkillEffectCondition.TargetSizeGreaterThanOne ? "（对体型>1）" : string.Empty;
-    }
-
-    private static string FormatRange(int min, int max)
-    {
-        return min == max ? min.ToString() : min + "～" + max;
     }
 
     private static string FormatPercent(float percent)
