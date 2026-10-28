@@ -18,6 +18,8 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     public BattleEntity CurrentEntity { get; private set; }
     private BattleRoundScheduler _roundScheduler;
     public BattleActionContext PendingAction { get; private set; }
+    private BattleActionContext _activeActionContext;
+    public bool IsActionInProgress => _activeActionContext != null;
 
     /// <summary>战斗流程的当前行动者唯一写入入口，并统一发布变更事件。</summary>
     public void SetCurrentEntity(BattleEntity entity)
@@ -113,9 +115,115 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         SetState(new PlayerInputState(this));
     }
 
+    /// <summary>
+    /// 由 PerformActionState 在正式结算前调用。只允许当前行动者执行当前待处理的行动，
+    /// 并阻止同一时刻启动第二次行动。
+    /// </summary>
+    public bool TryBeginAction(BattleActionContext actionContext)
+    {
+        if (!_battleRunning ||
+            actionContext == null ||
+            CurrentState is not PerformActionState ||
+            !ReferenceEquals(PendingAction, actionContext) ||
+            _activeActionContext != null ||
+            actionContext.Actor == null ||
+            actionContext.Actor != CurrentEntity ||
+            !actionContext.Actor.IsAlive)
+        {
+            return false;
+        }
+
+        _activeActionContext = actionContext;
+        return true;
+    }
+
+    /// <summary>
+    /// 正式提交敌方 AI 已选定的行动。AI 负责决策和目标选择，行动结算仍统一进入 PerformActionState。
+    /// </summary>
+    public bool SubmitAIAction(BattleActionContext actionContext)
+    {
+        if (!_battleRunning ||
+            CurrentState is not EnemyAIState ||
+            actionContext == null ||
+            actionContext.Actor == null ||
+            actionContext.Actor != CurrentEntity ||
+            actionContext.Actor.IsPlayer ||
+            !actionContext.Actor.IsAlive ||
+            _activeActionContext != null)
+        {
+            return false;
+        }
+
+        PendingAction = actionContext;
+        SetState(new PerformActionState(this, actionContext));
+        return true;
+    }
+
+    /// <summary>
+    /// 行动未能启动时，放弃本次待处理数据并回到适当状态。
+    /// 玩家可以重新选择；敌方则跳过本次行动，避免 AI 状态卡住。
+    /// </summary>
+    public void RejectUnstartedAction(BattleActionContext actionContext)
+    {
+        if (_activeActionContext != null)
+            return;
+
+        if (ReferenceEquals(PendingAction, actionContext))
+            PendingAction = null;
+
+        if (!_battleRunning)
+            return;
+
+        if (CurrentEntity != null && CurrentEntity.IsPlayer)
+            SetState(new PlayerInputState(this));
+        else
+            SetState(new SetNextEntityState(this));
+    }
+
+    /// <summary>
+    /// 统一结束已启动的行动。成功结算后清除上下文并交还给 CTB 调度器，
+    /// 由 SetNextEntityState 决定胜负或选择下一位行动者。
+    /// </summary>
+    public bool CompleteAction(BattleActionContext actionContext)
+    {
+        if (actionContext == null || !ReferenceEquals(_activeActionContext, actionContext))
+        {
+            Debug.LogWarning("BattleController：尝试结束的行动不是当前正在执行的行动。", this);
+            return false;
+        }
+
+        _activeActionContext = null;
+        if (ReferenceEquals(PendingAction, actionContext))
+            PendingAction = null;
+
+        if (_battleRunning)
+            SetState(new SetNextEntityState(this));
+
+        return true;
+    }
+
+    /// <summary>取消尚未开始结算的行动，例如玩家退出目标选择。</summary>
     public void CancelPendingAction()
     {
+        if (_activeActionContext != null)
+        {
+            Debug.LogWarning("BattleController：行动执行中不能通过 CancelPendingAction 清除上下文。", this);
+            return;
+        }
+
         PendingAction = null;
+    }
+
+    /// <summary>敌方没有可用技能时跳过行动，仍由统一的下一行动者状态推进 CTB。</summary>
+    public void SkipCurrentTurn(BattleEntity actor)
+    {
+        if (!_battleRunning || actor == null || actor != CurrentEntity ||
+            actor.IsPlayer || _activeActionContext != null)
+            return;
+
+        Debug.LogWarning($"敌方「{actor.Definition.Name}」没有可执行的技能，本次跳过行动。", this);
+        PendingAction = null;
+        SetState(new SetNextEntityState(this));
     }
 
     /// <summary>
@@ -218,6 +326,8 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         _battleRunning = false;
         _currentState = null;
         SetCurrentEntity(null);
+        PendingAction = null;
+        _activeActionContext = null;
         _roundScheduler = null;
 
         if (_battleLoopRoutine != null)
