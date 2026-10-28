@@ -137,7 +137,7 @@ public class SkillDefinitionSO : ScriptableObject
             return description;
 
         StringBuilder builder = new StringBuilder();
-        foreach (SkillEffectData effect in config.Effects)
+        foreach (SkillEffectBase effect in config.Effects)
         {
             if (effect == null)
                 continue;
