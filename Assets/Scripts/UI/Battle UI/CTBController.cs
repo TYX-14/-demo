@@ -149,6 +149,7 @@ public sealed class CTBController : MonoBehaviour,
         if (roundTransitionPending && currentActingEntity != null)
         {
             TimelineIconController handoffIcon = TakeRoundHeadIcon(currentActingEntity);
+            TransferRemainingNextRoundIconsToCurrentPool();
             SyncPool(evt.CurrentRoundNodes, currentRoundUpcomingContainer, currentRoundIcons);
             roundTransitionPending = false;
 
@@ -192,6 +193,24 @@ public sealed class CTBController : MonoBehaviour,
         return null;
     }
 
+    private void TransferRemainingNextRoundIconsToCurrentPool()
+    {
+        if (nextRoundIcons.Count == 0)
+            return;
+
+        // 剩余头像本来就是本轮的后续行动者，直接复用对象转入当前轮池，避免同一角色重复生成两份图标。
+        var transfer = new List<TimelineIconController>(nextRoundIcons);
+        nextRoundIcons.Clear();
+        foreach (TimelineIconController icon in transfer)
+        {
+            if (icon == null)
+                continue;
+            icon.transform.SetParent(currentRoundUpcomingContainer, false);
+            icon.SetIgnoredByLayout(false);
+            currentRoundIcons.Add(icon);
+        }
+        ForceLayout(currentRoundUpcomingContainer);
+    }
     private IEnumerator PlayRoundHandoffSequence(BattleEntity actor, TimelineIconController icon, CTBDisplayNode[] nextRoundNodes)
     {
         SetPortraitBlank();
