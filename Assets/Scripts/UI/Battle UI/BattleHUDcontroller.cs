@@ -238,6 +238,34 @@ public class BattleHUDcontroller : MonoBehaviour,
             spawnedHealthBars[i].transform.SetSiblingIndex(i);
     }
 
+    /// <summary>
+    /// 站位变化后按角色逻辑 Position 重新排列血条，并让每个血条的视觉根节点短暂滑向新位置。
+    /// 例如 1 号退到 4 号时，原 2/3/4 号向上补位，1 号向下移动。
+    /// </summary>
+    public void RefreshHealthBarOrderAnimated()
+    {
+        var oldPositions = new Dictionary<HealthBarController, Vector2>();
+        foreach (HealthBarController bar in spawnedHealthBars)
+        {
+            if (bar != null && bar.transform is RectTransform rect)
+                oldPositions[bar] = rect.anchoredPosition;
+        }
+
+        SortHealthBarsByPosition();
+        Canvas.ForceUpdateCanvases();
+
+        foreach (HealthBarController bar in spawnedHealthBars)
+        {
+            if (bar == null || !oldPositions.TryGetValue(bar, out Vector2 oldPosition) ||
+                !(bar.transform is RectTransform rect))
+                continue;
+
+            Vector2 offset = oldPosition - rect.anchoredPosition;
+            if (offset.sqrMagnitude > 0.25f)
+                bar.AnimateReorderOffset(offset, 0.18f);
+        }
+    }
+
     private void RefreshActingHighlight()
     {
         foreach (HealthBarController bar in spawnedHealthBars)
