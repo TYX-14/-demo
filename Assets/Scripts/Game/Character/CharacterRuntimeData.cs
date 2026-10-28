@@ -12,6 +12,7 @@ public class CharacterRuntimeData
     public int CurrenBP;
     public int CurrenEXP;
     public int Position;
+    [Min(0)] public int StunActionsRemaining;
 
     [Header("远征精神状态")]
     [Range(0, 200)] public int CurrentStress;
