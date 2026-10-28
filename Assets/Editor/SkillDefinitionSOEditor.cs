@@ -207,6 +207,12 @@ public class SkillDefinitionSOEditor : Editor
                 ("添加状态", new ApplyStatusEffect())))
             return true;
 
+        if (DrawAddButtonRow(typedEffects,
+                ("添加换位", new SwapPositionEffect()),
+                ("添加击退", new KnockbackEffect()),
+                ("添加眩晕", new StunEffect())))
+            return true;
+
         return false;
     }
 
