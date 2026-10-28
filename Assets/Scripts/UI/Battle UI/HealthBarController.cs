@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,7 @@ public class HealthBarController : MonoBehaviour
     private Sprite defaultBackgroundSprite;
     private Vector3 defaultRootScale = Vector3.one;
     private bool hasCapturedDefaults;
+    private Coroutine reorderAnimation;
 
     private void Awake()
     {
@@ -84,6 +86,40 @@ public class HealthBarController : MonoBehaviour
     }
 
     public CharacterRuntimeData BoundCharacter => boundCharacter;
+
+    /// <summary>
+    /// 当角色站位变化导致状态栏重新排序时，让内部视觉根节点从旧屏幕位置滑到新位置。
+    /// 外层 RectTransform 仍交给 Vertical Layout Group 管理。
+    /// </summary>
+    public void AnimateReorderOffset(Vector2 startOffset, float duration = 0.18f)
+    {
+        ResolveReferences();
+        if (rootTransform == null)
+            return;
+
+        if (reorderAnimation != null)
+            StopCoroutine(reorderAnimation);
+
+        reorderAnimation = StartCoroutine(AnimateReorderOffsetRoutine(startOffset, duration));
+    }
+
+    private IEnumerator AnimateReorderOffsetRoutine(Vector2 startOffset, float duration)
+    {
+        rootTransform.anchoredPosition = startOffset;
+        duration = Mathf.Max(0.01f, duration);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            rootTransform.anchoredPosition = Vector2.LerpUnclamped(startOffset, Vector2.zero, Mathf.SmoothStep(0f, 1f, t));
+            yield return null;
+        }
+
+        rootTransform.anchoredPosition = Vector2.zero;
+        reorderAnimation = null;
+    }
 
     private void HandleCharacterUpdated(CharacterRuntimeData character)
     {
