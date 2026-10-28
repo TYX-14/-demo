@@ -44,6 +44,10 @@ public class SkillDefinitionSO : ScriptableObject
     [Min(0)]
     [SerializeField] private int spCost;
 
+    [Header("攻击结算")]
+    [Tooltip("Damage 效果使用的攻击属性类型。此项不代表技能是否属于可被反制的法术。")]
+    [SerializeField] private DamageType damageType = DamageType.Physical;
+
     [Header("目标规则")]
     [Tooltip("目标关系与单体/AoE 独立配置。Enemy=敌方，Ally=友方（不含自身），Self=自身，AllEntities=双方所有存活实体。")]
     [SerializeField] private SkillTargetRelation targetRelation = SkillTargetRelation.Enemy;
@@ -69,6 +73,7 @@ public class SkillDefinitionSO : ScriptableObject
     public Sprite SkillIcon => skillIcon;
     public string Description => description;
     public int SpCost => spCost;
+    public DamageType DamageType => damageType;
     public SkillTargetRelation TargetRelation => targetRelation;
     public SkillTargetType TargetType => targetType;
     public SkillTargetSelectionMode TargetSelectionMode => targetSelectionMode;
