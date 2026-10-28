@@ -11,6 +11,7 @@ using UnityEngine;
 public class BattleHUDcontroller : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
     IEventReceiver<CurrentEntityChangedEvent>,
+    IEventReceiver<CTBDisplayedActorChangedEvent>,
     IEventReceiver<GameModeChangedEvent>
 {
     [Header("战斗 HUD 根节点")]
@@ -28,9 +29,21 @@ public class BattleHUDcontroller : MonoBehaviour,
     [SerializeField, Tooltip("状态栏排列容器。建议添加 Vertical Layout Group；未指定时使用 Health Bar Panel Root。")]
     private Transform healthBarContainer;
 
+    [Header("Health Bar 入场动画")]
+    [SerializeField, Min(0.01f), Tooltip("英雄状态栏在战斗开始时渐显的时长。")]
+    private float healthBarFadeDuration = 0.25f;
+
     private readonly List<HealthBarController> spawnedHealthBars = new();
     private BattleEntity currentActingEntity;
+    private BattleEntity displayedActingEntity;
+    private CanvasGroup healthBarCanvasGroup;
+    private Coroutine healthBarFadeCoroutine;
     private bool battleUIStarted;
+
+    private void Awake()
+    {
+        ResolveHealthBarCanvasGroup();
+    }
 
     private void OnEnable()
     {
@@ -46,7 +59,14 @@ public class BattleHUDcontroller : MonoBehaviour,
     {
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
         EventBus.Unsubscribe<GameModeChangedEvent>(this);
+
+        if (healthBarFadeCoroutine != null)
+        {
+            StopCoroutine(healthBarFadeCoroutine);
+            healthBarFadeCoroutine = null;
+        }
     }
 
     /// <summary>
@@ -57,13 +77,21 @@ public class BattleHUDcontroller : MonoBehaviour,
         battleUIStarted = true;
         SetBattleUIVisible(true);
         BuildAllyHealthBars();
+        StartHealthBarFadeIn();
         RefreshActingHighlight();
     }
 
     public void OnEvent(CurrentEntityChangedEvent evt)
     {
+        // 此事件代表逻辑行动者已选出，但 CTB 大头像可能仍在滑入。
+        // 这里只记录目标行动者，真正高亮等 CTBDisplayedActorChangedEvent。
         currentActingEntity = evt.Entity;
         SortHealthBarsByPosition();
+    }
+
+    public void OnEvent(CTBDisplayedActorChangedEvent evt)
+    {
+        displayedActingEntity = evt.Entity;
         RefreshActingHighlight();
     }
 
@@ -73,6 +101,7 @@ public class BattleHUDcontroller : MonoBehaviour,
         {
             battleUIStarted = false;
             currentActingEntity = null;
+            displayedActingEntity = null;
             SetBattleUIVisible(false);
             ClearHealthBars();
             return;
@@ -85,10 +114,72 @@ public class BattleHUDcontroller : MonoBehaviour,
 
     private void SetBattleUIVisible(bool visible)
     {
+        ResolveHealthBarCanvasGroup();
+
+        if (healthBarFadeCoroutine != null)
+        {
+            StopCoroutine(healthBarFadeCoroutine);
+            healthBarFadeCoroutine = null;
+        }
+
         if (healthBarPanelRoot != null && healthBarPanelRoot.activeSelf != visible)
             healthBarPanelRoot.SetActive(visible);
         if (ctbRoot != null && ctbRoot.activeSelf != visible)
             ctbRoot.SetActive(visible);
+
+        if (healthBarCanvasGroup != null)
+        {
+            healthBarCanvasGroup.alpha = visible ? 1f : 0f;
+            healthBarCanvasGroup.interactable = visible;
+            healthBarCanvasGroup.blocksRaycasts = visible;
+        }
+    }
+
+    private void ResolveHealthBarCanvasGroup()
+    {
+        if (healthBarPanelRoot == null)
+            return;
+
+        if (healthBarCanvasGroup == null)
+            healthBarCanvasGroup = healthBarPanelRoot.GetComponent<CanvasGroup>();
+
+        // 运行时补上 CanvasGroup，避免额外的 Inspector 配置步骤。
+        if (healthBarCanvasGroup == null)
+            healthBarCanvasGroup = healthBarPanelRoot.AddComponent<CanvasGroup>();
+    }
+
+    private void StartHealthBarFadeIn()
+    {
+        ResolveHealthBarCanvasGroup();
+        if (healthBarCanvasGroup == null)
+            return;
+
+        if (healthBarFadeCoroutine != null)
+            StopCoroutine(healthBarFadeCoroutine);
+
+        healthBarCanvasGroup.alpha = 0f;
+        healthBarCanvasGroup.interactable = false;
+        healthBarCanvasGroup.blocksRaycasts = false;
+        healthBarFadeCoroutine = StartCoroutine(FadeHealthBarsIn());
+    }
+
+    private IEnumerator FadeHealthBarsIn()
+    {
+        float duration = Mathf.Max(0.01f, healthBarFadeDuration);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            healthBarCanvasGroup.alpha = Mathf.SmoothStep(0f, 1f, t);
+            yield return null;
+        }
+
+        healthBarCanvasGroup.alpha = 1f;
+        healthBarCanvasGroup.interactable = true;
+        healthBarCanvasGroup.blocksRaycasts = true;
+        healthBarFadeCoroutine = null;
     }
 
     private void BuildAllyHealthBars()
@@ -165,9 +256,9 @@ public class BattleHUDcontroller : MonoBehaviour,
             if (bar == null)
                 continue;
 
-            bool isActing = currentActingEntity != null &&
-                            currentActingEntity.IsPlayer &&
-                            bar.BoundCharacter == currentActingEntity.RuntimeData;
+            bool isActing = displayedActingEntity != null &&
+                            displayedActingEntity.IsPlayer &&
+                            bar.BoundCharacter == displayedActingEntity.RuntimeData;
             bar.SetActing(isActing);
         }
     }
