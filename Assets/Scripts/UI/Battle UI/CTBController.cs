@@ -43,6 +43,7 @@ public sealed class CTBController : MonoBehaviour,
     private Coroutine portraitRoutine;
     private Coroutine openingRoutine;
     private Vector2 portraitRestingPosition;
+    private float portraitRestingAlpha = 1f;
     private bool portraitPositionCached;
 
     private void Awake()
@@ -59,6 +60,8 @@ public sealed class CTBController : MonoBehaviour,
         if (portraitPositionCached || currentActingPortraitImage == null)
             return;
         portraitRestingPosition = currentActingPortraitImage.rectTransform.anchoredPosition;
+        // 固定大头像的目标透明度，不能从正在执行/被中断的过渡动画读取，否则透明度会逐次衰减。
+        portraitRestingAlpha = 1f;
         portraitPositionCached = true;
     }
 
@@ -212,7 +215,7 @@ public sealed class CTBController : MonoBehaviour,
         if (!opening && currentActingPortraitImage.enabled && currentActingPortraitImage.sprite != null)
         {
             yield return AnimatePortrait(imageRect, restingPosition + Vector2.left * portraitSlideDistance,
-                0f, moveDuration * 0.5f, color.a);
+                0f, moveDuration * 0.5f, portraitRestingAlpha);
         }
 
         Sprite nextSprite = nextEntity != null && nextEntity.Definition != null
@@ -230,7 +233,7 @@ public sealed class CTBController : MonoBehaviour,
 
         imageRect.anchoredPosition = restingPosition + Vector2.right * portraitSlideDistance;
         currentActingPortraitImage.color = new Color(color.r, color.g, color.b, 0f);
-        yield return AnimatePortrait(imageRect, restingPosition, 1f, moveDuration, color.a);
+        yield return AnimatePortrait(imageRect, restingPosition, portraitRestingAlpha, moveDuration, portraitRestingAlpha);
         portraitRoutine = null;
     }
 
