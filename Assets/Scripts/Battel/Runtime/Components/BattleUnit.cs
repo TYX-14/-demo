@@ -310,6 +310,14 @@ public class BattleUnit : MonoBehaviour
         animator.SetFloat("hp01", hpRatio);
     }
 
+    /// <summary>同步显示运行时眩晕状态；与击退动画的临时图标共用 Star。</summary>
+    public void RefreshStunVisual()
+    {
+        if (star != null)
+            star.SetActive(Entity != null && Entity.RuntimeData != null &&
+                           Entity.RuntimeData.StunActionsRemaining > 0);
+    }
+
     /// <summary>
     /// 主动移动协程：平滑移动到目标位置，并播放现有的移动动画。
     /// </summary>
@@ -384,8 +392,7 @@ public class BattleUnit : MonoBehaviour
         transform.position = targetPos;
 
         // 击退位移与衰减震荡全部结束后，关闭眩晕图标。
-        if (star != null)
-            star.SetActive(false);
+        RefreshStunVisual();
     }
 
 }
