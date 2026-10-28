@@ -207,7 +207,7 @@ public class BattleHUDcontroller : MonoBehaviour,
         {
             HealthBarController bar = Instantiate(healthBarPrefab, container, false);
             bar.Bind(ally.RuntimeData);
-            bar.SetActing(ally == currentActingEntity);
+            bar.SetActing(ally == displayedActingEntity);
             spawnedHealthBars.Add(bar);
         }
 
