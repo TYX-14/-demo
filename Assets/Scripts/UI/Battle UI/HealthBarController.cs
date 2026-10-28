@@ -27,6 +27,7 @@ public class HealthBarController : MonoBehaviour
     private CharacterRuntimeData boundCharacter;
     private Sprite defaultBackgroundSprite;
     private Vector3 defaultRootScale = Vector3.one;
+    private Vector2 defaultRootAnchoredPosition;
     private bool hasCapturedDefaults;
     private Coroutine reorderAnimation;
 
@@ -105,7 +106,8 @@ public class HealthBarController : MonoBehaviour
 
     private IEnumerator AnimateReorderOffsetRoutine(Vector2 startOffset, float duration)
     {
-        rootTransform.anchoredPosition = startOffset;
+        Vector2 targetPosition = defaultRootAnchoredPosition;
+        rootTransform.anchoredPosition = targetPosition + startOffset;
         duration = Mathf.Max(0.01f, duration);
         float elapsed = 0f;
 
@@ -113,11 +115,11 @@ public class HealthBarController : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            rootTransform.anchoredPosition = Vector2.LerpUnclamped(startOffset, Vector2.zero, Mathf.SmoothStep(0f, 1f, t));
+            rootTransform.anchoredPosition = Vector2.LerpUnclamped(targetPosition + startOffset, targetPosition, Mathf.SmoothStep(0f, 1f, t));
             yield return null;
         }
 
-        rootTransform.anchoredPosition = Vector2.zero;
+        rootTransform.anchoredPosition = targetPosition;
         reorderAnimation = null;
     }
 
@@ -222,7 +224,10 @@ public class HealthBarController : MonoBehaviour
         if (backgroundImage != null)
             defaultBackgroundSprite = backgroundImage.sprite;
         if (rootTransform != null)
+        {
             defaultRootScale = rootTransform.localScale;
+            defaultRootAnchoredPosition = rootTransform.anchoredPosition;
+        }
 
         hasCapturedDefaults = true;
     }
