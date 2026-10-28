@@ -98,6 +98,8 @@ public class BattleSetupState : BattleState
         for (var i = 0; i < runtimeList.Count; i++)
         {
             var runtimeData = runtimeList[i];
+            // 眩晕是战斗中的即时控制效果，不应跨战斗残留。
+            runtimeData.StunActionsRemaining = 0;
             BattleUnit unit = units[i];
             var entity = new BattleEntity(
                 runtimeData,
