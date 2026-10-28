@@ -1,6 +1,7 @@
 ## 2026-10-28：接入技能攻击效果执行
 
 - **新增执行器：** `Assets/Scripts/Battel/Core/Combat/BattleSkillEffectExecutor.cs` 负责读取角色当前技能等级配置，汇总本次攻击的伤害修正，并调用 `BattleDamageCalculator` 计算伤害。
+- **死门目标规则：** `BattleEntity.IsAlive` 现在以 `RuntimeData.IsDead` 判断真正死亡；处于死门、HP 为 0 但尚未死亡的角色仍可被选中并再次受到攻击，从而触发既有致死判定。
 - **攻击结算：** 每个 `Damage` 项表示一次攻击；伤害计算后通过 `CharacterRuntimeData.ModifyHp(-damage)` 扣血，复用现有 HP、死门与致死判定。零伤害不会调用 `ModifyHp`，避免误触发死门判定；结算后刷新目标的战斗单位表现。
 - **条件修正：** `DamageModifier` 在攻击前按目标条件汇总；“对体型>1”当前通过敌人定义的 `occupiedSlotCount > 1` 判断。未配置条件的修正对所有目标生效。
 - **伤害类型：** `SkillDefinitionSO` 新增显式的物理/魔法伤害类型，默认物理。它与技能是否属于可被反制的法术是两种不同概念，不互相推断。
