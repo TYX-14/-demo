@@ -46,7 +46,7 @@ public class PerformActionState : BattleState
             _actionContext.ResolvedTargets);
 
         Debug.Log(
-            $"[技能结算] 技能等级：{skillLevel}；本次已结算的总 HP 伤害：{totalDamage}。" +
+            $"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。" +
             "尚未支持的效果类型会被跳过；本次不扣除 SP，也不推进 CTB 行动顺序。");
 
         _controller.CancelPendingAction();
