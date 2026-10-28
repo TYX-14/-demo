@@ -75,6 +75,15 @@ public class PerformActionState : BattleState
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。");
 
+        // 【未来接入动作系统的钩子】在这里等待行动者的技能动作完成信号。
+        // 目前项目尚未建立技能动作播放/完成事件，因此即时结算完成后直接进入后置位移阶段。
+        bool postActionMovementTriggered = BattleSkillEffectExecutor.ExecutePostActionMovementEffects(
+            _controller,
+            _actionContext.Actor,
+            _actionContext.Skill,
+            skillLevel);
+        movementTriggered |= postActionMovementTriggered;
+
         // 让位移协程完成后再推进 CTB，避免下一行动者在队形移动中开始行动。
         if (movementTriggered)
             yield return new WaitForSecondsRealtime(0.9f);
