@@ -100,6 +100,35 @@ public sealed class MoveBackwardEffect : SkillEffectBase
     public override string BuildDescription() => "后退" + Mathf.Abs(Mathf.RoundToInt(distance));
 }
 
+/// <summary>将行动者与目标交换站位。仅用于同阵营目标。</summary>
+[Serializable]
+public sealed class SwapPositionEffect : SkillEffectBase
+{
+    public override string BuildDescription() => "换位";
+}
+
+/// <summary>将目标向后推指定槽位数。</summary>
+[Serializable]
+public sealed class KnockbackEffect : SkillEffectBase
+{
+    [SerializeField, Min(1)] private int distance = 1;
+    public int Distance => Mathf.Max(1, distance);
+    public KnockbackEffect() { }
+    public KnockbackEffect(int distance) => this.distance = Mathf.Max(1, distance);
+    public override string BuildDescription() => "击退" + Distance;
+}
+
+/// <summary>令目标跳过指定次数的行动，不属于持续 Buff。</summary>
+[Serializable]
+public sealed class StunEffect : SkillEffectBase
+{
+    [SerializeField, Min(1)] private int actions = 1;
+    public int Actions => Mathf.Max(1, actions);
+    public StunEffect() { }
+    public StunEffect(int actions) => this.actions = Mathf.Max(1, actions);
+    public override string BuildDescription() => "眩晕" + Actions + "次行动";
+}
+
 /// <summary>只影响当前这次攻击的伤害修正，不是角色持续 Buff。</summary>
 [Serializable]
 public sealed class DamageModifierEffect : SkillEffectBase
