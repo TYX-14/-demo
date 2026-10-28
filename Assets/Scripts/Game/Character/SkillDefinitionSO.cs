@@ -76,6 +76,24 @@ public class SkillDefinitionSO : ScriptableObject
     public IReadOnlyList<int> TargetPositions => targetPositions;
     public IReadOnlyList<SkillLevelConfig> LevelConfigs => levelConfigs;
 
+    public int MaxLevel
+    {
+        get
+        {
+            int maxLevel = 1;
+            if (levelConfigs == null)
+                return maxLevel;
+
+            foreach (SkillLevelConfig config in levelConfigs)
+            {
+                if (config != null && config.Level > maxLevel)
+                    maxLevel = config.Level;
+            }
+
+            return maxLevel;
+        }
+    }
+
     /// <summary>读取指定等级配置；若缺少该等级，返回等级编号最接近且不高于目标等级的配置。</summary>
     public SkillLevelConfig GetLevelConfig(int level)
     {
