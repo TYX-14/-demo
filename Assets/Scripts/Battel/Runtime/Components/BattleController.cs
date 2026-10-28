@@ -174,7 +174,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         if (!_battleRunning)
             return;
 
-        if (CurrentEntity != null && CurrentEntity.IsPlayer)
+        if (CurrentEntity != null && CurrentEntity.IsPlayer && CurrentEntity.IsAlive)
             SetState(new PlayerInputState(this));
         else
             SetState(new SetNextEntityState(this));
@@ -217,11 +217,17 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     /// <summary>敌方没有可用技能时跳过行动，仍由统一的下一行动者状态推进 CTB。</summary>
     public void SkipCurrentTurn(BattleEntity actor)
     {
-        if (!_battleRunning || actor == null || actor != CurrentEntity ||
-            actor.IsPlayer || _activeActionContext != null)
+        if (!_battleRunning || _activeActionContext != null)
             return;
 
-        Debug.LogWarning($"敌方「{actor.Definition.Name}」没有可执行的技能，本次跳过行动。", this);
+        if (actor != null && (actor != CurrentEntity || actor.IsPlayer))
+            return;
+
+        if (actor != null)
+            Debug.LogWarning($"敌方「{actor.Definition.Name}」没有可执行的技能，本次跳过行动。", this);
+        else
+            Debug.LogWarning("当前没有有效行动者，返回下一行动者选择状态。", this);
+
         PendingAction = null;
         SetState(new SetNextEntityState(this));
     }
