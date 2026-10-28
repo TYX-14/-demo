@@ -47,6 +47,13 @@ public class SkillDefinitionSOEditor : Editor
             if (levelNumber != null)
                 levelNumber.intValue = index + 1;
 
+            SerializedProperty newTypedEffects = newLevel.FindPropertyRelative("typedEffects");
+            SerializedProperty newLegacyEffects = newLevel.FindPropertyRelative("effects");
+            if (newTypedEffects != null)
+                newTypedEffects.ClearArray();
+            if (newLegacyEffects != null)
+                newLegacyEffects.ClearArray();
+
             serializedObject.ApplyModifiedProperties();
             return;
         }
@@ -154,6 +161,14 @@ public class SkillDefinitionSOEditor : Editor
 
             EditorGUILayout.PropertyField(effectProperty, GUIContent.none, true);
             EditorGUILayout.EndVertical();
+        }
+
+        if (migrationRequired)
+        {
+            EditorGUILayout.HelpBox("请先迁移旧效果，再添加或编辑新效果，避免旧效果被新列表遮蔽。", MessageType.Warning);
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(4);
+            return false;
         }
 
         EditorGUILayout.Space(3);
