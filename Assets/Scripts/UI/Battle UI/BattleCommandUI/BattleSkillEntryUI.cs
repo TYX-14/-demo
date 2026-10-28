@@ -25,6 +25,7 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private Button skillButton;
     private SkillDefinitionSO currentSkill;
+    private int currentSkillLevel = 1;
     private Action<SkillDefinitionSO> onSkillSelected;
 
     private void Awake()
@@ -54,6 +55,14 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void Setup(SkillDefinitionSO skill, Action<SkillDefinitionSO> onSelected = null, bool interactable = true)
     {
+        Setup(skill, 1, onSelected, interactable);
+    }
+
+    /// <summary>用角色当前拥有的技能等级刷新条目说明。</summary>
+    public void Setup(SkillDefinitionSO skill, int skillLevel,
+        Action<SkillDefinitionSO> onSelected = null, bool interactable = true)
+    {
+        currentSkillLevel = Mathf.Max(1, skillLevel);
         currentSkill = skill;
         onSkillSelected = onSelected;
         if (skill == null)
@@ -89,7 +98,7 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
             positionDiagram.Setup(skill);
 
         if (skillTipDescription != null)
-            skillTipDescription.text = skill.Description ?? string.Empty;
+            skillTipDescription.text = skill.GetDescriptionForLevel(currentSkillLevel) ?? string.Empty;
     }
 
     private void HandleSkillClicked()
@@ -146,6 +155,7 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
     private void Clear()
     {
         currentSkill = null;
+        currentSkillLevel = 1;
         onSkillSelected = null;
         if (skillIcon != null)
         {

@@ -148,7 +148,7 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
                 ? battleController.GetLogicalPosition(currentEntity)
                 : 0;
             bool canUseFromPosition = BattleTargeting.CanUseFromPosition(skill, actorPosition);
-            entry.Setup(skill, OnSkillSelected, canUseFromPosition);
+            entry.Setup(skill, currentEntity.RuntimeData.GetSkillLevel(skill), OnSkillSelected, canUseFromPosition);
             spawnedEntries.Add(entry);
         }
 
