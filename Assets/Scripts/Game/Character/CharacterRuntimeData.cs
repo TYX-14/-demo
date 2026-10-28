@@ -40,12 +40,19 @@ public class CharacterRuntimeData
     [SerializeField]
     private List<SkillDefinitionSO> equippedSkills = new();
 
+    [SerializeField]
+    private List<SkillRuntimeData> skillProgression = new();
+
     /// <summary>当前装备的战斗技能，最多四个；菜单 UI 应通过 TrySetEquippedSkills 修改。</summary>
     public IReadOnlyList<SkillDefinitionSO> EquippedSkills => equippedSkills;
+
+    /// <summary>该角色技能池的等级数据。每个角色独立保存，不修改共享技能定义。</summary>
+    public IReadOnlyList<SkillRuntimeData> SkillProgression => skillProgression;
 
     public  CharacterRuntimeData(CharacterDefinitionSO definition)
     { 
         Definition = definition;
+        InitializeSkillProgression();
         InitializeDefaultEquippedSkills();
         EquipmentStats = StatBlock.Zero;
         Level = definition.BaseLevel;
@@ -79,6 +86,66 @@ public class CharacterRuntimeData
             if (equippedSkills.Count >= MaxEquippedSkills)
                 break;
         }
+    }
+
+    /// <summary>
+    /// 为角色技能池初始化独立等级数据。所有新学会的技能默认从 1 级开始。
+    /// </summary>
+    private void InitializeSkillProgression()
+    {
+        skillProgression.Clear();
+
+        if (Definition == null || Definition.initialSkills == null)
+            return;
+
+        foreach (SkillDefinitionSO skill in Definition.initialSkills)
+        {
+            if (skill == null || FindSkillProgression(skill) != null)
+                continue;
+
+            skillProgression.Add(new SkillRuntimeData(skill));
+        }
+    }
+
+    private SkillRuntimeData FindSkillProgression(SkillDefinitionSO skill)
+    {
+        if (skill == null || skillProgression == null)
+            return null;
+
+        return skillProgression.Find(entry => entry != null && entry.Definition == skill);
+    }
+
+    /// <summary>读取该角色指定技能的等级；未找到记录时按 1 级处理。</summary>
+    public int GetSkillLevel(SkillDefinitionSO skill)
+    {
+        SkillRuntimeData entry = FindSkillProgression(skill);
+        return entry != null ? entry.Level : 1;
+    }
+
+    /// <summary>
+    /// 设置该角色技能等级。只允许设置角色技能池中的技能，并由技能定义限制等级上限。
+    /// </summary>
+    public bool TrySetSkillLevel(SkillDefinitionSO skill, int level)
+    {
+        if (skill == null || Definition == null ||
+            Definition.initialSkills == null ||
+            !Definition.initialSkills.Contains(skill))
+        {
+            return false;
+        }
+
+        if (skillProgression == null)
+            skillProgression = new List<SkillRuntimeData>();
+
+        SkillRuntimeData entry = FindSkillProgression(skill);
+        if (entry == null)
+        {
+            entry = new SkillRuntimeData(skill);
+            skillProgression.Add(entry);
+        }
+
+        entry.SetLevel(level);
+        return true;
     }
 
     /// <summary>
