@@ -60,6 +60,16 @@ public class SetNextEntityState : BattleState
         _controller.SetCurrentEntity(nextEntity);
         _controller.PublishCTBQueueUpdate();
 
+        // 眩晕在目标下一次获得行动机会时消耗一次行动次数，并直接跳过本次行动。
+        if (nextEntity.RuntimeData != null && nextEntity.RuntimeData.StunActionsRemaining > 0)
+        {
+            nextEntity.RuntimeData.StunActionsRemaining--;
+            nextEntity.Unit?.RefreshStunVisual();
+            Debug.Log($"[眩晕] {characterName} 被眩晕影响，跳过本次行动；剩余次数：{nextEntity.RuntimeData.StunActionsRemaining}。", nextEntity.Unit);
+            _controller.SetState(new SetNextEntityState(_controller));
+            yield break;
+        }
+
         // 根据阵营把状态机控制权交给玩家输入或敌方 AI。
         if (nextEntity.IsPlayer)
         {
