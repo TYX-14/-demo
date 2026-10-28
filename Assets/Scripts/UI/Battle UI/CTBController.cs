@@ -150,12 +150,13 @@ public sealed class CTBController : MonoBehaviour,
         {
             TimelineIconController handoffIcon = TakeRoundHeadIcon(currentActingEntity);
             SyncPool(evt.CurrentRoundNodes, currentRoundUpcomingContainer, currentRoundIcons);
-            SyncPool(evt.NextRoundNodes, nextRoundContainer, nextRoundIcons);
             roundTransitionPending = false;
 
             if (roundHandoffRoutine != null)
                 StopCoroutine(roundHandoffRoutine);
-            roundHandoffRoutine = StartCoroutine(PlayRoundHandoffSequence(currentActingEntity, handoffIcon));
+            // 下一轮头像池的刷新延后到大头像显现之后，避免新头像入场动画与交接动画同时发生。
+            roundHandoffRoutine = StartCoroutine(
+                PlayRoundHandoffSequence(currentActingEntity, handoffIcon, evt.NextRoundNodes));
             return;
         }
 
@@ -191,7 +192,7 @@ public sealed class CTBController : MonoBehaviour,
         return null;
     }
 
-    private IEnumerator PlayRoundHandoffSequence(BattleEntity actor, TimelineIconController icon)
+    private IEnumerator PlayRoundHandoffSequence(BattleEntity actor, TimelineIconController icon, CTBDisplayNode[] nextRoundNodes)
     {
         SetPortraitBlank();
         if (icon != null)
@@ -222,6 +223,9 @@ public sealed class CTBController : MonoBehaviour,
         yield return TransitionPortrait(actor, true);
         if (currentActingEntity == actor)
             EventBus.Publish(new CTBDisplayedActorChangedEvent(actor));
+
+        // 新一轮大头像已显现，再生成/复用下一轮小头像并播放既有的入场动画。
+        SyncPool(nextRoundNodes, nextRoundContainer, nextRoundIcons);
         roundHandoffRoutine = null;
     }
     public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities) =>
