@@ -249,6 +249,124 @@ public class BattleFieldManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 供即时技能调用的站位操作。前进/后退/击退都改变逻辑站位，场地管理器负责同步视觉位置。
+    /// delta 为负数表示前进，正数表示后退。
+    /// </summary>
+    public bool TryMoveEntityBySlots(BattleEntity target, int delta, bool knockback = false, float duration = 0.3f)
+    {
+        if (_formationMovementInProgress || target == null || target.Unit == null ||
+            target.RuntimeData == null || delta == 0 || layout == null)
+            return false;
+
+        int oldPosition = target.RuntimeData.Position;
+        if (oldPosition < 1 || oldPosition > 4)
+            return false;
+
+        int targetPosition = Mathf.Clamp(oldPosition + delta, 1, 4);
+        if (targetPosition == oldPosition)
+            return false;
+
+        if (target.IsPlayer)
+        {
+            if (knockback)
+                return targetPosition > oldPosition &&
+                       TryKnockbackAllyToPosition(target, targetPosition, duration);
+            return MoveAllyToPosition(target, targetPosition, duration);
+        }
+
+        EnemyDfinitionSo definition = target.Definition as EnemyDfinitionSo;
+        int occupiedCount = definition != null ? Mathf.Clamp(definition.occupiedSlotCount, 1, 4) : 1;
+        int maxStartPosition = 5 - occupiedCount;
+        targetPosition = Mathf.Clamp(targetPosition, 1, maxStartPosition);
+        if (targetPosition == oldPosition || !IsEnemyPositionAvailable(target, targetPosition, occupiedCount))
+            return false;
+
+        target.RuntimeData.Position = targetPosition;
+        Vector3 destination = layout.GetEnemySlotPos(targetPosition, occupiedCount);
+        _homePos[target.Unit] = destination;
+        _formationMovementInProgress = true;
+        StartCoroutine(AnimateEnemyMove(target.Unit, destination, Mathf.Max(0.01f, duration), knockback));
+        return true;
+    }
+
+    /// <summary>交换同阵营的两个实体。敌方只允许相同占格尺寸互换，以免造成槽位重叠。</summary>
+    public bool TrySwapEntities(BattleEntity actor, BattleEntity target, float duration = 0.35f)
+    {
+        if (_formationMovementInProgress || actor == null || target == null ||
+            actor == target || actor.IsPlayer != target.IsPlayer ||
+            actor.RuntimeData == null || target.RuntimeData == null ||
+            actor.Unit == null || target.Unit == null || layout == null)
+            return false;
+
+        if (actor.IsPlayer)
+            return TrySwapAllyPositions(actor, target.RuntimeData.Position, duration);
+
+        EnemyDfinitionSo actorDefinition = actor.Definition as EnemyDfinitionSo;
+        EnemyDfinitionSo targetDefinition = target.Definition as EnemyDfinitionSo;
+        int actorSize = actorDefinition != null ? Mathf.Clamp(actorDefinition.occupiedSlotCount, 1, 4) : 1;
+        int targetSize = targetDefinition != null ? Mathf.Clamp(targetDefinition.occupiedSlotCount, 1, 4) : 1;
+        if (actorSize != targetSize)
+            return false;
+
+        int actorPosition = actor.RuntimeData.Position;
+        int targetPosition = target.RuntimeData.Position;
+        if (actorPosition < 1 || targetPosition < 1 || actorPosition == targetPosition)
+            return false;
+
+        actor.RuntimeData.Position = targetPosition;
+        target.RuntimeData.Position = actorPosition;
+        Vector3 actorDestination = layout.GetEnemySlotPos(targetPosition, actorSize);
+        Vector3 targetDestination = layout.GetEnemySlotPos(actorPosition, targetSize);
+        _homePos[actor.Unit] = actorDestination;
+        _homePos[target.Unit] = targetDestination;
+        _formationMovementInProgress = true;
+        StartCoroutine(AnimateEnemySwap(actor.Unit, target.Unit, actorDestination, targetDestination, Mathf.Max(0.01f, duration)));
+        return true;
+    }
+
+    private bool IsEnemyPositionAvailable(BattleEntity movingEntity, int position, int size)
+    {
+        int end = position + size - 1;
+        foreach (BattleUnit unit in _spawnedEnemyUnits)
+        {
+            if (unit == null || unit.Entity == null || unit.Entity == movingEntity ||
+                !unit.Entity.IsAlive || unit.Entity.RuntimeData == null)
+                continue;
+
+            EnemyDfinitionSo otherDefinition = unit.Entity.Definition as EnemyDfinitionSo;
+            int otherSize = otherDefinition != null ? Mathf.Clamp(otherDefinition.occupiedSlotCount, 1, 4) : 1;
+            int otherStart = unit.Entity.RuntimeData.Position;
+            int otherEnd = otherStart + otherSize - 1;
+            if (position <= otherEnd && otherStart <= end)
+                return false;
+        }
+
+        return position >= 1 && end <= 4;
+    }
+
+    private System.Collections.IEnumerator AnimateEnemyMove(BattleUnit unit, Vector3 destination, float duration, bool knockback)
+    {
+        if (unit != null)
+        {
+            if (knockback)
+                yield return StartCoroutine(unit.ForcedMoveToPosition(destination, duration));
+            else
+                yield return StartCoroutine(unit.MoveToPosition(destination, duration));
+        }
+
+        _formationMovementInProgress = false;
+    }
+
+    private System.Collections.IEnumerator AnimateEnemySwap(
+        BattleUnit actor, BattleUnit target, Vector3 actorDestination, Vector3 targetDestination, float duration)
+    {
+        StartCoroutine(actor.MoveToPosition(actorDestination, duration));
+        StartCoroutine(target.MoveToPosition(targetDestination, duration));
+        yield return new WaitForSeconds(duration);
+        _formationMovementInProgress = false;
+    }
+
+    /// <summary>
     /// 清理战场上所有已生成的单位，并重置记录的数据。
     /// </summary>
     public void ClearAllUnits()
