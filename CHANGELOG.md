@@ -1,3 +1,11 @@
+## 2026-10-28：建立最小行动生命周期并接入敌方技能行动
+
+- **统一行动入口与收尾：** `BattleController` 增加行动启动校验、活动行动锁、统一完成行动与状态恢复入口；技能结算完成后清除上下文并交还给 `SetNextEntityState`，不再直接切回玩家输入。
+- **玩家技能结算：** `PerformActionState` 在结算前登记行动开始，结束时统一完成行动；无效或无法启动的行动会按行动者阵营恢复到玩家输入或下一行动者状态。
+- **最小敌方 AI：** `EnemyAIState` 按装备技能顺序选择第一个站位和目标合法的技能，并复用 `PerformActionState` 结算。暂时没有可用技能时跳过该次行动，避免状态机无限等待。
+- **当前边界：** 敌方决策仍是占位级策略；尚未接入普通攻击兜底、SP 扣除、命中/暴击、动画等待、反应窗口及除攻击/伤害修正外的技能效果。
+- **验证状态：** 已静态检查修改后的调用链；尚未在 Unity 编辑器中编译或运行验证，需拉取后进行实际战斗测试。
+
 ## 2026-10-28：技能效果改为独立数据类型并增加专用配置界面
 
 - **效果数据结构：** 新增 `SkillEffectBase` 父类及 `DamageEffect`、`HealEffect`、`StressDamageEffect`、`StressHealEffect`、`MoveForwardEffect`、`MoveBackwardEffect`、`DamageModifierEffect`、`AccuracyModifierEffect`、`CriticalModifierEffect`、`ApplyStatusEffect` 等独立子类。每类只保存自身需要的字段。
