@@ -23,6 +23,21 @@ public readonly struct CurrentEntityChangedEvent : IEvent
     }
 }
 
+
+/// <summary>
+/// CTB 大头像完成切换并稳定显示后发布。
+/// Health Bar 等依赖视觉时机的 UI 应监听此事件，而不是提前监听 CurrentEntityChangedEvent。
+/// </summary>
+public readonly struct CTBDisplayedActorChangedEvent : IEvent
+{
+    public BattleEntity Entity { get; }
+
+    public CTBDisplayedActorChangedEvent(BattleEntity entity)
+    {
+        Entity = entity;
+    }
+}
+
 /// <summary>
 /// CTB 两个行动池更新事件。数据已由调度器转换为 UI 可直接使用的节点。
 /// </summary>
