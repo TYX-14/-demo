@@ -13,6 +13,14 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     [SerializeField] private BattleFieldManager fieldManager;
     public BattleFieldManager FieldManager => fieldManager;
 
+    [Header("敌方行动节奏")]
+    [SerializeField, Min(0f), Tooltip("当前尚未接入攻击动画时，敌方造成伤害前的短暂停顿。")]
+    private float enemyActionWindupDelay = 0.25f;
+    [SerializeField, Min(0f), Tooltip("敌方技能结算后、CTB 切换到下一行动者前的停顿。")]
+    private float enemyActionRecoveryDelay = 0.65f;
+    public float EnemyActionWindupDelay => enemyActionWindupDelay;
+    public float EnemyActionRecoveryDelay => enemyActionRecoveryDelay;
+
     private readonly List<BattleEntity> _allEntities = new();
     public List<BattleEntity> AllEntities => _allEntities;
     public BattleEntity CurrentEntity { get; private set; }
