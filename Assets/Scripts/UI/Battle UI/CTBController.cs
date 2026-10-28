@@ -123,7 +123,7 @@ public sealed class CTBController : MonoBehaviour,
 
         if (portraitRoutine != null)
             StopCoroutine(portraitRoutine);
-        portraitRoutine = StartCoroutine(TransitionPortrait(currentActingEntity, false));
+        portraitRoutine = StartCoroutine(TransitionPortraitAndNotify(currentActingEntity, false));
     }
 
     public void OnEvent(CTBQueueUpdatedEvent evt)
@@ -184,7 +184,19 @@ public sealed class CTBController : MonoBehaviour,
 
         yield return TransitionPortrait(currentActingEntity, true);
         isOpeningSequence = false;
+        EventBus.Publish(new CTBDisplayedActorChangedEvent(currentActingEntity));
         openingRoutine = null;
+    }
+
+    private IEnumerator TransitionPortraitAndNotify(BattleEntity nextEntity, bool opening)
+    {
+        yield return TransitionPortrait(nextEntity, opening);
+
+        // 如果动画期间已经切换到另一位行动者，旧动画不得覆盖新行动者的 UI 状态。
+        if (currentActingEntity == nextEntity)
+            EventBus.Publish(new CTBDisplayedActorChangedEvent(nextEntity));
+
+        portraitRoutine = null;
     }
 
     private IEnumerator TransitionPortrait(BattleEntity nextEntity, bool opening)
