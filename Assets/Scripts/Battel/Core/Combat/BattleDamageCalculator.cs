@@ -43,7 +43,7 @@ public static class BattleDamageCalculator
         float damageModifierPercent = 0f,
         bool isCritical = false)
     {
-        if (attacker == null || target == null || target.IsDead)
+        if (attacker == null || target == null || attacker.IsDead || target.IsDead)
             return 0;
 
         float variance = Random.Range(1f - DamageVariance, 1f + DamageVariance);
