@@ -1,3 +1,15 @@
+## 2026-10-28：技能效果改为独立数据类型并增加专用配置界面
+
+- **效果数据结构：** 新增 `SkillEffectBase` 父类及 `DamageEffect`、`HealEffect`、`StressDamageEffect`、`StressHealEffect`、`MoveForwardEffect`、`MoveBackwardEffect`、`DamageModifierEffect`、`AccuracyModifierEffect`、`CriticalModifierEffect`、`ApplyStatusEffect` 等独立子类。每类只保存自身需要的字段。
+- **Inspector 操作：** 新增 `Assets/Editor/SkillDefinitionSOEditor.cs`，技能等级效果通过按类型区分的按钮添加；效果条目可独立编辑和删除，等级可单独新增或删除。
+- **旧数据兼容：** `SkillLevelConfig.effects` 原字段名和类型保留为隐藏的旧格式数据；新列表使用 `[SerializeReference]` 存储不同子类实例。检测到旧效果时，Inspector 提供迁移按钮，转换后保留旧字段作为备份，不会直接删除旧配置。运行时和动态说明在尚未迁移时也可将旧数据临时转换为新类型读取。
+- **技能说明与攻击执行：** `SkillDefinitionSO` 的动态说明改为调用新效果类型的 `BuildDescription()`；`BattleSkillEffectExecutor` 改为识别 `DamageEffect` 与 `DamageModifierEffect`。其他效果仍只是数据与说明配置，尚未接入战斗结算。
+- **范围边界：** 保留现有技能等级、目标规则、伤害类型和状态定义架构；没有为普通效果创建独立 `.asset`，可复用状态仍由 `StatusEffectDefinitionSO` 定义。
+- **涉及文件：** `SkillEffectData.cs`、新增 `SkillEffectTypes.cs`、`SkillDefinitionSO.cs`、`BattleSkillEffectExecutor.cs`、新增 `Assets/Editor/SkillDefinitionSOEditor.cs`，以及对应 Unity 元数据。
+- **验证状态：** 已提交到 `feature/battle-position-system`，但尚未在 Unity 中编译或运行验证。请导入后先确认 Console 无编译错误，再检查技能资源中的等级配置；发现旧效果时先使用迁移按钮并核对说明和数值。迁移前建议提交或备份当前工作区。
+
+---
+
 ## 2026-10-28：接入技能攻击效果执行
 
 - **新增执行器：** `Assets/Scripts/Battel/Core/Combat/BattleSkillEffectExecutor.cs` 负责读取角色当前技能等级配置，汇总本次攻击的伤害修正，并调用 `BattleDamageCalculator` 计算伤害。
