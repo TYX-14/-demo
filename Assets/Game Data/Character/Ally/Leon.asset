@@ -16,6 +16,7 @@ MonoBehaviour:
   Name: "\u91CC\u6602"
   Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftIdle: {fileID: 463951968, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
+  LeftBattleIdle: {fileID: -942445637, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   BaseLevel: 4
   BaseStats:
     MaxHP: 150

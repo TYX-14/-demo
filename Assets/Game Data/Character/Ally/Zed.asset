@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: Zed
   Name: Zed
-  Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
+  Portrait: {fileID: -1365205660, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
   LeftIdle: {fileID: 463951968, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
+  LeftBattleIdle: {fileID: -942445637, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
   BaseLevel: 5
   BaseStats:
     MaxHP: 120

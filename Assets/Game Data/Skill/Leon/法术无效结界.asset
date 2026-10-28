@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c81d4c8b23c84f44aefbf25a9a74a101, type: 3}
+  m_Name: "\u6CD5\u672F\u65E0\u6548\u7ED3\u754C"
+  m_EditorClassIdentifier: 
+  skillName: "\u6CD5\u672F\u65E0\u6548\u7ED3\u754C"
+  skillIcon: {fileID: 0}
+  description: "\u65E0\u654C\uFF08\u4E00\u56DE\u5408\uFF09"
+  spCost: 200
+  targetRelation: 1
+  targetType: 0
+  targetSelectionMode: 0
+  usablePositions: 0300000004000000
+  targetPositions: 01000000020000000300000004000000

@@ -16,6 +16,7 @@ MonoBehaviour:
   Name: "\u5730\u7A74\u866B"
   Portrait: {fileID: 1782950447, guid: d32ba9126eb77497caa10e2c9ab3d2ae, type: 3}
   LeftIdle: {fileID: 0}
+  LeftBattleIdle: {fileID: 1782950447, guid: d32ba9126eb77497caa10e2c9ab3d2ae, type: 3}
   BaseLevel: 1
   BaseStats:
     MaxHP: 10
@@ -27,6 +28,7 @@ MonoBehaviour:
     Speed: 0
     Accuracy: 0
     Evasion: 0
+  BaseDeathblowResistance: 0.67
   maxSwapDistance: 1
   initialSkills: []
   filedAnimator: {fileID: 0}

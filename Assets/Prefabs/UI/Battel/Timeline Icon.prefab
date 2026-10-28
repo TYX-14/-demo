@@ -165,6 +165,24 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &7349012856012394871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3242057982933525603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c4d2f7a91b645e3a6f0c2d8b7e14953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  backgroundImage: {fileID: 2841640863590602516}
+  portraitImage: {fileID: 9080791085825435146}
+  allyBackgroundSprite: {fileID: 21300000, guid: 850493566960843efbc6f9ff612f26bc,
+    type: 3}
+  enemyBackgroundSprite: {fileID: 21300000, guid: f30a8adfaed064b049b2571d674b346a,
+    type: 3}
 --- !u!1 &6342042388673082494
 GameObject:
   m_ObjectHideFlags: 0
@@ -332,19 +350,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
---- !u!114 &7349012856012394871
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3242057982933525603}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c4d2f7a91b645e3a6f0c2d8b7e14953, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  backgroundImage: {fileID: 2841640863590602516}
-  portraitImage: {fileID: 9080791085825435146}
-  allyBackgroundSprite: {fileID: 21300000, guid: 850493566960843efbc6f9ff612f26bc, type: 3}
-  enemyBackgroundSprite: {fileID: 0}

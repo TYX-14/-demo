@@ -141,8 +141,8 @@
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Products\ProductAttribute.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Inspection\IndividualPropertyDrawer.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Utilities\ReloadAssets.cs" />
-     <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Platforms\ConstructorInfoStubWriter.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Utilities\SearchUtility.cs" />
+     <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Platforms\ConstructorInfoStubWriter.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Interface\LudiqStyles.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Widgets\WidgetAttribute.cs" />
      <Compile Include="Library\PackageCache\com.unity.visualscripting@1.9.11\Editor\VisualScripting.Core\Products\ProductContainer.cs" />
