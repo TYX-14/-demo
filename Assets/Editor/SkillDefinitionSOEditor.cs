@@ -115,6 +115,10 @@ public class SkillDefinitionSOEditor : Editor
             return false;
         }
 
+        bool migrationRequired = legacyEffects != null &&
+                                 legacyEffects.arraySize > 0 &&
+                                 typedEffects.arraySize == 0;
+
         if (legacyEffects != null && legacyEffects.arraySize > 0 && typedEffects.arraySize == 0)
         {
             EditorGUILayout.HelpBox(
