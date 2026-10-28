@@ -17,17 +17,17 @@ MonoBehaviour:
   Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftIdle: {fileID: 463951968, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftBattleIdle: {fileID: -942445637, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
-  BaseLevel: 4
+  BaseLevel: 100
   BaseStats:
-    MaxHP: 150
-    MaxSP: 50
-    PAtk: 50
-    PDef: 50
-    MAtk: 0
-    MDef: 0
-    Speed: 2
-    Accuracy: 0
-    Evasion: 0
+    MaxHP: 20
+    MaxSP: 150
+    PAtk: 10
+    PDef: 5
+    MAtk: 10
+    MDef: 5
+    Speed: 3
+    Accuracy: 10
+    Evasion: 5
   BaseDeathblowResistance: 0.67
   maxSwapDistance: 2
   initialSkills:
@@ -42,13 +42,13 @@ MonoBehaviour:
   globalGrowthConfigSO: {fileID: 11400000, guid: d98136d756eb5f741aaa993a1dd6e576,
     type: 2}
   growProfile:
-    Hp: 0
+    Hp: 1
     SP: 0
-    PAtk: 0
-    PDef: 0
-    MAtk: 0
-    MDef: 0
-    speed: 0
+    PAtk: 2
+    PDef: 2
+    MAtk: 2
+    MDef: 2
+    speed: 3
   EquipableweaqonTypes: 01000000
   initialEquipments:
   - slot: 0

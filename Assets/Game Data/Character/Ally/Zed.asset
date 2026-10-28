@@ -19,14 +19,14 @@ MonoBehaviour:
   LeftBattleIdle: {fileID: -942445637, guid: 1aa3939c061aa44f7875021bed33998a, type: 3}
   BaseLevel: 5
   BaseStats:
-    MaxHP: 120
+    MaxHP: 17
     MaxSP: 70
-    PAtk: 60
-    PDef: 30
-    MAtk: 40
-    MDef: 30
+    PAtk: 9
+    PDef: 3
+    MAtk: 2
+    MDef: 3
     Speed: 7
-    Accuracy: 0
+    Accuracy: 15
     Evasion: 0
   BaseDeathblowResistance: 0.67
   maxSwapDistance: 3
