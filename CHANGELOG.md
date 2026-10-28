@@ -1,3 +1,16 @@
+## 2026-10-28：接入技能攻击效果执行
+
+- **新增执行器：** `Assets/Scripts/Battel/Core/Combat/BattleSkillEffectExecutor.cs` 负责读取角色当前技能等级配置，汇总本次攻击的伤害修正，并调用 `BattleDamageCalculator` 计算伤害。
+- **攻击结算：** 每个 `Damage` 项表示一次攻击；伤害计算后通过 `CharacterRuntimeData.ModifyHp(-damage)` 扣血，复用现有 HP、死门与致死判定。零伤害不会调用 `ModifyHp`，避免误触发死门判定；结算后刷新目标的战斗单位表现。
+- **条件修正：** `DamageModifier` 在攻击前按目标条件汇总；“对体型>1”当前通过敌人定义的 `occupiedSlotCount > 1` 判断。未配置条件的修正对所有目标生效。
+- **伤害类型：** `SkillDefinitionSO` 新增显式的物理/魔法伤害类型，默认物理。它与技能是否属于可被反制的法术是两种不同概念，不互相推断。
+- **行动流程：** `PerformActionState` 已调用执行器并输出本次结算的总 HP 伤害。当前只执行 `Damage` 与 `DamageModifier`；治疗、压力、精准、暴击修正、位移和状态效果尚未接入。
+- **当前边界：** 尚未实现命中判定与暴击概率；本阶段固定不暴击。也尚未扣除 SP、播放技能动作或推进 CTB 行动顺序，行动后仍返回玩家输入状态。
+- **涉及文件：** `BattleSkillEffectExecutor.cs`、`PerformActionState.cs`、`SkillDefinitionSO.cs`。
+- **验证状态：** 代码已提交到功能分支；尚未在 Unity 中编译或运行验证。Unity 导入新增脚本后需生成并提交对应的 `.meta` 文件。
+
+---
+
 ## 2026-10-28：技能攻击效果改为使用角色属性结算
 
 - **移除固定伤害区间：** `SkillEffectData` 不再为技能等级保存 `minValue/maxValue`，避免技能等级直接决定实际伤害数值。
