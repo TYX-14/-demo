@@ -114,7 +114,7 @@ public class BattleFieldManager : MonoBehaviour
     /// <summary>
     /// 将我方单位移动到目标槽位，并把补位后的结果写回队伍数据。
     /// </summary>
-    public bool MoveAllyToPosition(BattleEntity entity, int targetPosition, float duration = 0.35f)
+    public bool MoveAllyToPosition(BattleEntity entity, int targetPosition, float duration = 0.35f, bool quickShift = false)
     {
         if (entity == null || !entity.IsPlayer || layout == null || PartyManager.Instance == null)
             return false;
@@ -122,6 +122,7 @@ public class BattleFieldManager : MonoBehaviour
         if (!PartyManager.Instance.MoveMemberToPosition(entity.RuntimeData, targetPosition))
             return false;
 
+        NotifyHealthBarOrderChanged();
         duration = Mathf.Max(0.01f, duration);
         var movingUnits = new List<BattleUnit>();
         var destinations = new List<Vector3>();
@@ -138,17 +139,22 @@ public class BattleFieldManager : MonoBehaviour
         }
 
         _formationMovementInProgress = true;
-        StartCoroutine(AnimateAllyFormationMove(movingUnits, destinations, duration));
+        StartCoroutine(AnimateAllyFormationMove(movingUnits, destinations, duration, quickShift));
         return true;
     }
 
     private System.Collections.IEnumerator AnimateAllyFormationMove(
-        List<BattleUnit> units, List<Vector3> destinations, float duration)
+        List<BattleUnit> units, List<Vector3> destinations, float duration, bool quickShift)
     {
         for (int i = 0; i < units.Count; i++)
         {
             if (units[i] != null)
-                StartCoroutine(units[i].MoveToPosition(destinations[i], duration));
+            {
+                if (quickShift)
+                    StartCoroutine(units[i].FastMoveToPosition(destinations[i], duration));
+                else
+                    StartCoroutine(units[i].MoveToPosition(destinations[i], duration));
+            }
         }
 
         yield return new WaitForSeconds(duration);
@@ -197,6 +203,7 @@ public class BattleFieldManager : MonoBehaviour
             return false;
 
         PartyManager.Instance.SwapPosition(currentPosition, targetPosition);
+        NotifyHealthBarOrderChanged();
 
         Vector3 actorTarget = layout.GetAllySlotPos(targetPosition);
         Vector3 targetTarget = layout.GetAllySlotPos(currentPosition);
@@ -238,6 +245,7 @@ public class BattleFieldManager : MonoBehaviour
         if (!PartyManager.Instance.MoveMemberToPosition(target.RuntimeData, targetPosition))
             return false;
 
+        NotifyHealthBarOrderChanged();
         duration = Mathf.Max(0.01f, duration);
         _formationMovementInProgress = true;
         StartCoroutine(AnimateAllyKnockback(target.Unit, duration));
@@ -272,7 +280,7 @@ public class BattleFieldManager : MonoBehaviour
     /// 供即时技能调用的站位操作。前进/后退/击退都改变逻辑站位，场地管理器负责同步视觉位置。
     /// delta 为负数表示前进，正数表示后退。
     /// </summary>
-    public bool TryMoveEntityBySlots(BattleEntity target, int delta, bool knockback = false, float duration = 0.3f)
+    public bool TryMoveEntityBySlots(BattleEntity target, int delta, bool knockback = false, float duration = 0.3f, bool quickShift = false)
     {
         if (_formationMovementInProgress || target == null || target.Unit == null ||
             target.RuntimeData == null || delta == 0 || layout == null)
@@ -293,7 +301,7 @@ public class BattleFieldManager : MonoBehaviour
             if (knockback)
                 return targetPosition > oldPosition &&
                        TryKnockbackAllyToPosition(target, targetPosition, duration);
-            return MoveAllyToPosition(target, targetPosition, duration);
+            return MoveAllyToPosition(target, targetPosition, duration, quickShift);
         }
 
         EnemyDfinitionSo definition = target.Definition as EnemyDfinitionSo;
@@ -307,7 +315,7 @@ public class BattleFieldManager : MonoBehaviour
         Vector3 destination = layout.GetEnemySlotPos(targetPosition, occupiedCount);
         _homePos[target.Unit] = destination;
         _formationMovementInProgress = true;
-        StartCoroutine(AnimateEnemyMove(target.Unit, destination, Mathf.Max(0.01f, duration), knockback));
+        StartCoroutine(AnimateEnemyMove(target.Unit, destination, Mathf.Max(0.01f, duration), knockback, quickShift));
         return true;
     }
 
@@ -366,12 +374,14 @@ public class BattleFieldManager : MonoBehaviour
         return position >= 1 && end <= 4;
     }
 
-    private System.Collections.IEnumerator AnimateEnemyMove(BattleUnit unit, Vector3 destination, float duration, bool knockback)
+    private System.Collections.IEnumerator AnimateEnemyMove(BattleUnit unit, Vector3 destination, float duration, bool knockback, bool quickShift)
     {
         if (unit != null)
         {
             if (knockback)
                 yield return StartCoroutine(unit.ForcedMoveToPosition(destination, duration));
+            else if (quickShift)
+                yield return StartCoroutine(unit.FastMoveToPosition(destination, duration));
             else
                 yield return StartCoroutine(unit.MoveToPosition(destination, duration));
         }
@@ -386,6 +396,13 @@ public class BattleFieldManager : MonoBehaviour
         StartCoroutine(target.MoveToPosition(targetDestination, duration));
         yield return new WaitForSeconds(duration);
         _formationMovementInProgress = false;
+    }
+
+    private void NotifyHealthBarOrderChanged()
+    {
+        BattleHUDcontroller hud = FindAnyObjectByType<BattleHUDcontroller>();
+        if (hud != null)
+            hud.RefreshHealthBarOrderAnimated();
     }
 
     /// <summary>
