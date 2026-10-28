@@ -1,57 +1,57 @@
 
 /// <summary>
-/// Õ½¶·ÊµÌåµÄÔËĞĞÊ±°ü×°Àà¡£
-/// ×÷ÎªÕ½¶·ºËĞÄµÄÊı¾İÔØÌå£¬¹ØÁªÁË½ÇÉ«µÄÔËĞĞÊ±Êı¾İ¡¢³¡¾°ÖĞµÄÊÓ¾õ×é¼ş£¨BattleUnit£©ÒÔ¼°ÕóÓªÉí·İ±êÊ¶¡£
+/// æˆ˜æ–—å®ä½“çš„è¿è¡Œæ—¶åŒ…è£…ç±»ã€‚
+/// ä½œä¸ºæˆ˜æ–—æ ¸å¿ƒçš„æ•°æ®è½½ä½“ï¼Œå…³è”äº†è§’è‰²çš„è¿è¡Œæ—¶æ•°æ®ã€åœºæ™¯ä¸­çš„è§†è§‰ç»„ä»¶ï¼ˆBattleUnitï¼‰ä»¥åŠé˜µè¥èº«ä»½æ ‡è¯†ã€‚
 /// </summary>
 public class BattleEntity
 {
     /// <summary>
-    /// ¸ÃÕ½¶·ÊµÌå¶ÔÓ¦µÄÔËĞĞÊ±½ÇÉ«Êı¾İ¡£
+    /// è¯¥æˆ˜æ–—å®ä½“å¯¹åº”çš„è¿è¡Œæ—¶è§’è‰²æ•°æ®ã€‚
     /// </summary>
     public CharacterRuntimeData RuntimeData { get; }
 
     /// <summary>
-    /// »ñÈ¡½ÇÉ«µÄ»ù´¡¶¨ÒåÅäÖÃ£¨ÓÉ RuntimeData ´úÀíÌá¹©£©¡£
+    /// è·å–è§’è‰²çš„åŸºç¡€å®šä¹‰é…ç½®ï¼ˆç”± RuntimeData ä»£ç†æä¾›ï¼‰ã€‚
     /// </summary>
     public CharacterDefinitionSO Definition => RuntimeData.Definition;
 
     /// <summary>
-    /// ¸ÃÊµÌåÔÚÕ½¶·³¡¾°ÖĞ¶ÔÓ¦µÄÊÓ¾õ¿ØÖÆ×é¼ş£¨BattleUnit£©¡£
+    /// è¯¥å®ä½“åœ¨æˆ˜æ–—åœºæ™¯ä¸­å¯¹åº”çš„è§†è§‰æ§åˆ¶ç»„ä»¶ï¼ˆBattleUnitï¼‰ã€‚
     /// </summary>
     public BattleUnit Unit { get; }
 
     /// <summary>
-    /// ¸ÃÊµÌåµÄÎÈ¶¨Î¨Ò»±êÊ¶·û¡£
+    /// è¯¥å®ä½“çš„ç¨³å®šå”¯ä¸€æ ‡è¯†ç¬¦ã€‚
     /// </summary>
     public string ID { get; }
 
     /// <summary>
-    /// ±ê¼Ç¸ÃÊµÌåÊÇ·ñÊôÓÚÍæ¼ÒÕóÓª¡£
+    /// æ ‡è®°è¯¥å®ä½“æ˜¯å¦å±äºç©å®¶é˜µè¥ã€‚
     /// </summary>
     public bool IsPlayer { get; }
 
     /// <summary>
-    /// ÅĞ¶ÏÊµÌåµ±Ç°ÊÇ·ñ´æ»î¡£
+    /// åˆ¤æ–­å®ä½“å½“å‰æ˜¯å¦å­˜æ´»ã€‚
     /// </summary>
-    public bool IsAlive => RuntimeData.CurrentHP > 0;
+    public bool IsAlive => RuntimeData != null && !RuntimeData.IsDead;
 
     /// <summary>
-    /// »ñÈ¡¸ÃÊµÌåµ±Ç°µÄÉúÃüÖµ£¨ÓÉ RuntimeData ´úÀíÌá¹©£©¡£
+    /// è·å–è¯¥å®ä½“å½“å‰çš„ç”Ÿå‘½å€¼ï¼ˆç”± RuntimeData ä»£ç†æä¾›ï¼‰ã€‚
     /// </summary>
     public int CurrentHP => RuntimeData.CurrentHP;
 
     /// <summary>
-    /// »ñÈ¡¸ÃÊµÌå¼ÆËãºóµÄ×ÜÊôĞÔÃæ°å£¨ÓÉ RuntimeData ´úÀíÌá¹©£©¡£
+    /// è·å–è¯¥å®ä½“è®¡ç®—åçš„æ€»å±æ€§é¢æ¿ï¼ˆç”± RuntimeData ä»£ç†æä¾›ï¼‰ã€‚
     /// </summary>
     public StatBlock TotalStats => RuntimeData.GetTotalStats();
 
     /// <summary>
-    /// ³õÊ¼»¯Õ½¶·ÊµÌåÊı¾İÀàµÄĞÂÊµÀı¡£
+    /// åˆå§‹åŒ–æˆ˜æ–—å®ä½“æ•°æ®ç±»çš„æ–°å®ä¾‹ã€‚
     /// </summary>
-    /// <param name="runtimeData">ÊµÌåµÄÔËĞĞÊ±Êı¾İ¶ÔÏó¡£</param>
-    /// <param name="unit">ÊµÌåµÄ³¡¾°½Úµã£¨BattleUnit ×é¼ş£©¡£</param>
-    /// <param name="isPlayer">±ê¼ÇÊÇ·ñÎªÍæ¼Òµ¥Î»¡£</param>
-    /// <param name="stableID">ÊµÌåµÄÎÈ¶¨ ID¡£</param>
+    /// <param name="runtimeData">å®ä½“çš„è¿è¡Œæ—¶æ•°æ®å¯¹è±¡ã€‚</param>
+    /// <param name="unit">å®ä½“çš„åœºæ™¯èŠ‚ç‚¹ï¼ˆBattleUnit ç»„ä»¶ï¼‰ã€‚</param>
+    /// <param name="isPlayer">æ ‡è®°æ˜¯å¦ä¸ºç©å®¶å•ä½ã€‚</param>
+    /// <param name="stableID">å®ä½“çš„ç¨³å®š IDã€‚</param>
     public BattleEntity(CharacterRuntimeData runtimeData, BattleUnit unit, bool isPlayer, string stableID)
     {
         RuntimeData = runtimeData;
