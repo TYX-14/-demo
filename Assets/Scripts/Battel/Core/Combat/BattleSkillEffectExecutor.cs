@@ -28,6 +28,7 @@ public static class BattleSkillEffectExecutor
         IReadOnlyList<SkillEffectBase> effects = levelConfig.Effects;
 
         // 换位是行动者与被选中的一个目标之间的关系操作，不对 AoE 目标列表逐个执行。
+        // 前进/后退则属于行动者自身的位移，也只执行一次，与技能选择了谁作为目标无关。
         foreach (SkillEffectBase effect in effects)
         {
             if (effect is SwapPositionEffect)
@@ -35,6 +36,20 @@ public static class BattleSkillEffectExecutor
                 if (selectedInputTarget != null &&
                     controller.FieldManager != null &&
                     controller.FieldManager.TrySwapEntities(actor, selectedInputTarget))
+                    movementTriggered = true;
+            }
+            else if (effect is MoveForwardEffect moveForward)
+            {
+                int distance = Mathf.Abs(Mathf.RoundToInt(moveForward.Distance));
+                if (distance > 0 && controller.FieldManager != null &&
+                    controller.FieldManager.TryMoveEntityBySlots(actor, -distance))
+                    movementTriggered = true;
+            }
+            else if (effect is MoveBackwardEffect moveBackward)
+            {
+                int distance = Mathf.Abs(Mathf.RoundToInt(moveBackward.Distance));
+                if (distance > 0 && controller.FieldManager != null &&
+                    controller.FieldManager.TryMoveEntityBySlots(actor, distance))
                     movementTriggered = true;
             }
         }
@@ -81,17 +96,9 @@ public static class BattleSkillEffectExecutor
                 {
                     target.RuntimeData.ModifyStress(-Mathf.Abs(Mathf.RoundToInt(stressHeal.Value)));
                 }
-                else if (effect is MoveForwardEffect moveForward)
+                else if (effect is MoveForwardEffect || effect is MoveBackwardEffect)
                 {
-                    if (controller.FieldManager != null &&
-                        controller.FieldManager.TryMoveEntityBySlots(target, -Mathf.Abs(Mathf.RoundToInt(moveForward.Distance))))
-                        movementTriggered = true;
-                }
-                else if (effect is MoveBackwardEffect moveBackward)
-                {
-                    if (controller.FieldManager != null &&
-                        controller.FieldManager.TryMoveEntityBySlots(target, Mathf.Abs(Mathf.RoundToInt(moveBackward.Distance))))
-                        movementTriggered = true;
+                    // 前进/后退已在上方对行动者执行，不应随着目标数量重复触发。
                 }
                 else if (effect is KnockbackEffect knockback)
                 {
