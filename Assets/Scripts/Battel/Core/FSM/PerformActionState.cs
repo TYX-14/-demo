@@ -4,8 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 执行已确认的行动。
-/// 当前阶段先验证并记录行动者、技能和解析后的目标，具体伤害、SP 扣除、动画与状态效果留待行动结算阶段接入。
-/// 在结算器尚未实现前，不消耗行动或资源，而是返回玩家输入状态，便于验证目标选择链路。
+/// 当前接入攻击效果结算；其他效果、SP 消耗、命中/暴击判定、动画与行动推进仍待后续阶段实现。
 /// </summary>
 public class PerformActionState : BattleState
 {
@@ -23,8 +22,8 @@ public class PerformActionState : BattleState
             _actionContext.Actor == null ||
             _actionContext.Skill == null ||
             _actionContext.ResolvedTargets == null ||
-            _actionContext.ResolvedTargets.Count == 0 &&
-            _actionContext.Skill.TargetSelectionMode != SkillTargetSelectionMode.None)
+            (_actionContext.ResolvedTargets.Count == 0 &&
+             _actionContext.Skill.TargetSelectionMode != SkillTargetSelectionMode.None))
         {
             Debug.LogWarning("PerformActionState：行动数据不完整或没有有效目标。");
             _controller.CancelPendingAction();
@@ -36,11 +35,19 @@ public class PerformActionState : BattleState
             target => target.Definition != null ? target.Definition.Name : target.ID));
 
         Debug.Log(
-            $"[行动验证] {_actionContext.Actor.Definition.Name} 选择技能「{_actionContext.Skill.SkillName}」；" +
+            $"[行动执行] {_actionContext.Actor.Definition.Name} 使用技能「{_actionContext.Skill.SkillName}」；" +
             $"输入位置：{_actionContext.SelectedInputPosition}；实际目标：{targetNames}。");
 
-        Debug.LogWarning(
-            "当前仅验证行动数据与目标解析，尚未接入伤害、SP 消耗、动画或状态效果；本次不会消耗行动。");
+        int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
+        int totalDamage = BattleSkillEffectExecutor.Execute(
+            _actionContext.Actor,
+            _actionContext.Skill,
+            skillLevel,
+            _actionContext.ResolvedTargets);
+
+        Debug.Log(
+            $"[技能结算] 技能等级：{skillLevel}；本次已结算的总 HP 伤害：{totalDamage}。" +
+            "尚未支持的效果类型会被跳过；本次不扣除 SP，也不推进 CTB 行动顺序。");
 
         _controller.CancelPendingAction();
         _controller.SetState(new PlayerInputState(_controller));
