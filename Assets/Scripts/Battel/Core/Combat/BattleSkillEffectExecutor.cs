@@ -72,7 +72,7 @@ public static class BattleSkillEffectExecutor
         BattleEntity target)
     {
         float modifier = 0f;
-        foreach (SkillEffectData effect in effects)
+        foreach (SkillEffectBase effect in effects)
         {
             DamageModifierEffect damageModifierEffect = effect as DamageModifierEffect;
             if (damageModifierEffect == null)
