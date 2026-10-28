@@ -16,8 +16,10 @@ public sealed class BattleRoundScheduler
     private readonly Dictionary<BattleEntity, float> _nextActionTime = new();
     private readonly HashSet<BattleEntity> _actedThisRound = new();
     private readonly Dictionary<BattleEntity, int> _stableOrder = new();
+    private int _roundNumber = 1;
 
     public IReadOnlyList<BattleEntity> CurrentRoundQueue => _currentRoundQueue;
+    public int RoundNumber => _roundNumber;
 
     public void Initialize(IEnumerable<BattleEntity> entities)
     {
@@ -26,6 +28,7 @@ public sealed class BattleRoundScheduler
         _nextActionTime.Clear();
         _actedThisRound.Clear();
         _stableOrder.Clear();
+        _roundNumber = 1;
 
         if (entities == null)
             return;
@@ -43,16 +46,26 @@ public sealed class BattleRoundScheduler
         BuildCurrentRoundQueue();
     }
 
+    /// <summary>上一轮队列耗尽后，显式构建下一轮；仅由战斗状态机在行动结束后调用。</summary>
+    public bool TryAdvanceToNextRound()
+    {
+        RemoveInvalidEntities();
+        if (_currentRoundQueue.Count > 0 || _entities.Count == 0)
+            return false;
+
+        _actedThisRound.Clear();
+        BuildCurrentRoundQueue();
+        if (_currentRoundQueue.Count == 0)
+            return false;
+
+        _roundNumber++;
+        return true;
+    }
+
     /// <summary>取得并消费下一位行动者，同时为其记录下一次行动时间。</summary>
     public BattleEntity TakeNextEntity()
     {
         RemoveInvalidEntities();
-        if (_currentRoundQueue.Count == 0)
-        {
-            _actedThisRound.Clear();
-            BuildCurrentRoundQueue();
-        }
-
         if (_currentRoundQueue.Count == 0)
             return null;
 
