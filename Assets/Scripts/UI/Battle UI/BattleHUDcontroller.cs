@@ -11,7 +11,6 @@ using UnityEngine;
 /// </summary>
 public class BattleHUDcontroller : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
-    IEventReceiver<CurrentEntityChangedEvent>,
     IEventReceiver<CTBDisplayedActorChangedEvent>,
     IEventReceiver<GameModeChangedEvent>
 {
@@ -35,7 +34,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     private float healthBarFadeDuration = 0.25f;
 
     private readonly List<HealthBarController> spawnedHealthBars = new();
-    private BattleEntity currentActingEntity;
     private BattleEntity displayedActingEntity;
     private CanvasGroup healthBarCanvasGroup;
     private Coroutine healthBarFadeCoroutine;
@@ -49,7 +47,7 @@ public class BattleHUDcontroller : MonoBehaviour,
     private void OnEnable()
     {
         EventBus.Subscribe<BattleStartedEvent>(this);
-        EventBus.Subscribe<CurrentEntityChangedEvent>(this);
+        EventBus.Subscribe<CTBDisplayedActorChangedEvent>(this);
         EventBus.Subscribe<GameModeChangedEvent>(this);
 
         battleUIStarted = false;
@@ -59,7 +57,6 @@ public class BattleHUDcontroller : MonoBehaviour,
     private void OnDisable()
     {
         EventBus.Unsubscribe<BattleStartedEvent>(this);
-        EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
         EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
         EventBus.Unsubscribe<GameModeChangedEvent>(this);
 
@@ -82,14 +79,6 @@ public class BattleHUDcontroller : MonoBehaviour,
         RefreshActingHighlight();
     }
 
-    public void OnEvent(CurrentEntityChangedEvent evt)
-    {
-        // 此事件代表逻辑行动者已选出，但 CTB 大头像可能仍在滑入。
-        // 这里只记录目标行动者，真正高亮等 CTBDisplayedActorChangedEvent。
-        currentActingEntity = evt.Entity;
-        SortHealthBarsByPosition();
-    }
-
     public void OnEvent(CTBDisplayedActorChangedEvent evt)
     {
         displayedActingEntity = evt.Entity;
@@ -101,7 +90,6 @@ public class BattleHUDcontroller : MonoBehaviour,
         if (evt.newMode != GameMode.Battle)
         {
             battleUIStarted = false;
-            currentActingEntity = null;
             displayedActingEntity = null;
             SetBattleUIVisible(false);
             ClearHealthBars();
