@@ -53,7 +53,7 @@ public class SkillEffectData
         switch (effectType)
         {
             case SkillEffectType.Damage:
-                return "攻击";
+                return string.Empty;
             case SkillEffectType.Heal:
                 return "恢复" + Mathf.Abs(Mathf.RoundToInt(value));
             case SkillEffectType.StressDamage:
