@@ -38,20 +38,7 @@ public static class BattleSkillEffectExecutor
                     controller.FieldManager.TrySwapEntities(actor, selectedInputTarget))
                     movementTriggered = true;
             }
-            else if (effect is MoveForwardEffect moveForward)
-            {
-                int distance = Mathf.Abs(Mathf.RoundToInt(moveForward.Distance));
-                if (distance > 0 && controller.FieldManager != null &&
-                    controller.FieldManager.TryMoveEntityBySlots(actor, -distance))
-                    movementTriggered = true;
-            }
-            else if (effect is MoveBackwardEffect moveBackward)
-            {
-                int distance = Mathf.Abs(Mathf.RoundToInt(moveBackward.Distance));
-                if (distance > 0 && controller.FieldManager != null &&
-                    controller.FieldManager.TryMoveEntityBySlots(actor, distance))
-                    movementTriggered = true;
-            }
+            // 前进/后退统一在技能即时效果结算完成后执行，避免打断技能动作时序。
         }
 
         foreach (BattleEntity target in targets)
@@ -117,6 +104,46 @@ public static class BattleSkillEffectExecutor
         }
 
         return totalCalculatedDamage;
+    }
+
+    /// <summary>
+    /// 在技能本身的动作/即时结算完成后执行行动者的前进与后退。
+    /// 当前尚无技能动作播放系统；PerformActionState 中的调用点就是未来等待动作完成信号的位置。
+    /// </summary>
+    public static bool ExecutePostActionMovementEffects(
+        BattleController controller,
+        BattleEntity actor,
+        SkillDefinitionSO skill,
+        int skillLevel)
+    {
+        if (controller == null || actor == null || actor.RuntimeData == null ||
+            skill == null || !actor.IsAlive)
+            return false;
+
+        SkillLevelConfig levelConfig = skill.GetLevelConfig(skillLevel);
+        if (levelConfig == null || levelConfig.Effects == null || controller.FieldManager == null)
+            return false;
+
+        bool movementTriggered = false;
+        foreach (SkillEffectBase effect in levelConfig.Effects)
+        {
+            if (effect is MoveForwardEffect moveForward)
+            {
+                int distance = Mathf.Abs(Mathf.RoundToInt(moveForward.Distance));
+                if (distance > 0 &&
+                    controller.FieldManager.TryMoveEntityBySlots(actor, -distance, false, 0.12f, true))
+                    movementTriggered = true;
+            }
+            else if (effect is MoveBackwardEffect moveBackward)
+            {
+                int distance = Mathf.Abs(Mathf.RoundToInt(moveBackward.Distance));
+                if (distance > 0 &&
+                    controller.FieldManager.TryMoveEntityBySlots(actor, distance, false, 0.12f, true))
+                    movementTriggered = true;
+            }
+        }
+
+        return movementTriggered;
     }
 
     private static float GetDamageModifier(IReadOnlyList<SkillEffectBase> effects, BattleEntity target)
