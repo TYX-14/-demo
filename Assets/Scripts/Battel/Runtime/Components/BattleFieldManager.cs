@@ -263,6 +263,8 @@ public class BattleFieldManager : MonoBehaviour
             return false;
 
         int targetPosition = Mathf.Clamp(oldPosition + delta, 1, 4);
+        if (target.IsPlayer && PartyManager.Instance != null)
+            targetPosition = Mathf.Clamp(targetPosition, 1, PartyManager.Instance.PartyMembers.Count);
         if (targetPosition == oldPosition)
             return false;
 
