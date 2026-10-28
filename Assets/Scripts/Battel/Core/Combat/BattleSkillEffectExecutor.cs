@@ -36,9 +36,9 @@ public static class BattleSkillEffectExecutor
                 continue;
 
             float damageModifier = GetDamageModifier(levelConfig.Effects, target);
-            foreach (SkillEffectData effect in levelConfig.Effects)
+            foreach (SkillEffectBase effect in levelConfig.Effects)
             {
-                if (effect == null || effect.EffectType != SkillEffectType.Damage)
+                if (!(effect is DamageEffect))
                     continue;
 
                 int damage = BattleDamageCalculator.CalculateDamage(
@@ -74,7 +74,8 @@ public static class BattleSkillEffectExecutor
         float modifier = 0f;
         foreach (SkillEffectData effect in effects)
         {
-            if (effect is not DamageModifierEffect damageModifierEffect)
+            DamageModifierEffect damageModifierEffect = effect as DamageModifierEffect;
+            if (damageModifierEffect == null)
                 continue;
 
             if (MatchesCondition(damageModifierEffect.Condition, target))
