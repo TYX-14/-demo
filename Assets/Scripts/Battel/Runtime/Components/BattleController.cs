@@ -53,6 +53,19 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
         return _roundScheduler != null ? _roundScheduler.TakeNextEntity() : null;
     }
 
+    /// <summary>在下一行动者选择状态中检查回合边界，并在成功跨轮时发布事件。</summary>
+    public bool TryAdvanceRound()
+    {
+        if (_roundScheduler == null)
+            InitializeRoundScheduler();
+
+        if (_roundScheduler == null || !_roundScheduler.TryAdvanceToNextRound())
+            return false;
+
+        EventBus.Publish(new BattleRoundChangedEvent(_roundScheduler.RoundNumber));
+        return true;
+    }
+
     /// <summary>把调度器的两个队列转换为 UI 节点并发布，不让 UI 自行排序。</summary>
     public void PublishCTBQueueUpdate()
     {
