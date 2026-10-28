@@ -28,7 +28,7 @@ public static class BattleSkillEffectExecutor
         if (levelConfig == null || levelConfig.Effects == null)
             return 0;
 
-        int totalDamageDealt = 0;
+        int totalCalculatedDamage = 0;
 
         foreach (BattleEntity target in targets)
         {
@@ -53,7 +53,7 @@ public static class BattleSkillEffectExecutor
                     continue;
 
                 target.RuntimeData.ModifyHp(-damage);
-                totalDamageDealt += damage;
+                totalCalculatedDamage += damage;
 
                 if (target.Unit != null)
                     target.Unit.UpdateVisuals();
@@ -64,7 +64,7 @@ public static class BattleSkillEffectExecutor
             }
         }
 
-        return totalDamageDealt;
+        return totalCalculatedDamage;
     }
 
     private static float GetDamageModifier(
