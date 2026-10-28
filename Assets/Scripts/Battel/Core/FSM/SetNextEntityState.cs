@@ -33,6 +33,9 @@ public class SetNextEntityState : BattleState
             yield break;
         }
 
+        // 上一行动完整结束后才进入这里；队列耗尽时先明确推进回合，再选择行动者。
+        _controller.TryAdvanceRound();
+
         BattleEntity nextEntity = _controller.TakeNextScheduledEntity();
         if (nextEntity == null)
         {
