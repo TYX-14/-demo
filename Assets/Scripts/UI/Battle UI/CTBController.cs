@@ -11,7 +11,8 @@ using TMPro;
 public sealed class CTBController : MonoBehaviour,
     IEventReceiver<BattleStartedEvent>,
     IEventReceiver<CurrentEntityChangedEvent>,
-    IEventReceiver<CTBQueueUpdatedEvent>
+    IEventReceiver<CTBQueueUpdatedEvent>,
+    IEventReceiver<BattleRoundChangedEvent>
 {
     [Header("当前行动者")]
     [SerializeField, Tooltip("场景中已有的大头像 Image，不需要制作头像预制体。")]
@@ -29,6 +30,8 @@ public sealed class CTBController : MonoBehaviour,
     [SerializeField, Min(0f)] private float enterDuration = 0.22f;
     [SerializeField, Min(0f)] private float exitDuration = 0.15f;
     [SerializeField, Min(0f)] private float moveDuration = 0.22f;
+    [SerializeField, Min(0f), Tooltip("新一轮队首小头像飞入大头像前的快速交接时长。")]
+    private float roundHandoffDuration = 0.18f;
     [SerializeField, Min(0f)] private float iconEnterOffset = 18f;
     [SerializeField, Min(0f)] private float iconExitOffset = 14f;
     [SerializeField, Min(0f)] private float portraitSlideDistance = 90f;
@@ -42,6 +45,8 @@ public sealed class CTBController : MonoBehaviour,
     private bool isOpeningSequence = true;
     private Coroutine portraitRoutine;
     private Coroutine openingRoutine;
+    private Coroutine roundHandoffRoutine;
+    private bool roundTransitionPending;
     private Vector2 portraitRestingPosition;
     private float portraitRestingAlpha = 1f;
     private bool portraitPositionCached;
@@ -75,6 +80,7 @@ public sealed class CTBController : MonoBehaviour,
         EventBus.Subscribe<BattleStartedEvent>(this);
         EventBus.Subscribe<CurrentEntityChangedEvent>(this);
         EventBus.Subscribe<CTBQueueUpdatedEvent>(this);
+        EventBus.Subscribe<BattleRoundChangedEvent>(this);
         isOpeningSequence = true;
         currentActingEntity = null;
         RefreshCurrentActingName();
@@ -86,9 +92,12 @@ public sealed class CTBController : MonoBehaviour,
         EventBus.Unsubscribe<BattleStartedEvent>(this);
         EventBus.Unsubscribe<CurrentEntityChangedEvent>(this);
         EventBus.Unsubscribe<CTBQueueUpdatedEvent>(this);
+        EventBus.Unsubscribe<BattleRoundChangedEvent>(this);
         StopAllCoroutines();
         portraitRoutine = null;
         openingRoutine = null;
+        roundHandoffRoutine = null;
+        roundTransitionPending = false;
 
         // 此处只停止动画，不移动/停用头像对象。
         // 当父级正在停用时，Unity 不允许在这里重设子对象的 parent。
@@ -115,13 +124,19 @@ public sealed class CTBController : MonoBehaviour,
         RefreshCurrentActingName();
     }
 
+    public void OnEvent(BattleRoundChangedEvent evt)
+    {
+        // 此事件先于行动者变更发布，等待队列快照到达后再开始头像交接。
+        roundTransitionPending = true;
+    }
+
     public void OnEvent(CurrentEntityChangedEvent evt)
     {
         currentActingEntity = evt.Entity;
         RefreshCurrentActingName();
 
-        // 首次显示时，当前行动者先作为普通队首图标出现，不能直接填进大头像。
-        if (isOpeningSequence)
+        // 首次显示或跨轮交接时，先等队列快照，不能立即切换大头像。
+        if (isOpeningSequence || roundTransitionPending)
             return;
 
         if (portraitRoutine != null)
@@ -131,6 +146,19 @@ public sealed class CTBController : MonoBehaviour,
 
     public void OnEvent(CTBQueueUpdatedEvent evt)
     {
+        if (roundTransitionPending && currentActingEntity != null)
+        {
+            TimelineIconController handoffIcon = TakeRoundHeadIcon(currentActingEntity);
+            SyncPool(evt.CurrentRoundNodes, currentRoundUpcomingContainer, currentRoundIcons);
+            SyncPool(evt.NextRoundNodes, nextRoundContainer, nextRoundIcons);
+            roundTransitionPending = false;
+
+            if (roundHandoffRoutine != null)
+                StopCoroutine(roundHandoffRoutine);
+            roundHandoffRoutine = StartCoroutine(PlayRoundHandoffSequence(currentActingEntity, handoffIcon));
+            return;
+        }
+
         if (isOpeningSequence && currentActingEntity != null)
         {
             CTBDisplayNode[] openingNodes = PrependCurrentActor(currentActingEntity, evt.CurrentRoundNodes);
@@ -147,6 +175,55 @@ public sealed class CTBController : MonoBehaviour,
         SyncPool(evt.NextRoundNodes, nextRoundContainer, nextRoundIcons);
     }
 
+    private TimelineIconController TakeRoundHeadIcon(BattleEntity actor)
+    {
+        if (actor == null) return null;
+        for (int i = 0; i < nextRoundIcons.Count; i++)
+        {
+            TimelineIconController icon = nextRoundIcons[i];
+            if (icon == null || icon.BoundEntityId != actor.ID) continue;
+            nextRoundIcons.RemoveAt(i);
+            icon.SetIgnoredByLayout(true);
+            exitingIcons.Add(icon);
+            ForceLayout(nextRoundContainer);
+            return icon;
+        }
+        return null;
+    }
+
+    private IEnumerator PlayRoundHandoffSequence(BattleEntity actor, TimelineIconController icon)
+    {
+        SetPortraitBlank();
+        if (icon != null)
+        {
+            Vector3 startPosition = icon.transform.position;
+            Vector3 targetPosition = currentActingPortraitImage != null ? currentActingPortraitImage.rectTransform.position : startPosition;
+            icon.transform.SetParent(transform, true);
+            icon.transform.SetAsLastSibling();
+            float duration = roundHandoffDuration;
+            if (duration <= 0f) icon.transform.position = targetPosition;
+            else
+            {
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float t = Mathf.Clamp01(elapsed / duration);
+                    float eased = 1f - Mathf.Pow(1f - t, 3f);
+                    icon.transform.position = Vector3.LerpUnclamped(startPosition, targetPosition, eased);
+                    yield return null;
+                }
+                icon.transform.position = targetPosition;
+            }
+            exitingIcons.Remove(icon);
+            ReturnIcon(icon);
+        }
+        // 小头像抵达并回收后，大头像才显现。
+        yield return TransitionPortrait(actor, true);
+        if (currentActingEntity == actor)
+            EventBus.Publish(new CTBDisplayedActorChangedEvent(actor));
+        roundHandoffRoutine = null;
+    }
     public void SetCurrentRoundUpcomingEntities(IEnumerable<CTBDisplayNode> entities) =>
         SyncPool(ToArray(entities), currentRoundUpcomingContainer, currentRoundIcons);
 
