@@ -70,7 +70,8 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
             return;
 
         _activeBlueEffect = GetEffect(_bluePool, blueCurrentActorPrefab);
-        ShowEffect(_activeBlueEffect, position, occupiedCount, blueCurrentActorPrefab.transform.localScale);
+        ShowEffect(_activeBlueEffect, position, occupiedCount,
+            blueCurrentActorPrefab != null ? blueCurrentActorPrefab.transform.localScale : Vector3.one);
     }
 
     /// <summary>
@@ -96,7 +97,8 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
                 continue;
 
             ParticleSystem effect = GetEffect(_redPool, redLegalTargetPrefab);
-            ShowEffect(effect, position, occupiedCount, redLegalTargetPrefab.transform.localScale);
+            ShowEffect(effect, position, occupiedCount,
+                redLegalTargetPrefab != null ? redLegalTargetPrefab.transform.localScale : Vector3.one);
             _activeRedEffects.Add(effect);
         }
     }
