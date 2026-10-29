@@ -8,7 +8,7 @@ using UnityEngine;
 /// 本组件应放在 Persistent 场景中的常驻对象上；位置只读取 BattleFieldLayout 的槽位数据，
 /// 不依赖 BattleUnit 的 Transform。
 /// </summary>
-public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplayedActorChangedEvent>
+public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplayedActorChangedEvent>, IEventReceiver<BattleEntityPositionChangedEvent>
 {
     public static BattleVFXManager Instance { get; private set; }
 
@@ -26,6 +26,7 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
     private readonly List<ParticleSystem> _bluePool = new();
     private readonly List<ParticleSystem> _activeRedEffects = new();
     private ParticleSystem _activeBlueEffect;
+    private BattleEntity _displayedActor;
     private BattleFieldLayout _layout;
 
     private void Awake()
@@ -43,11 +44,14 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
     private void OnEnable()
     {
         EventBus.Subscribe<CTBDisplayedActorChangedEvent>(this);
+        EventBus.Subscribe<BattleEntityPositionChangedEvent>(this);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
+        EventBus.Unsubscribe<BattleEntityPositionChangedEvent>(this);
+        _displayedActor = null;
         ClearLegalTargetHighlights();
         HideBlueEffect();
 
@@ -58,6 +62,7 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
     /// <summary>CTB 大头像完成切换后再移动蓝色光圈，与血条高亮保持同一展示时机。</summary>
     public void OnEvent(CTBDisplayedActorChangedEvent evt)
     {
+        _displayedActor = evt.Entity;
         HideBlueEffect();
 
         if (evt.Entity == null)
@@ -72,6 +77,17 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
         _activeBlueEffect = GetEffect(_bluePool, blueCurrentActorPrefab);
         ShowEffect(_activeBlueEffect, position, occupiedCount,
             blueCurrentActorPrefab != null ? blueCurrentActorPrefab.transform.localScale : Vector3.one);
+    }
+
+
+    /// <summary>当前展示的行动者完成位移后，只更新蓝圈位置，不重播粒子。</summary>
+    public void OnEvent(BattleEntityPositionChangedEvent evt)
+    {
+        if (evt.Entity == null || evt.Entity != _displayedActor || _activeBlueEffect == null)
+            return;
+
+        if (TryGetWorldPosition(evt.Entity, null, out Vector3 position, out _))
+            _activeBlueEffect.transform.position = position;
     }
 
     /// <summary>
