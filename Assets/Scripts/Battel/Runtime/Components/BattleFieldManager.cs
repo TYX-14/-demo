@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using MFrameork.Event;
 
 /// <summary>
 /// 战场管理器。
@@ -158,6 +159,7 @@ public class BattleFieldManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(duration);
+        PublishPositionChanged(units);
         _formationMovementInProgress = false;
     }
 
@@ -222,6 +224,7 @@ public class BattleFieldManager : MonoBehaviour
         StartCoroutine(actor.MoveToPosition(actorTarget, duration));
         StartCoroutine(target.MoveToPosition(targetTarget, duration));
         yield return new WaitForSeconds(duration);
+        PublishPositionChanged(actor, target);
         _formationMovementInProgress = false;
     }
 
@@ -273,6 +276,7 @@ public class BattleFieldManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(duration);
+        PublishPositionChanged(_spawnedAllyUnits);
         _formationMovementInProgress = false;
     }
 
@@ -386,6 +390,7 @@ public class BattleFieldManager : MonoBehaviour
                 yield return StartCoroutine(unit.MoveToPosition(destination, duration));
         }
 
+        PublishPositionChanged(unit);
         _formationMovementInProgress = false;
     }
 
@@ -396,6 +401,31 @@ public class BattleFieldManager : MonoBehaviour
         StartCoroutine(target.MoveToPosition(targetDestination, duration));
         yield return new WaitForSeconds(duration);
         _formationMovementInProgress = false;
+    }
+
+
+    private static void PublishPositionChanged(BattleUnit unit)
+    {
+        if (unit != null && unit.Entity != null)
+            EventBus.Publish(new BattleEntityPositionChangedEvent(unit.Entity));
+    }
+
+    private static void PublishPositionChanged(params BattleUnit[] units)
+    {
+        if (units == null)
+            return;
+
+        foreach (BattleUnit unit in units)
+            PublishPositionChanged(unit);
+    }
+
+    private static void PublishPositionChanged(IEnumerable<BattleUnit> units)
+    {
+        if (units == null)
+            return;
+
+        foreach (BattleUnit unit in units)
+            PublishPositionChanged(unit);
     }
 
     private void NotifyHealthBarOrderChanged()
