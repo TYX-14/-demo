@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c81d4c8b23c84f44aefbf25a9a74a101, type: 3}
+  m_Name: "\u9B54\u6CD5\u98DE\u5F39"
+  m_EditorClassIdentifier: 
+  skillName: "\u9B54\u6CD5\u98DE\u5F39"
+  skillIcon: {fileID: 21300000, guid: 42d4ee87e76b44f8ea234ed2f2a77134, type: 3}
+  description: "\u7CBE\u51C6\u4FEE\u6B63+20%\n\u4F24\u5BB3\u4FEE\u6B63-12%"
+  spCost: 20
+  damageType: 0
+  targetRelation: 0
+  targetType: 0
+  targetSelectionMode: 0
+  usablePositions: 020000000300000004000000
+  targetPositions: 01000000020000000300000004000000
+  levelConfigs:
+  - level: 1
+    effects: []
+    typedEffects:
+    - rid: 8975276674539061250
+    - rid: 8975276674539061251
+    - rid: 8975276674539061252
+  references:
+    version: 2
+    RefIds:
+    - rid: 8975276674539061250
+      type: {class: DamageEffect, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 8975276674539061251
+      type: {class: DamageModifierEffect, ns: , asm: Assembly-CSharp}
+      data:
+        percent: -12
+        condition: 0
+    - rid: 8975276674539061252
+      type: {class: AccuracyModifierEffect, ns: , asm: Assembly-CSharp}
+      data:
+        percent: 20
+        condition: 0

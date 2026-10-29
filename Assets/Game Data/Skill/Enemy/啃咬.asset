@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c81d4c8b23c84f44aefbf25a9a74a101, type: 3}
+  m_Name: "\u5543\u54AC"
+  m_EditorClassIdentifier: 
+  skillName: "\u5543\u54AC"
+  skillIcon: {fileID: 0}
+  description: 
+  spCost: 0
+  damageType: 0
+  targetRelation: 0
+  targetType: 0
+  targetSelectionMode: 0
+  usablePositions: 01000000020000000300000004000000
+  targetPositions: 01000000020000000300000004000000
+  levelConfigs:
+  - level: 1
+    effects: []
+    typedEffects:
+    - rid: 8975276674539061259
+    - rid: 8975276674539061260
+  references:
+    version: 2
+    RefIds:
+    - rid: 8975276674539061259
+      type: {class: DamageEffect, ns: , asm: Assembly-CSharp}
+      data: 
+    - rid: 8975276674539061260
+      type: {class: StressDamageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        value: 8

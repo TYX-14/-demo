@@ -22,15 +22,16 @@ MonoBehaviour:
     MaxHP: 15
     MaxSP: 0
     PAtk: 0
-    PDef: 0
+    PDef: 5
     MAtk: 0
     MDef: 0
     Speed: 0
     Accuracy: 0
     Evasion: 0
-  BaseDeathblowResistance: 0.67
+  BaseDeathblowResistance: 0
   maxSwapDistance: 1
-  initialSkills: []
+  initialSkills:
+  - {fileID: 11400000, guid: dabd2c4e53a5e2d42961364a10cae2f9, type: 2}
   filedAnimator: {fileID: 0}
   battleAnimator: {fileID: 22100000, guid: b63edc48550821e449bacbf8a96468a6, type: 2}
   occupiedSlotCount: 1
