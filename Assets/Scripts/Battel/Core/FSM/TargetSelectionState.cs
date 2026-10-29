@@ -206,11 +206,27 @@ public class TargetSelectionState : BattleState
 
     private void SetLegalTargetHighlights(bool visible)
     {
+        BattleVFXManager vfxManager = BattleVFXManager.Instance;
+        if (vfxManager == null)
+        {
+            Debug.LogWarning("TargetSelectionState：Persistent 场景中没有启用 BattleVFXManager，无法显示合法目标光圈。");
+            return;
+        }
+
+        if (!visible)
+        {
+            vfxManager.ClearLegalTargetHighlights();
+            return;
+        }
+
+        List<BattleEntity> legalTargets = new List<BattleEntity>();
         foreach (BattleEntity entity in _controller.AllEntities)
         {
-            if (entity?.Unit != null)
-                entity.Unit.SetTargetHighlight(visible && IsLegalTarget(entity));
+            if (IsLegalTarget(entity))
+                legalTargets.Add(entity);
         }
+
+        vfxManager.ShowLegalTargetHighlights(legalTargets, _controller.GetLogicalPosition);
     }
 
     private void SetAllTargetCursors(bool visible)
