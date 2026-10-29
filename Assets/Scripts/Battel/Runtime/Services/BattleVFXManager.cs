@@ -16,7 +16,9 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
     [SerializeField] private ParticleSystem redLegalTargetPrefab;
     [SerializeField] private ParticleSystem blueCurrentActorPrefab;
 
-    [Header("位置")]
+    [Header("缩放与位置")]
+    [SerializeField, Min(0.01f), Tooltip("所有光圈的基础缩放倍率，可在 Inspector 中调整测试。")]
+    private float baseScale = 0.5f;
     [SerializeField, Tooltip("可微调光圈相对槽位中心的世界坐标偏移。默认保持为零。")]
     private Vector3 worldPositionOffset = Vector3.zero;
 
@@ -192,8 +194,9 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
         effect.transform.position = position;
         // 单槽位单位保持 Prefab 原始尺寸；多槽位单位按占格数量的平方根扩展，
         // 避免占格翻倍时光圈直径也直接翻倍，导致特效过大。
-        float scaleMultiplier = Mathf.Sqrt(Mathf.Max(1, occupiedCount));
-        effect.transform.localScale = Vector3.Scale(prefabScale, Vector3.one * scaleMultiplier);
+        float occupiedSlotMultiplier = Mathf.Sqrt(Mathf.Max(1, occupiedCount));
+        float finalScale = baseScale * occupiedSlotMultiplier;
+        effect.transform.localScale = Vector3.Scale(prefabScale, Vector3.one * finalScale);
 
         if (!effect.gameObject.activeSelf)
             effect.gameObject.SetActive(true);
