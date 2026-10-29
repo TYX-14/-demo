@@ -8,7 +8,7 @@ using UnityEngine;
 /// 本组件应放在 Persistent 场景中的常驻对象上；位置只读取 BattleFieldLayout 的槽位数据，
 /// 不依赖 BattleUnit 的 Transform。
 /// </summary>
-public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEntityChangedEvent>
+public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplayedActorChangedEvent>
 {
     public static BattleVFXManager Instance { get; private set; }
 
@@ -42,12 +42,12 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
 
     private void OnEnable()
     {
-        EventBus.Subscribe(this);
+        EventBus.Subscribe<CTBDisplayedActorChangedEvent>(this);
     }
 
     private void OnDisable()
     {
-        EventBus.Unsubscribe(this);
+        EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
         ClearLegalTargetHighlights();
         HideBlueEffect();
 
@@ -55,8 +55,8 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
             Instance = null;
     }
 
-    /// <summary>由当前行动者事件驱动蓝色光圈，不参与目标合法性判断。</summary>
-    public void OnEvent(CurrentEntityChangedEvent evt)
+    /// <summary>CTB 大头像完成切换后再移动蓝色光圈，与血条高亮保持同一展示时机。</summary>
+    public void OnEvent(CTBDisplayedActorChangedEvent evt)
     {
         HideBlueEffect();
 
