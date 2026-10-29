@@ -59,7 +59,11 @@ public class PerformActionState : BattleState
         Debug.Log($"[行动开始] {actorName} 使用技能「{_actionContext.Skill.SkillName}」；" +
                   $"输入位置：{_actionContext.SelectedInputPosition}；实际目标：{targetNames}。");
 
-        if (!_actionContext.Actor.IsPlayer && _controller.EnemyActionWindupDelay > 0f)
+        bool isEnemyAction = !_actionContext.Actor.IsPlayer;
+        if (isEnemyAction && BattleVFXManager.Instance != null)
+            BattleVFXManager.Instance.ShowEnemyActionTargets(_actionContext.ResolvedTargets);
+
+        if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
 
         int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
@@ -88,8 +92,12 @@ public class PerformActionState : BattleState
         if (movementTriggered)
             yield return new WaitForSecondsRealtime(0.9f);
 
-        if (!_actionContext.Actor.IsPlayer && _controller.EnemyActionRecoveryDelay > 0f)
+        if (isEnemyAction && _controller.EnemyActionRecoveryDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionRecoveryDelay);
+
+        // 前摇、技能结算、位移与后摇期间保持攻击意图可见；行动即将交还 CTB 时再清理。
+        if (isEnemyAction && BattleVFXManager.Instance != null)
+            BattleVFXManager.Instance.ClearEnemyActionTargets();
 
         _controller.CompleteAction(_actionContext);
     }
