@@ -35,6 +35,21 @@ public readonly struct CurrentEntityChangedEvent : IEvent
 }
 
 
+
+/// <summary>
+/// 战场单位完成站位移动后发布。
+/// 视觉表现层可据此更新位置提示，不需要直接依赖 BattleFieldManager。
+/// </summary>
+public readonly struct BattleEntityPositionChangedEvent : IEvent
+{
+    public BattleEntity Entity { get; }
+
+    public BattleEntityPositionChangedEvent(BattleEntity entity)
+    {
+        Entity = entity;
+    }
+}
+
 /// <summary>
 /// CTB 大头像完成切换并稳定显示后发布。
 /// Health Bar 等依赖视觉时机的 UI 应监听此事件，而不是提前监听 CurrentEntityChangedEvent。
