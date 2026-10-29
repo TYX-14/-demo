@@ -25,6 +25,9 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
     private readonly List<ParticleSystem> _redPool = new();
     private readonly List<ParticleSystem> _bluePool = new();
     private readonly List<ParticleSystem> _activeRedEffects = new();
+    // 敌方行动意图使用独立效果池，避免与玩家手动选目标时的红圈互相清理。
+    private readonly List<ParticleSystem> _enemyIntentPool = new();
+    private readonly List<ParticleSystem> _activeEnemyIntentEffects = new();
     private ParticleSystem _activeBlueEffect;
     private BattleEntity _displayedActor;
     private BattleFieldLayout _layout;
@@ -53,6 +56,7 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
         EventBus.Unsubscribe<BattleEntityPositionChangedEvent>(this);
         _displayedActor = null;
         ClearLegalTargetHighlights();
+        ClearEnemyActionTargets();
         HideBlueEffect();
 
         if (Instance == this)
@@ -126,6 +130,45 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
             HideEffect(_activeRedEffects[i]);
 
         _activeRedEffects.Clear();
+    }
+
+    /// <summary>
+    /// 显示敌方行动已经锁定的友方目标。使用独立效果池，不会清理玩家目标选择的红圈。
+    /// 传入 BattleActionContext 中已经解析完成的目标，避免提示与实际结算目标不一致。
+    /// </summary>
+    public void ShowEnemyActionTargets(IReadOnlyList<BattleEntity> resolvedTargets)
+    {
+        ClearEnemyActionTargets();
+
+        if (resolvedTargets == null || resolvedTargets.Count == 0 || !TryGetLayout())
+            return;
+
+        for (int i = 0; i < resolvedTargets.Count; i++)
+        {
+            BattleEntity entity = resolvedTargets[i];
+            // 红色敌意提示只标记敌人本次行动实际影响的玩家单位。
+            // 敌方自我强化、敌方治疗等行动不会错误地把敌方单位标成攻击目标。
+            if (entity == null || !entity.IsAlive || !entity.IsPlayer)
+                continue;
+
+            if (!TryGetWorldPosition(entity, null, out Vector3 position, out int occupiedCount))
+                continue;
+
+            ParticleSystem effect = GetEffect(_enemyIntentPool, redLegalTargetPrefab);
+            ShowEffect(effect, position, occupiedCount,
+                redLegalTargetPrefab != null ? redLegalTargetPrefab.transform.localScale : Vector3.one);
+            if (effect != null)
+                _activeEnemyIntentEffects.Add(effect);
+        }
+    }
+
+    /// <summary>只清理敌方行动意图红圈，不影响玩家目标选择红圈或蓝色行动者光圈。</summary>
+    public void ClearEnemyActionTargets()
+    {
+        for (int i = 0; i < _activeEnemyIntentEffects.Count; i++)
+            HideEffect(_activeEnemyIntentEffects[i]);
+
+        _activeEnemyIntentEffects.Clear();
     }
 
     private bool TryGetLayout()
