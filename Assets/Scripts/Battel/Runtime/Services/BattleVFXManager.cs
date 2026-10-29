@@ -70,7 +70,7 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
             return;
 
         _activeBlueEffect = GetEffect(_bluePool, blueCurrentActorPrefab);
-        ShowEffect(_activeBlueEffect, position, occupiedCount);
+        ShowEffect(_activeBlueEffect, position, occupiedCount, blueCurrentActorPrefab.transform.localScale);
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
                 continue;
 
             ParticleSystem effect = GetEffect(_redPool, redLegalTargetPrefab);
-            ShowEffect(effect, position, occupiedCount);
+            ShowEffect(effect, position, occupiedCount, redLegalTargetPrefab.transform.localScale);
             _activeRedEffects.Add(effect);
         }
     }
@@ -184,15 +184,14 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CurrentEnti
         return instance;
     }
 
-    private void ShowEffect(ParticleSystem effect, Vector3 position, int occupiedCount)
+    private void ShowEffect(ParticleSystem effect, Vector3 position, int occupiedCount, Vector3 prefabScale)
     {
         if (effect == null)
             return;
 
         effect.transform.position = position;
-        effect.transform.rotation = effect.transform.rotation;
         float scaleMultiplier = occupiedCount > 1 ? largeUnitScaleMultiplier : 1f;
-        effect.transform.localScale = effect.transform.localScale * scaleMultiplier;
+        effect.transform.localScale = Vector3.Scale(prefabScale, Vector3.one * scaleMultiplier);
 
         if (!effect.gameObject.activeSelf)
             effect.gameObject.SetActive(true);
