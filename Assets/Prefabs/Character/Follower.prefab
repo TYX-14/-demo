@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6864011811986922626}
   - component: {fileID: 1007600186879487794}
   - component: {fileID: 6877773293734818302}
+  - component: {fileID: -8390563732055523216}
   m_Layer: 6
   m_HasEditorInfo: 1
   m_Name: Follower
@@ -82,6 +83,20 @@ MonoBehaviour:
   gravity: -25
   groundSnapFroce: -2
   maxVelocity: -40
+--- !u!114 &-8390563732055523216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3284102459453004021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7a715d7bae810a4192d4a4204622b40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 1
+  centryOffcet: {x: 0, y: 0, z: 0}
 --- !u!1 &3614377667329198110
 GameObject:
   m_ObjectHideFlags: 0

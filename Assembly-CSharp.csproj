@@ -61,6 +61,7 @@
     <Compile Include="Assets\Scripts\MFramewrok\Event\IEvent.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI\BattleItemEntryUI.cs" />
     <Compile Include="Assets\Scripts\UI\Equipment\EquipmentStatPreviewPanel.cs" />
+    <Compile Include="Assets\Art2\Grass\Script\GetPlayerPos.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
     <Compile Include="Assets\Scripts\UI\Equipment\EquipmentSlotButton.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\BattleHUDcontroller.cs" />
@@ -115,11 +116,13 @@
     <Compile Include="Assets\Scripts\Game\Character\SkillEffectTypes.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark03.cs" />
     <Compile Include="Assets\Scripts\Game\Character\StatusEffectDefinitionSO.cs" />
+    <Compile Include="Assets\Scripts\Battel\Runtime\Services\BattleVFXManager.cs" />
     <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleFieldLayout.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\Targeting\BattleTargeting.cs" />
     <Compile Include="Assets\Scripts\UI\Field Panel\PanelController.cs" />
     <Compile Include="Assets\Scripts\UI\Field Panel\ShopPanelController.cs" />
     <Compile Include="Assets\Scripts\Game\Inventory\EquipmentItemSO.cs" />
+    <Compile Include="Assets\PlayerMoveLogic.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\FSM\SetNextEntityState.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\HealthBarController.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_ExampleScript_01.cs" />
@@ -183,6 +186,7 @@
     <Compile Include="Assets\Scripts\Game\Character\CharacterDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleUnit.cs" />
     <Compile Include="Assets\Scripts\Game\Character\CharacterStressSystem.cs" />
+    <Compile Include="Assets\Art2\Grass\Script\GrassCollider.cs" />
     <Compile Include="Assets\Scripts\Game\Input\InputSystemController.cs" />
     <Compile Include="Assets\Scripts\Game\Path Acton\ActionBase.cs" />
     <Compile Include="Assets\Scripts\Game\Party\ExpeditionManager.cs" />
@@ -195,6 +199,7 @@
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
+    <None Include="Assets\Art2\Grass\Shaders\Grass.shader" />
     <None Include="Assets\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR_SETTINGS.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\TextMesh Pro\Examples &amp; Extras\Fonts\Oswald-Bold - OFL.txt" />
@@ -203,6 +208,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\Art2\Effect\Shaders\PCS_VFX_AlphaBlend.shader" />
+    <None Include="Assets\Art2\Grass\Shaders\lib\CustomTessellation.hlsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\Art2\Effect\Shaders\Dreamscape_Waterfall.shader" />
     <None Include="Assets\Lana Studio\Hyper Casual FX\Demo\Readme.txt" />
@@ -216,6 +222,7 @@
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\Art2\Effect\Shaders\Dreamscape_WaterfallFoam_Volumetric.shader" />
+    <None Include="Assets\Art2\Grass\Shaders\lib\Grass.hlsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\JMO Assets\Cartoon FX Remaster\CFXR Prefabs\Texts\_Make your own text effect.txt" />
     <None Include="Assets\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR_PASSES.cginc" />
@@ -1168,12 +1175,12 @@
       <HintPath>Library\ScriptAssemblies\Unity.2D.PixelPerfect.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Settings.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="PPv2URPConverters">
       <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Settings.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
@@ -1228,12 +1235,12 @@
       <HintPath>Library\ScriptAssemblies\Unified.Universal.Blur.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.ShaderGraph.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.ShaderGraph.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">
