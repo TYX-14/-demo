@@ -4,12 +4,6 @@
     "m_ObjectId": "54a11bf49a564acd94435e3713a70cb9",
     "m_Properties": [
         {
-            "m_Id": "c1000000000000000000000000000001"
-        },
-        {
-            "m_Id": "c1000000000000000000000000000002"
-        },
-        {
             "m_Id": "37a5552c5bf04d2589605a552cfdd53e"
         },
         {
@@ -1114,66 +1108,6 @@
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
     "m_Labels": []
-}
-
-{
-    "m_SGVersion": 3,
-    "m_Type": "UnityEditor.ShaderGraph.Internal.ColorShaderProperty",
-    "m_ObjectId": "c1000000000000000000000000000001",
-    "m_Guid": {
-        "m_GuidSerialized": "c1000000-0000-0000-0000-000000000011"
-    },
-    "m_Name": "基础颜色（草叶染色）",
-    "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "基础颜色",
-    "m_DefaultReferenceName": "_基础颜色",
-    "m_OverrideReferenceName": "_GrassTint",
-    "m_GeneratePropertyBlock": true,
-    "m_UseCustomSlotLabel": false,
-    "m_CustomSlotLabel": "",
-    "m_DismissedVersion": 0,
-    "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
-    "m_Hidden": false,
-    "m_Priority": 10,
-    "m_Value": {
-        "r": 0.9245283007621765,
-        "g": 0.6175575852394104,
-        "b": 0.24857598543167115,
-        "a": 1.0
-    },
-    "isMainColor": false,
-    "m_ColorMode": 0
-}
-
-{
-    "m_SGVersion": 1,
-    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
-    "m_ObjectId": "c1000000000000000000000000000002",
-    "m_Guid": {
-        "m_GuidSerialized": "c1000000-0000-0000-0000-000000000012"
-    },
-    "m_Name": "光滑度（控制高光）",
-    "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "光滑度",
-    "m_DefaultReferenceName": "_光滑度",
-    "m_OverrideReferenceName": "_GrassSmoothness",
-    "m_GeneratePropertyBlock": true,
-    "m_UseCustomSlotLabel": false,
-    "m_CustomSlotLabel": "",
-    "m_DismissedVersion": 0,
-    "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
-    "m_Hidden": false,
-    "m_Priority": 10,
-    "m_Value": 0.25,
-    "m_FloatType": 1,
-    "m_RangeValues": {
-        "x": 0.0,
-        "y": 1.0
-    }
 }
 
 {
