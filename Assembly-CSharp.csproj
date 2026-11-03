@@ -245,6 +245,7 @@
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
      <None Include="Assets\Art3\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR_URP.cginc" />
      <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
+     <None Include="Assets\grass\LightScript.hlsl" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
      <None Include="Assets\Art3\Hovl Studio\Magic effects pack\Demo scene\Readme.txt" />
      <None Include="Assets\Art2\Effect\Shaders\Dreamscape_Water.shader" />
