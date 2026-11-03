@@ -147,7 +147,7 @@
         {
             "m_OutputSlot": {
                 "m_Node": { "m_Id": "450bd100e27f4979992c3799293755b7" },
-                "m_SlotId": 4
+                "m_SlotId": 0
             },
             "m_InputSlot": {
                 "m_Node": { "m_Id": "c1000000000000000000000000000005" },
