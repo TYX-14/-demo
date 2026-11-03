@@ -13383,6 +13383,57 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 4556617135225262579}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &804809420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 7
+  m_Component:
+  - component: {fileID: 804809422}
+  - component: {fileID: 804809421}
+  m_Layer: 0
+  m_HasEditorInfo: 1
+  m_Name: BattleVFXManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &804809421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804809420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a679705520d285458caa264289611b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  redLegalTargetPrefab: {fileID: 5438288598739070507, guid: af0d06ad2f476cc43be23ac0f464a510,
+    type: 3}
+  blueCurrentActorPrefab: {fileID: 4823518202205099634, guid: cdc919a43bba95b4a8b6916b6aa5321d,
+    type: 3}
+  baseScale: 0.2
+  worldPositionOffset: {x: 0, y: 0, z: 0.01}
+--- !u!4 &804809422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804809420}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &805492163
 GameObject:
   m_ObjectHideFlags: 0
@@ -24515,6 +24566,7 @@ MonoBehaviour:
   enterDuration: 0.22
   exitDuration: 0.15
   moveDuration: 0.22
+  roundHandoffDuration: 0.18
   iconEnterOffset: 18
   iconExitOffset: 14
   portraitSlideDistance: 90
@@ -29390,6 +29442,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fieldManager: {fileID: 419918057}
+  enemyActionWindupDelay: 0.25
+  enemyActionRecoveryDelay: 0.65
 --- !u!4 &1833260759
 Transform:
   m_ObjectHideFlags: 0
@@ -31133,6 +31187,7 @@ MonoBehaviour:
   healthBarPrefab: {fileID: 7329104856172309945, guid: b2730685b15a82f4d836ca10d0eae2dd,
     type: 3}
   healthBarContainer: {fileID: 2038698193}
+  healthBarFadeDuration: 0.25
 --- !u!114 &1946343278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35433,6 +35488,7 @@ SceneRoots:
   - {fileID: 1224125900}
   - {fileID: 1906250747}
   - {fileID: 419918058}
+  - {fileID: 804809422}
   - {fileID: 1553672088}
   - {fileID: 1833260759}
   - {fileID: 982494877}
