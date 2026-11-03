@@ -156,26 +156,17 @@ Shader "Custom/Grass"
             #pragma target 2.0
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
-            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            // Match the URP 14 Lit ShadowCaster keyword setup.
+            #pragma shader_feature_local _ALPHATEST_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            // Map URP's standard Lit pass inputs to this shader's preserved property names.
+            // Keep the existing material property names while using URP's standard Lit input layout.
             #define _BaseMap _MainTex
-            #define sampler_BaseMap sampler_MainTex
             #define _BaseColor _Color
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _MainTex_ST;
-                half4 _Color;
-                half _Cutoff;
-                half _Metallic;
-                half _Smoothness;
-            CBUFFER_END
-
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
