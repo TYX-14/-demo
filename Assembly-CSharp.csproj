@@ -223,6 +223,7 @@
     <None Include="Assets\Art2\Effect\Shaders\Dreamscape_Waterfall.shader" />
     <None Include="Assets\IL3DN\Shaders\IL3DN_Terrain.shader" />
     <None Include="Assets\Lana Studio\Hyper Casual FX\Demo\Readme.txt" />
+    <None Include="Assets\MYShaders\Grass.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />

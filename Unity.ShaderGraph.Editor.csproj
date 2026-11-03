@@ -73,8 +73,8 @@
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Procedural\Shape\RoundedRectangleNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Math\Range\MaximumNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Generation\Targets\Canvas\CanvasSubTarget.cs" />
-     <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Input\CustomInterpolatorNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Math\Trigonometry\DegreesToRadiansNode.cs" />
+     <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Input\CustomInterpolatorNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Input\Scene\DepthFadeNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Drawing\Blackboard\BlackboardUtils.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\AssetCallbacks\CreateVFXShaderGraph.cs" />
@@ -382,8 +382,8 @@
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Drawing\Controllers\SGController.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Channel\SwizzleNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Implementation\Edge.cs" />
-     <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Generation\Enumerations\StructFieldOptions.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\NormalMapSpace.cs" />
+     <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Generation\Enumerations\StructFieldOptions.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Generation\Targets\Canvas\CanvasStructs.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Procedural\CheckerboardNode.cs" />
      <Compile Include="Library\PackageCache\com.unity.shadergraph@14.1.0\Editor\Data\Nodes\Input\Lighting\MainLightColorNode.cs" />
