@@ -162,8 +162,12 @@ Shader "Custom/Grass"
             #pragma multi_compile_instancing
             #pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            // Keep the existing material property names while using URP's standard Lit input layout.
+            // Map every URP Lit texture identifier to this shader's existing material properties.
+            // LitInput.hlsl expects _BaseMap, while existing grass materials store _MainTex.
             #define _BaseMap _MainTex
+            #define sampler_BaseMap sampler_MainTex
+            #define _BaseMap_ST _MainTex_ST
+            #define _BaseMap_TexelSize _MainTex_TexelSize
             #define _BaseColor _Color
 
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
