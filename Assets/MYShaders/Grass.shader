@@ -2,9 +2,18 @@ Shader "Custom/Grass"
 {
     Properties
     {
-        _MainTex ("主纹理 (Main Texture)", 2D) = "white" {}
-        _Color ("草地颜色 (Grass Color)", Color) = (1, 1, 1, 1)
-        _Cutoff ("Alpha 裁剪阈值 (Alpha Cutoff)", Range(0, 1)) = 0.5
+        [Header(Surface Options)]
+        [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clipping", Float) = 1
+        _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Render Face", Float) = 0
+
+        [Header(Surface Inputs)]
+        _MainTex ("Base Map", 2D) = "white" {}
+        _Color ("Base Color", Color) = (1, 1, 1, 1)
+
+        [Header(Lighting)]
+        _Metallic ("Metallic", Range(0, 1)) = 0
+        _Smoothness ("Smoothness", Range(0, 1)) = 0.25
     }
 
     SubShader
@@ -18,31 +27,46 @@ Shader "Custom/Grass"
 
         Pass
         {
-            Name "GrassUnlit"
+            Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
 
-            Cull Off
+            Cull [_Cull]
             ZWrite On
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex vert
             #pragma fragment frag
+
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // Keep the original property names so existing grass materials retain their textures and tint.
+            #define _BaseMap _MainTex
+            #define sampler_BaseMap sampler_MainTex
+            #define _BaseColor _Color
 
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _MainTex_ST;
                 half4 _Color;
                 half _Cutoff;
+                half _Metallic;
+                half _Smoothness;
             CBUFFER_END
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -50,7 +74,11 @@ Shader "Custom/Grass"
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
-                float2 uv : TEXCOORD0;
+                float3 positionWS : TEXCOORD0;
+                half3 normalWS : TEXCOORD1;
+                float2 uv : TEXCOORD2;
+                float4 shadowCoord : TEXCOORD3;
+                half fogFactor : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -58,13 +86,19 @@ Shader "Custom/Grass"
             {
                 Varyings output = (Varyings)0;
 
-                // 读取当前 Terrain 草实例的实例 ID，
-                // 让 TransformObjectToHClip 使用对应实例的变换矩阵。
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
-                output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
+                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS);
+
+                output.positionHCS = positionInputs.positionCS;
+                output.positionWS = positionInputs.positionWS;
+                output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                output.shadowCoord = GetShadowCoord(positionInputs);
+                output.fogFactor = ComputeFogFactor(positionInputs.positionCS.z);
+
                 return output;
             }
 
@@ -72,14 +106,80 @@ Shader "Custom/Grass"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
 
-                half4 mainSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
-                half4 finalColor = mainSample * _Color;
+                half4 baseSample = SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
 
-                clip(finalColor.a - _Cutoff);
+                #if defined(_ALPHATEST_ON)
+                    Alpha(baseSample.a, _Color, _Cutoff);
+                #endif
 
-                return finalColor;
+                SurfaceData surfaceData = (SurfaceData)0;
+                surfaceData.albedo = baseSample.rgb * _Color.rgb;
+                surfaceData.metallic = _Metallic;
+                surfaceData.specular = half3(0, 0, 0);
+                surfaceData.smoothness = _Smoothness;
+                surfaceData.normalTS = half3(0, 0, 1);
+                surfaceData.emission = half3(0, 0, 0);
+                surfaceData.occlusion = 1;
+                surfaceData.alpha = baseSample.a * _Color.a;
+                surfaceData.clearCoatMask = 0;
+                surfaceData.clearCoatSmoothness = 0;
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.normalWS = NormalizeNormalPerPixel(input.normalWS);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                inputData.shadowCoord = input.shadowCoord;
+                inputData.fogCoord = input.fogFactor;
+                inputData.vertexLighting = VertexLighting(input.positionWS, inputData.normalWS);
+                inputData.bakedGI = SampleSH(inputData.normalWS);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
+                inputData.shadowMask = half4(1, 1, 1, 1);
+
+                half4 color = UniversalFragmentPBR(inputData, surfaceData);
+                color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                return color;
             }
             ENDHLSL
         }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
+
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #pragma multi_compile_instancing
+
+            // Map URP's standard Lit pass inputs to this shader's preserved property names.
+            #define _BaseMap _MainTex
+            #define sampler_BaseMap sampler_MainTex
+            #define _BaseColor _Color
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half _Cutoff;
+                half _Metallic;
+                half _Smoothness;
+            CBUFFER_END
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            ENDHLSL
+        }
     }
+
+    FallBack Off
 }
