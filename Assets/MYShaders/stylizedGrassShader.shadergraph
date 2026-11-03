@@ -147,9 +147,8 @@
                 "m_SlotId": 1
             }
         }
-    ],
-    "m_Edges": [
-        {
+,
+{
             "m_OutputSlot": {
                 "m_Node": { "m_Id": "c1000000000000000000000000000003" },
                 "m_SlotId": 0
@@ -188,7 +187,7 @@
                 "m_Node": { "m_Id": "2de4482360e8432ab546ada9006f620b" },
                 "m_SlotId": 0
             }
-        },
+        }
     ],
     "m_VertexContext": {
         "m_Position": {
