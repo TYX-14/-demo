@@ -27,6 +27,7 @@ Shader "Custom/Grass"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -43,17 +44,25 @@ Shader "Custom/Grass"
             {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             Varyings vert(Attributes input)
             {
-                Varyings output;
+                Varyings output = (Varyings)0;
+
+                // 读取当前 Terrain 草实例的实例 ID，
+                // 让 TransformObjectToHClip 使用对应实例的变换矩阵。
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
                 output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 return output;
@@ -61,8 +70,9 @@ Shader "Custom/Grass"
 
             half4 frag(Varyings input) : SV_Target
             {
-                half4 mainSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+                UNITY_SETUP_INSTANCE_ID(input);
 
+                half4 mainSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 half4 finalColor = mainSample * _Color;
 
                 clip(finalColor.a - _Cutoff);
