@@ -106,7 +106,7 @@ Shader "MYShaders/IL3DN/Leaf_URP"
             posOS+=offsetOS.xyz;
             #endif
 
-            OUT.positionHCS=TransformObjectToH clip(posOS);
+            OUT.positionHCS=TransformObjectToHClip(posOS);
             OUT.positionWS=TransformObjectToWorld(posOS);
             OUT.normalWS=TransformObjectToWorldNormal(IN.normalOS);
             OUT.uv=IN.uv;
