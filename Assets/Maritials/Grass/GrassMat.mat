@@ -29,7 +29,7 @@ Material:
   m_InvalidKeywords:
   - _USETERRAINCOLOR
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -157,19 +157,19 @@ Material:
     - _TerrainOffset: 0.5
     - _TerrainSize: 50
     - _USETERRAINCOLOR: 1
-    - _WindHeght: 0.26
-    - _WindNoiseSpeed: 0.7
+    - _WindHeght: 1.2
+    - _WindNoiseSpeed: 1.1
     - _WorkflowMode: 1
     - _ZTest: 4
     - _ZWrite: 1
     - _ZWriteControl: 0
     - __1: 0
-    - __4: 0.0001
+    - __4: 0
     - __6: 50
     - __7: 0.5
     - _smoothness: 0
-    - _whidspeed: 0.14
-    - _windlntensity: 0.1
+    - _whidspeed: 0.2
+    - _windlntensity: 0.28
     m_Colors:
     - _: {r: 0, g: 0, b: 0, a: 1}
     - _BaseColor: {r: 0.8113208, g: 0.047724754, b: 0, a: 1}
@@ -183,8 +183,8 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WindNoiseScale: {r: 50, g: 50, b: 0, a: 0}
-    - _WindNolseContrast: {r: 0.5, g: 0.25, b: 0, a: 0}
+    - _WindNolseContrast: {r: 1, g: 0.1, b: 0, a: 0}
     - __2: {r: 9.16, g: 25, b: 0, a: 0}
-    - __3: {r: 0.8679245, g: 0.86791235, b: 0.31523672, a: 1}
-    - __5: {r: 0.4339623, g: 0, b: 0.41945818, a: 1}
+    - __3: {r: 0.7924528, g: 0.7924528, b: 0.3999644, a: 1}
+    - __5: {r: 0.46745554, g: 0.4716981, b: 0.3048238, a: 1}
   m_BuildTextureStacks: []

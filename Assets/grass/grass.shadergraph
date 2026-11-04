@@ -3103,7 +3103,7 @@
     "synonyms": [],
     "m_Precision": 0,
     "m_PreviewExpanded": true,
-    "m_NodeLOD": 2,
+    "m_NodeLOD": 0,
     "m_DismissedVersion": 0,
     "m_PreviewMode": 0,
     "m_CustomColors": {
@@ -3783,7 +3783,7 @@
     "m_Title": "New Group",
     "m_Position": {
         "x": -4435.0,
-        "y": -2027.9998779296875
+        "y": -2028.0
     },
     "m_LoopGroup": false
 }
@@ -4015,8 +4015,8 @@
     "m_ObjectId": "473cbf9b17d24a7ea9f3ec2a000441df",
     "m_Title": "New Group",
     "m_Position": {
-        "x": -3075.0,
-        "y": -3096.000244140625
+        "x": -2975.0,
+        "y": -3096.0
     },
     "m_LoopGroup": false
 }
@@ -4361,8 +4361,8 @@
     "m_ObjectId": "514ee24b94414b59bf5efffa87c321c2",
     "m_Title": "New Group",
     "m_Position": {
-        "x": -2333.000244140625,
-        "y": 236.99984741210938
+        "x": -2333.0,
+        "y": 237.0
     },
     "m_LoopGroup": false
 }
@@ -4937,8 +4937,8 @@
     "m_ObjectId": "5d24b799224c48dab56224cc863ccba4",
     "m_Title": "TerrainColor",
     "m_Position": {
-        "x": -2820.000244140625,
-        "y": -334.0001525878906
+        "x": -2820.0,
+        "y": -334.0
     },
     "m_LoopGroup": false
 }
@@ -6119,7 +6119,7 @@
         "divided by"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": false,
+    "m_PreviewExpanded": true,
     "m_NodeLOD": 0,
     "m_DismissedVersion": 0,
     "m_PreviewMode": 0,
@@ -6193,10 +6193,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -3050.0,
-            "y": -2814.0,
+            "x": -2836.0,
+            "y": -2908.0,
             "width": 208.0,
-            "height": 315.0
+            "height": 314.0
         }
     },
     "m_Slots": [
@@ -6831,8 +6831,8 @@
     "m_Hidden": false,
     "m_Priority": 10,
     "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
+        "x": 8.0,
+        "y": 8.0,
         "z": 0.0,
         "w": 0.0
     }
@@ -8837,8 +8837,8 @@
     "m_ObjectId": "c1f144af472945e8b1a517ede4c591d9",
     "m_Title": "HeightBlend",
     "m_Position": {
-        "x": -1884.000244140625,
-        "y": 1117.000244140625
+        "x": -1884.0,
+        "y": 1117.0
     },
     "m_LoopGroup": false
 }
@@ -9163,8 +9163,8 @@
     "m_ObjectId": "ce6bd3d9795f496289a8d91ba057a650",
     "m_Title": "DEPTH",
     "m_Position": {
-        "x": -2720.000244140625,
-        "y": -1110.999755859375
+        "x": -2720.0,
+        "y": -1111.0
     },
     "m_LoopGroup": false
 }
