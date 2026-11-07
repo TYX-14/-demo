@@ -250,6 +250,7 @@
     <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_OpaqueSurface.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
     <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_SoftParticle.shader" />
+    <None Include="Assets\MyShared\VS_indirect.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_Fog.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
@@ -259,6 +260,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
     <None Include="Assets\Art3\Hovl Studio\Magic effects pack\Demo scene\Readme.txt" />
     <None Include="Assets\Art2\Effect\Shaders\Dreamscape_Water.shader" />
+    <None Include="Assets\MyShared\IL3DN_Leaf_URP.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
     <None Include="Assets\TextMesh Pro\Examples &amp; Extras\Fonts\Bangers - OFL.txt" />
   </ItemGroup>

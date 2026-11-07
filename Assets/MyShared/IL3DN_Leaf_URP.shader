@@ -220,7 +220,7 @@ Shader "MyShared/IL3DN/Leaf_URP"
             #if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)
                 float3 lightDirectionWS = normalize(_LightPosition - positionWS);
             #else
-                float3 lightDirectionWS = _LightDirection;
+                float3 lightDirectionWS = _MainLightPosition.xyz;
             #endif
 
             positionWS = ApplyShadowBias(positionWS, normalWS, lightDirectionWS);
