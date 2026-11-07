@@ -99,8 +99,8 @@
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Deprecated\CinemachineInputProvider.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Components\CinemachinePositionComposer.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Core\ConfinerOven.cs" />
-     <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Behaviours\CinemachineFollowZoom.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Core\SignalSourceAsset.cs" />
+     <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Behaviours\CinemachineFollowZoom.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Deprecated\CinemachineGroupComposer.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Core\NoiseSettings.cs" />
      <Compile Include="Library\PackageCache\com.unity.cinemachine@3.1.6\Runtime\Core\BlendManager.cs" />
