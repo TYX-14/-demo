@@ -2,12 +2,12 @@ Shader "MyShared/IL3DN/Leaf_URP"
 {
     Properties
     {
-        [Header(基础外观)]
+        [Header("基础外观")]
         [MainTexture] _MainTex ("叶片贴图（RGBA）", 2D) = "white" {}
         [MainColor] _Color ("叶片颜色", Color) = (1,1,1,1)
         _AlphaCutoff ("透明剪裁阈值", Range(0,1)) = 0.5
 
-        [Header(风动效果)]
+        [Header("风动效果")]
         [Toggle(_WIND_ON)] _Wind ("启用风动", Float) = 1
         _WindNoiseTex ("风噪贴图", 2D) = "gray" {}
         _WindDirection ("风向（世界坐标）", Vector) = (1,0,0,0)
@@ -17,17 +17,17 @@ Shader "MyShared/IL3DN/Leaf_URP"
         [Toggle(_USE_VERTEX_COLOR_WIND)] _UseVertexColorWind ("使用顶点色控制风动", Float) = 0
         _WindMaskStrength ("顶点色风动影响", Range(0,2)) = 1
 
-        [Header(叶片摆动)]
+        [Header("叶片摆动")]
         [Toggle(_WIGGLE_ON)] _Wiggle ("启用叶片摆动", Float) = 1
         _WiggleStrength ("摆动幅度", Range(0,2)) = 0.25
         _WiggleSpeed ("摆动速度", Range(0,5)) = 1
 
-        [Header(颜色变化)]
+        [Header("颜色变化")]
         _ColorVariationTexture ("颜色变化贴图", 2D) = "white" {}
         _ColorVariationAmount ("颜色变化强度", Range(0,1)) = 0
         _ColorVariationScale ("颜色变化缩放", Range(0.01,100)) = 50
 
-        [Header(积雪效果)]
+        [Header("积雪效果")]
         [Toggle(_SNOW_ON)] _Snow ("启用积雪", Float) = 0
         _SnowAmount ("积雪强度", Range(0,2)) = 0.5
         _SnowColor ("积雪颜色", Color) = (1,1,1,1)
