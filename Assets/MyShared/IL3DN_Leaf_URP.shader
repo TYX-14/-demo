@@ -100,8 +100,9 @@ Shader "MyShared/IL3DN/Leaf_URP"
             #if defined(_WIND_ON)
                 float3 positionWS = TransformObjectToWorld(positionOS);
                 float4 noise = SampleWindNoise(positionWS, vertexColor.g, vertexColor.a);
-                float scalar = vertexColor.a * noise.r + noise.r * vertexColor.g;
-                float3 offsetOS = mul(GetWorldToObjectMatrix(), float4(WindDirection * scalar, 0.0)).xyz;
+                // The source shader multiplies WindDirection by the RGB channels of the noise.
+                float3 windOffsetWS = WindDirection * noise.rgb * (vertexColor.a + vertexColor.g);
+                float3 offsetOS = mul(GetWorldToObjectMatrix(), float4(windOffsetWS, 0.0)).xyz;
                 positionOS += offsetOS;
             #endif
             return positionOS;
