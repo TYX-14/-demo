@@ -1,3 +1,11 @@
+## 2026-11-08：为体积光柱增加可选的地面 Point Light
+
+- **新增真实局部照明：** `VolumetricLightBeam.cs` 可在光柱射线命中的地面落点生成独立 Point Light，照亮附近地面与支持 URP 附加光源的物体；点光源位置沿地面法线轻微抬高。
+- **独立控制：** 新增 `Show Ground Point Light`、`Ground Point Light Intensity`、`Ground Point Light Range` 与 `Ground Point Light Height`。点光源颜色跟随光柱颜色，默认关闭阴影并将 Bounce Intensity 设为 0。
+- **与原光斑并存：** 原有 Quad 地面光斑保留，可独立开关；Point Light 与 Quad 共用同一次地面 Raycast，既可叠加，也可只启用其中一种。
+- **落点规则：** 只有射线命中 `Ground Layers` 中的有效 Collider 时才启用点光源；没有地面命中时，点光源与 Quad 光斑都会隐藏。
+- **验证状态：** 已提交代码；尚未在 Unity 2022 / URP 14.1.0 中编译或运行验证。需检查 URP Additional Lights 设置、地面及周围材质对附加光源的响应，并调整亮度与范围避免过曝。
+
 ## 2026-11-08：为风格化体积光柱加入漂浮光尘
 
 - **粒子效果：** `VolumetricLightBeam.cs` 新增独立的漂浮光尘 Particle System，使用覆盖光柱全长与横截面的盒形体积发射器，让粒子从光柱内部各个高度出现，而不是只从地面附近向上喷出。
