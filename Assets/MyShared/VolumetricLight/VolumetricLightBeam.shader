@@ -16,7 +16,7 @@ Shader "MyShared/VolumetricLightBeam"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "Queue" = "Transparent+10"
+            "Queue" = "Transparent-10"
             "RenderType" = "Transparent"
         }
 
