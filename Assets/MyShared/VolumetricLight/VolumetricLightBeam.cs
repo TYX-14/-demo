@@ -27,6 +27,12 @@ namespace MyShared.VolumetricLight
         [Min(0.1f)] public float groundSpotSize = 4f;
         [Min(0f)] public float groundSpotIntensity = 0.8f;
         [Range(0.05f, 1f)] public float groundSpotSoftness = 0.75f;
+        [Tooltip("从光束上端沿光束方向向下检测地面的最大距离。")]
+        [Min(0.1f)] public float groundSpotRayDistance = 100f;
+        [Tooltip("斜射时光斑椭圆长轴相对短轴的最大拉伸倍数。")]
+        [Range(1f, 5f)] public float groundSpotMaxStretch = 3f;
+        [Tooltip("参与地面检测的碰撞体层。建议只勾选 Terrain 和 Ground 等地面层。")]
+        public LayerMask groundLayers = ~0;
 
         [Header("Shader")]
         [SerializeField] private Shader beamShader;
@@ -82,6 +88,8 @@ namespace MyShared.VolumetricLight
             length = Mathf.Max(0.1f, length);
             radius = Mathf.Max(0.05f, radius);
             groundSpotSize = Mathf.Max(0.1f, groundSpotSize);
+            groundSpotRayDistance = Mathf.Max(0.1f, groundSpotRayDistance);
+            groundSpotMaxStretch = Mathf.Clamp(groundSpotMaxStretch, 1f, 5f);
             raymarchSteps = Mathf.Clamp(raymarchSteps, 4, 48);
 
             if (beamFilter == null)
@@ -169,7 +177,6 @@ namespace MyShared.VolumetricLight
                 groundRenderer.receiveShadows = false;
             }
 
-            groundSpotObject.SetActive(groundMaterial != null);
             if (groundRenderer != null && groundMaterial != null)
                 groundRenderer.sharedMaterial = groundMaterial;
 
@@ -180,7 +187,6 @@ namespace MyShared.VolumetricLight
         {
             if (transform == null) return;
             transform.localScale = new Vector3(radius * 2f, length, radius * 2f);
-
             UpdateGroundSpotTransform();
         }
 
@@ -188,10 +194,43 @@ namespace MyShared.VolumetricLight
         {
             if (groundSpotObject == null) return;
 
+            if (!showGroundSpot || groundMaterial == null)
+            {
+                groundSpotObject.SetActive(false);
+                return;
+            }
+
+            // 光束沿本地 -Y 方向射出，从光束上端开始检测实际碰撞表面。
+            Vector3 beamDirection = -transform.up.normalized;
+            Vector3 rayOrigin = transform.position + transform.up * (length * 0.5f);
+            if (!Physics.Raycast(rayOrigin, beamDirection, out RaycastHit hit,
+                    groundSpotRayDistance, groundLayers, QueryTriggerInteraction.Ignore))
+            {
+                // 没有真实地面碰撞体时隐藏光斑，避免它悬浮在错误高度。
+                groundSpotObject.SetActive(false);
+                return;
+            }
+
+            Vector3 projectedBeamDirection = Vector3.ProjectOnPlane(beamDirection, hit.normal);
+            if (projectedBeamDirection.sqrMagnitude < 0.0001f)
+                projectedBeamDirection = Vector3.ProjectOnPlane(transform.forward, hit.normal);
+
+            if (projectedBeamDirection.sqrMagnitude < 0.0001f)
+                projectedBeamDirection = Vector3.Cross(hit.normal, Vector3.right);
+
+            projectedBeamDirection.Normalize();
+
             Transform spot = groundSpotObject.transform;
-            spot.position = transform.position - transform.up * (length * 0.5f) + Vector3.up * 0.02f;
-            spot.rotation = Quaternion.Euler(90f, 0f, 0f);
-            spot.localScale = Vector3.one * groundSpotSize;
+            spot.position = hit.point + hit.normal * 0.025f;
+
+            // Quad 的本地 Z 朝向地面法线，本地 Y 沿光束在地面上的投影方向。
+            spot.rotation = Quaternion.LookRotation(hit.normal, projectedBeamDirection);
+
+            float incidence = Mathf.Abs(Vector3.Dot(beamDirection, hit.normal));
+            float stretch = Mathf.Clamp(1f / Mathf.Max(incidence, 0.2f), 1f, groundSpotMaxStretch);
+            spot.localScale = new Vector3(groundSpotSize, groundSpotSize * stretch, 1f);
+
+            groundSpotObject.SetActive(true);
         }
 
         private void UpdateProperties()
