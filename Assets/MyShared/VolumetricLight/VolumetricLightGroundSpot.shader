@@ -13,7 +13,7 @@ Shader "MyShared/VolumetricLightGroundSpot"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "Queue" = "Transparent+5"
+            "Queue" = "Transparent-20"
             "RenderType" = "Transparent"
         }
 
