@@ -161,7 +161,6 @@ namespace MyShared.VolumetricLight
             {
                 groundSpotObject = new GameObject("Ground Light Spot");
                 groundSpotObject.hideFlags = HideFlags.HideAndDontSave;
-                groundSpotObject.transform.SetParent(transform, false);
 
                 MeshFilter filter = groundSpotObject.AddComponent<MeshFilter>();
                 filter.sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
@@ -174,14 +173,7 @@ namespace MyShared.VolumetricLight
             if (groundRenderer != null && groundMaterial != null)
                 groundRenderer.sharedMaterial = groundMaterial;
 
-            Transform spot = groundSpotObject.transform;
-            spot.localPosition = new Vector3(0f, -0.5f, 0f);
-            spot.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            spot.localScale = new Vector3(
-                groundSpotSize / Mathf.Max(radius * 2f, 0.0001f),
-                groundSpotSize / Mathf.Max(radius * 2f, 0.0001f),
-                1f
-            );
+            UpdateGroundSpotTransform();
         }
 
         private void ApplyTransformScale()
@@ -189,16 +181,17 @@ namespace MyShared.VolumetricLight
             if (transform == null) return;
             transform.localScale = new Vector3(radius * 2f, length, radius * 2f);
 
-            if (groundSpotObject != null)
-            {
-                Transform spot = groundSpotObject.transform;
-                spot.localPosition = new Vector3(0f, -0.5f, 0f);
-                spot.localScale = new Vector3(
-                    groundSpotSize / Mathf.Max(radius * 2f, 0.0001f),
-                    groundSpotSize / Mathf.Max(radius * 2f, 0.0001f),
-                    1f
-                );
-            }
+            UpdateGroundSpotTransform();
+        }
+
+        private void UpdateGroundSpotTransform()
+        {
+            if (groundSpotObject == null) return;
+
+            Transform spot = groundSpotObject.transform;
+            spot.position = transform.position - transform.up * (length * 0.5f) + Vector3.up * 0.02f;
+            spot.rotation = Quaternion.Euler(90f, 0f, 0f);
+            spot.localScale = Vector3.one * groundSpotSize;
         }
 
         private void UpdateProperties()
