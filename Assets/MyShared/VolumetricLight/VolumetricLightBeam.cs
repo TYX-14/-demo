@@ -365,13 +365,26 @@ namespace MyShared.VolumetricLight
 
         private void UpdateLightParticles()
         {
-            if (particleObject == null || lightParticleSystem == null) return;
+            if (!showLightParticles)
+            {
+                if (particleObject != null) particleObject.SetActive(false);
+                return;
+            }
+
+            if (particleObject == null)
+            {
+                CreateLightParticles();
+                return;
+            }
+
+            if (lightParticleSystem == null) return;
 
             particleObject.transform.SetPositionAndRotation(transform.position, transform.rotation);
             particleObject.transform.localScale = Vector3.one;
-            particleObject.SetActive(showLightParticles);
+            particleObject.SetActive(true);
 
-            if (!showLightParticles) return;
+            if (!lightParticleSystem.isPlaying)
+                lightParticleSystem.Play(true);
 
             var main = lightParticleSystem.main;
             main.maxParticles = Mathf.Max(1, particleMaxCount);
