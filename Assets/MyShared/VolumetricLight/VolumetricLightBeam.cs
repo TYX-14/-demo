@@ -310,9 +310,11 @@ namespace MyShared.VolumetricLight
 
             var shape = lightParticleSystem.shape;
             shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.shapeType = ParticleSystemShapeType.Circle;
             shape.position = new Vector3(0f, -length * 0.48f, 0f);
-            shape.scale = new Vector3(radius * 1.55f, 0.12f, radius * 1.55f);
+            shape.rotation = new Vector3(-90f, 0f, 0f);
+            shape.radius = radius * 0.72f;
+            shape.radiusThickness = 1f;
 
             var colorOverLifetime = lightParticleSystem.colorOverLifetime;
             colorOverLifetime.enabled = true;
@@ -383,7 +385,7 @@ namespace MyShared.VolumetricLight
 
             var shape = lightParticleSystem.shape;
             shape.position = new Vector3(0f, -length * 0.48f, 0f);
-            shape.scale = new Vector3(radius * 1.55f, 0.12f, radius * 1.55f);
+            shape.radius = radius * 0.72f;
 
             if (particleMaterial != null)
                 particleMaterial.SetFloat("_ParticleIntensity", particleIntensity);
