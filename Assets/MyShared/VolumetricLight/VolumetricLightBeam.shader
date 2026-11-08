@@ -79,18 +79,13 @@ Shader "MyShared/VolumetricLightBeam"
                 return frac(p.x * p.y * p.z * (p.x + p.y + p.z));
             }
 
-            half4 Frag(Varyings input, FRONT_FACE_TYPE face : FRONT_FACE_SEMANTIC) : SV_Target
+            half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float3 cameraOS = TransformWorldToObject(_WorldSpaceCameraPos);
-                float3 rayToCameraOS;
-
-                // 正交相机的所有像素射线互相平行；透视相机则从相机位置指向当前像素。
-                if (unity_OrthoParams.w > 0.5)
-                    rayToCameraOS = normalize(TransformWorldToObjectDir(UNITY_MATRIX_V[2].xyz));
-                else
-                    rayToCameraOS = normalize(cameraOS - input.positionOS);
+                // URP 的视线函数会同时处理透视与正交相机。
+                float3 viewDirectionWS = normalize(GetWorldSpaceViewDir(input.positionWS));
+                float3 rayToCameraOS = normalize(TransformWorldToObjectDir(viewDirectionWS));
 
                 // 当前片元位于代理立方体背面，从背面沿视线反方向寻找圆柱体积的交点。
                 float3 origin = input.positionOS;
