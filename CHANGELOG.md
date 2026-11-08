@@ -1,3 +1,12 @@
+## 2026-11-08：树叶与树枝 Shader 接入附加光源
+
+- **树叶 Shader：** `Assets/MyShared/IL3DN_Leaf_URP.shader` 的 Forward Pass 新增逐像素附加光源循环，支持 Point Light 与 Spot Light 对叶片颜色的照明贡献；保留原有主方向光、球谐环境光、风动、叶片摆动、颜色变化、积雪、GPU Instancing 与阴影投射逻辑。
+- **树枝 Shader：** `Assets/MyShared/IL3DN_Branch_URP.shader` 的 Forward Pass 新增相同的附加光源计算，保留原有主方向光阴影、环境光、风动、积雪与 GPU Instancing。
+- **光照开关：** 两个 Forward Pass 增加 `_ADDITIONAL_LIGHTS` 与 `_ADDITIONAL_LIGHT_SHADOWS` 变体。URP Asset 仍需启用 Additional Lights，并选择 Per Pixel；附加光源阴影还受 URP Asset、Light 与 Renderer 设置限制。
+- **当前边界：** 这次只补齐材质表面的局部光照响应，不实现体积光。标准 Forward 渲染路径为本次目标；若项目切换到 Forward+，还需按 URP 14 对应的 Cluster Light Loop 规则适配。
+- **验证状态：** 已提交 GitHub；尚未在 Unity 14.1.0 中编译或运行验证。重点检查树叶、树枝是否被 Point Light / Spot Light 照亮，以及原有风动、积雪、GPU Instancing 是否正常。
+
+---
 ## 2026-10-28：调整技能前进/后退位移表现与血条站位同步
 
 - **前进/后退时序：** 从普通技能效果循环中移出，改在技能即时效果结算后统一执行；在 `PerformActionState` 中预留等待技能动作完成的明确钩子。当前还没有技能动作播放/完成事件，因此现阶段是在即时结算结束后执行。
