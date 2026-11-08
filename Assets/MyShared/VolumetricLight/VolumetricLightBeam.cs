@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MyShared.VolumetricLight
 {
@@ -61,6 +64,10 @@ namespace MyShared.VolumetricLight
         private Material particleMaterial;
         private MaterialPropertyBlock beamProperties;
         private MaterialPropertyBlock groundProperties;
+#if UNITY_EDITOR
+        private double lastParticlePreviewTime;
+        private bool particlePreviewInitialized;
+#endif
 
         private static readonly int BeamColorId = Shader.PropertyToID("_BeamColor");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
@@ -92,10 +99,20 @@ namespace MyShared.VolumetricLight
             CreateLightParticles();
             ApplyTransformScale();
             UpdateProperties();
+#if UNITY_EDITOR
+            lastParticlePreviewTime = EditorApplication.timeSinceStartup;
+            particlePreviewInitialized = false;
+            EditorApplication.update -= PreviewParticlesInEditMode;
+            EditorApplication.update += PreviewParticlesInEditMode;
+#endif
         }
 
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            EditorApplication.update -= PreviewParticlesInEditMode;
+            particlePreviewInitialized = false;
+#endif
             ReleaseRuntimeObjects();
         }
 
@@ -362,7 +379,8 @@ namespace MyShared.VolumetricLight
             }
 
             lightParticleSystem.Clear(true);
-            lightParticleSystem.Play(true);
+            if (Application.isPlaying)
+                lightParticleSystem.Play(true);
         }
 
         private void UpdateLightParticles()
@@ -385,7 +403,7 @@ namespace MyShared.VolumetricLight
             particleObject.transform.localScale = Vector3.one;
             particleObject.SetActive(true);
 
-            if (!lightParticleSystem.isPlaying)
+            if (Application.isPlaying && !lightParticleSystem.isPlaying)
                 lightParticleSystem.Play(true);
 
             var main = lightParticleSystem.main;
@@ -406,6 +424,46 @@ namespace MyShared.VolumetricLight
             if (particleMaterial != null)
                 particleMaterial.SetFloat("_ParticleIntensity", particleIntensity);
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Unity 不会在普通编辑模式下自动推进 ParticleSystem。
+        /// 通过 EditorApplication.update 手动模拟，让场景视图和游戏视图都能预览光尘。
+        /// </summary>
+        private void PreviewParticlesInEditMode()
+        {
+            if (Application.isPlaying || !isActiveAndEnabled || !showLightParticles)
+                return;
+
+            if (lightParticleSystem == null || particleObject == null)
+                CreateLightParticles();
+
+            if (lightParticleSystem == null || particleObject == null)
+                return;
+
+            UpdateLightParticles();
+
+            double now = EditorApplication.timeSinceStartup;
+            float deltaTime = Mathf.Clamp((float)(now - lastParticlePreviewTime), 0f, 0.05f);
+            lastParticlePreviewTime = now;
+
+            if (!particlePreviewInitialized)
+            {
+                lightParticleSystem.Simulate(
+                    Mathf.Min(particleLifetime * 0.6f, 2f),
+                    true,
+                    true,
+                    false);
+                particlePreviewInitialized = true;
+            }
+            else if (deltaTime > 0f)
+            {
+                lightParticleSystem.Simulate(deltaTime, true, false, false);
+            }
+
+            SceneView.RepaintAll();
+        }
+#endif
 
         private void UpdateProperties()
         {
