@@ -1,3 +1,14 @@
+## 2026-11-08：新增风格化体积光柱
+
+- **新增组件：** `Assets/MyShared/VolumetricLight/VolumetricLightBeam.cs`。将组件添加到一个单位 Cube 上即可生成可调节的体积光柱；物体本地 Y 轴为光柱方向，物体中心为光柱中心。
+- **体积计算：** `VolumetricLightBeam.shader` 使用立方体代理网格覆盖屏幕像素，并在 Shader 中解析视线与有限圆柱的交段，再沿圆柱内部进行 Ray Marching。支持透视与正交相机、径向柔化、端部衰减、程序噪声和可调采样步数。
+- **场景遮挡：** Shader 读取 URP Camera Depth Texture，将光柱采样长度截断到最近的不透明场景表面，避免体积光穿透不透明地形和建筑。当前 High Fidelity URP Asset 已启用 Depth Texture。
+- **地面光斑：** `VolumetricLightGroundSpot.shader` 在光柱底端生成独立的柔和圆形加色光斑，可单独关闭并调节尺寸、强度与边缘柔和度。
+- **参数：** Inspector 可调光柱长度、半径、颜色、散射强度、密度、边缘柔和、噪声、Ray March 步数，以及地面光斑参数。
+- **当前边界：** 这是可控的风格化局部体积效果，不会真实照亮场景材质；当前遮挡依赖不透明深度，不读取主光源阴影图，也不处理透明物体遮挡。地面光斑是平面加色效果，需要将光柱底端放在地面附近。
+- **使用方式：** 在场景创建 3D Cube，添加 `VolumetricLightBeam` 组件，调整 Transform 旋转使本地 Y 轴指向光束方向，并将物体中心放在光柱中点。组件会自动使用内置 Cube 网格和 Shader；URP Asset 需启用 Depth Texture。
+- **验证状态：** 文件与 Unity .meta 已提交；尚未在 Unity 2022 / URP 14.1.0 中编译或运行验证。首次导入后请检查 Shader 编译结果，并在 Game View 测试透视/正交相机、地形遮挡和地面光斑位置。
+
 ## 2026-11-08：树叶与树枝 Shader 接入附加光源
 
 - **树叶 Shader：** `Assets/MyShared/IL3DN_Leaf_URP.shader` 的 Forward Pass 新增逐像素附加光源循环，支持 Point Light 与 Spot Light 对叶片颜色的照明贡献；保留原有主方向光、球谐环境光、风动、叶片摆动、颜色变化、积雪、GPU Instancing 与阴影投射逻辑。
