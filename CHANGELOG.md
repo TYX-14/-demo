@@ -1,3 +1,12 @@
+## 2026-11-08：改进体积光柱倾斜落点与地面光斑
+
+- **光束方向：** 保持光束沿物体本地 Y 轴延伸，可直接通过 Cube/组件所在物体的 Transform Rotation 调整倾斜方向；光束尺寸仍由组件的长度与半径控制。
+- **真实落点：** `VolumetricLightBeam.cs` 从光束上端沿本地 -Y 方向进行 Physics Raycast，使用命中的地面位置与法线放置光斑，不再固定使用世界 Y 高度。
+- **斜射光斑：** 光斑 Quad 根据命中表面法线旋转，并将光束方向投影到地面作为椭圆长轴方向；入射角越斜，长轴越长，可用最大拉伸倍数限制形状。
+- **新增 Inspector 参数：** `Ground Spot Ray Distance` 控制地面检测距离；`Ground Spot Max Stretch` 控制斜射时光斑最大拉伸；`Ground Layers` 用于限定可接收光斑的地面碰撞层。
+- **无地面时的处理：** 射线未命中碰撞体时隐藏光斑，避免光斑漂浮在错误高度。地形或地面必须具有 Collider，并确保其 Layer 被 `Ground Layers` 包含。
+- **验证状态：** 已更新 GitHub 代码；尚未在 Unity 2022 / URP 14.1.0 中编译或运行验证。需检查斜向光束、不同坡度地形、地面 Layer 筛选和无碰撞体场景。
+
 ## 2026-11-08：新增风格化体积光柱
 
 - **新增组件：** `Assets/MyShared/VolumetricLight/VolumetricLightBeam.cs`。将组件添加到一个单位 Cube 上即可生成可调节的体积光柱；物体本地 Y 轴为光柱方向，物体中心为光柱中心。
