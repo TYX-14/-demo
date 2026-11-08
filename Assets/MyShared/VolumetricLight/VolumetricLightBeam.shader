@@ -24,9 +24,9 @@ Shader "MyShared/VolumetricLightBeam"
         {
             Name "VolumetricBeam"
             Tags { "LightMode" = "UniversalForward" }
-            Cull Front
+            Cull Back
             ZWrite Off
-            ZTest Always
+            ZTest LEqual
             Blend One One
             ColorMask RGB
 
@@ -85,11 +85,12 @@ Shader "MyShared/VolumetricLightBeam"
 
                 // URP 的视线函数会同时处理透视与正交相机。
                 float3 viewDirectionWS = normalize(GetWorldSpaceViewDir(input.positionWS));
-                float3 rayToCameraOS = normalize(TransformWorldToObjectDir(viewDirectionWS));
+                // 从代理立方体朝向摄像机的一侧开始，沿摄像机视线进入场景的方向积分。
+                // 这样代理面的硬件深度测试可以先挡住位于光束前方的场景物体。
+                float3 rayIntoSceneOS = normalize(TransformWorldToObjectDir(-viewDirectionWS));
 
-                // 当前片元位于代理立方体背面，从背面沿视线反方向寻找圆柱体积的交点。
                 float3 origin = input.positionOS;
-                float3 direction = rayToCameraOS;
+                float3 direction = rayIntoSceneOS;
 
                 // 单位圆柱：轴向 Y，长度 1，半径 0.5。
                 float a = direction.x * direction.x + direction.z * direction.z;
@@ -129,7 +130,7 @@ Shader "MyShared/VolumetricLightBeam"
                 float rayEnd = min(sideFar, capFar);
                 if (rayEnd <= rayStart) discard;
 
-                // 用场景深度截断光柱，避免光束穿过不透明建筑和地形。
+                // 用场景深度截断光柱，避免光束穿过不透明建筑、地形以及写入深度的 Sprite。
                 float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 float rawDepth = SampleSceneDepth(screenUV);
 
