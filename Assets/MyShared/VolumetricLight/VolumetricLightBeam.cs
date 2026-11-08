@@ -34,9 +34,20 @@ namespace MyShared.VolumetricLight
         [Tooltip("参与地面检测的碰撞体层。建议只勾选 Terrain 和 Ground 等地面层。")]
         public LayerMask groundLayers = ~0;
 
+        [Tooltip("是否在光柱中显示缓慢漂浮的光尘。")]
+        public bool showLightParticles = true;
+        [Min(0f)] public float particleEmissionRate = 16f;
+        [Min(0.01f)] public float particleRiseSpeed = 0.45f;
+        [Min(0.1f)] public float particleLifetime = 4f;
+        [Min(0.001f)] public float particleSize = 0.055f;
+        [Min(1)] public int particleMaxCount = 120;
+        [ColorUsage(false, true)] public Color particleColor = new Color(1f, 0.82f, 0.48f, 0.9f);
+        [Min(0f)] public float particleIntensity = 1.2f;
+
         [Header("Shader")]
         [SerializeField] private Shader beamShader;
         [SerializeField] private Shader groundSpotShader;
+        [SerializeField] private Shader particleShader;
 
         private MeshRenderer beamRenderer;
         private MeshFilter beamFilter;
@@ -44,6 +55,10 @@ namespace MyShared.VolumetricLight
         private Material groundMaterial;
         private GameObject groundSpotObject;
         private MeshRenderer groundRenderer;
+        private GameObject particleObject;
+        private ParticleSystem lightParticleSystem;
+        private ParticleSystemRenderer particleRenderer;
+        private Material particleMaterial;
         private MaterialPropertyBlock beamProperties;
         private MaterialPropertyBlock groundProperties;
 
@@ -74,6 +89,7 @@ namespace MyShared.VolumetricLight
             RemoveProxyCollider();
             CreateMaterials();
             CreateGroundSpot();
+            CreateLightParticles();
             ApplyTransformScale();
             UpdateProperties();
         }
@@ -111,6 +127,7 @@ namespace MyShared.VolumetricLight
         {
             ApplyTransformScale();
             UpdateProperties();
+            UpdateLightParticles();
         }
 
         private void CacheComponents()
@@ -138,6 +155,7 @@ namespace MyShared.VolumetricLight
         {
             if (beamShader == null) beamShader = Shader.Find("MyShared/VolumetricLightBeam");
             if (groundSpotShader == null) groundSpotShader = Shader.Find("MyShared/VolumetricLightGroundSpot");
+            if (particleShader == null) particleShader = Shader.Find("MyShared/VolumetricLightParticles");
 
             if (beamShader != null && (beamMaterial == null || beamMaterial.shader != beamShader))
             {
@@ -233,6 +251,144 @@ namespace MyShared.VolumetricLight
             groundSpotObject.SetActive(true);
         }
 
+        private void CreateLightParticles()
+        {
+            if (!showLightParticles)
+            {
+                if (particleObject != null) particleObject.SetActive(false);
+                return;
+            }
+
+            if (particleObject == null)
+            {
+                particleObject = new GameObject("Volumetric Light Dust");
+                particleObject.hideFlags = HideFlags.HideAndDontSave;
+                lightParticleSystem = particleObject.AddComponent<ParticleSystem>();
+                particleRenderer = particleObject.GetComponent<ParticleSystemRenderer>();
+                ConfigureParticleSystem();
+            }
+
+            if (particleShader == null)
+                particleShader = Shader.Find("MyShared/VolumetricLightParticles");
+
+            if (particleShader != null && (particleMaterial == null || particleMaterial.shader != particleShader))
+            {
+                DestroyMaterial(particleMaterial);
+                particleMaterial = new Material(particleShader) { name = "Volumetric Light Particles (Runtime)" };
+                particleMaterial.hideFlags = HideFlags.HideAndDontSave;
+                particleMaterial.SetFloat("_ParticleIntensity", particleIntensity);
+            }
+
+            if (particleRenderer != null && particleMaterial != null)
+                particleRenderer.sharedMaterial = particleMaterial;
+
+            particleObject.SetActive(true);
+            UpdateLightParticles();
+        }
+
+        private void ConfigureParticleSystem()
+        {
+            if (lightParticleSystem == null) return;
+
+            var main = lightParticleSystem.main;
+            main.loop = true;
+            main.playOnAwake = false;
+            main.duration = 5f;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            main.scalingMode = ParticleSystemScalingMode.Local;
+            main.maxParticles = Mathf.Max(1, particleMaxCount);
+            main.startLifetime = new ParticleSystem.MinMaxCurve(particleLifetime * 0.65f, particleLifetime * 1.35f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(particleRiseSpeed * 0.55f, particleRiseSpeed * 1.35f);
+            main.startSize = new ParticleSystem.MinMaxCurve(particleSize * 0.65f, particleSize * 1.35f);
+            main.startColor = particleColor;
+            main.gravityModifier = 0f;
+            main.simulationSpeed = 1f;
+
+            var emission = lightParticleSystem.emission;
+            emission.enabled = true;
+            emission.rateOverTime = particleEmissionRate;
+
+            var shape = lightParticleSystem.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.position = new Vector3(0f, -length * 0.48f, 0f);
+            shape.scale = new Vector3(radius * 1.55f, 0.12f, radius * 1.55f);
+
+            var colorOverLifetime = lightParticleSystem.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            Gradient gradient = new Gradient();
+            gradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(Color.white, 0f),
+                    new GradientColorKey(new Color(1f, 0.9f, 0.68f), 0.5f),
+                    new GradientColorKey(Color.white, 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(0f, 0f),
+                    new GradientAlphaKey(0.85f, 0.15f),
+                    new GradientAlphaKey(0.65f, 0.75f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colorOverLifetime.color = gradient;
+
+            var sizeOverLifetime = lightParticleSystem.sizeOverLifetime;
+            sizeOverLifetime.enabled = true;
+            AnimationCurve sizeCurve = new AnimationCurve(
+                new Keyframe(0f, 0.65f),
+                new Keyframe(0.25f, 1f),
+                new Keyframe(1f, 0.2f));
+            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+            var velocity = lightParticleSystem.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
+            velocity.y = new ParticleSystem.MinMaxCurve(-0.05f, 0.08f);
+            velocity.z = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
+
+            if (particleRenderer != null)
+            {
+                particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+                particleRenderer.alignment = ParticleSystemRenderSpace.View;
+                particleRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                particleRenderer.receiveShadows = false;
+                particleRenderer.sortingFudge = 0.1f;
+            }
+
+            lightParticleSystem.Clear(true);
+            lightParticleSystem.Play(true);
+        }
+
+        private void UpdateLightParticles()
+        {
+            if (particleObject == null || lightParticleSystem == null) return;
+
+            particleObject.transform.SetPositionAndRotation(transform.position, transform.rotation);
+            particleObject.transform.localScale = Vector3.one;
+            particleObject.SetActive(showLightParticles);
+
+            if (!showLightParticles) return;
+
+            var main = lightParticleSystem.main;
+            main.maxParticles = Mathf.Max(1, particleMaxCount);
+            main.startLifetime = new ParticleSystem.MinMaxCurve(particleLifetime * 0.65f, particleLifetime * 1.35f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(particleRiseSpeed * 0.55f, particleRiseSpeed * 1.35f);
+            main.startSize = new ParticleSystem.MinMaxCurve(particleSize * 0.65f, particleSize * 1.35f);
+            main.startColor = particleColor;
+
+            var emission = lightParticleSystem.emission;
+            emission.rateOverTime = particleEmissionRate;
+
+            var shape = lightParticleSystem.shape;
+            shape.position = new Vector3(0f, -length * 0.48f, 0f);
+            shape.scale = new Vector3(radius * 1.55f, 0.12f, radius * 1.55f);
+
+            if (particleMaterial != null)
+                particleMaterial.SetFloat("_ParticleIntensity", particleIntensity);
+        }
+
         private void UpdateProperties()
         {
             if (beamRenderer != null && beamMaterial != null)
@@ -263,8 +419,19 @@ namespace MyShared.VolumetricLight
         {
             DestroyMaterial(beamMaterial);
             DestroyMaterial(groundMaterial);
+            DestroyMaterial(particleMaterial);
             beamMaterial = null;
             groundMaterial = null;
+            particleMaterial = null;
+
+            if (particleObject != null)
+            {
+                if (Application.isPlaying) Destroy(particleObject);
+                else DestroyImmediate(particleObject);
+                particleObject = null;
+                lightParticleSystem = null;
+                particleRenderer = null;
+            }
 
             if (groundSpotObject != null)
             {
