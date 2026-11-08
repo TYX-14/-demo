@@ -57,6 +57,7 @@ namespace MyShared.VolumetricLight
         {
             CacheComponents();
             AssignBuiltinCube();
+            RemoveProxyCollider();
             ApplyTransformScale();
         }
 
@@ -64,6 +65,7 @@ namespace MyShared.VolumetricLight
         {
             CacheComponents();
             AssignBuiltinCube();
+            RemoveProxyCollider();
             CreateMaterials();
             CreateGroundSpot();
             ApplyTransformScale();
@@ -113,6 +115,15 @@ namespace MyShared.VolumetricLight
         {
             if (beamFilter != null && beamFilter.sharedMesh == null)
                 beamFilter.sharedMesh = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+        }
+
+        private void RemoveProxyCollider()
+        {
+            Collider proxyCollider = GetComponent<Collider>();
+            if (proxyCollider == null) return;
+
+            if (Application.isPlaying) Destroy(proxyCollider);
+            else DestroyImmediate(proxyCollider);
         }
 
         private void CreateMaterials()
