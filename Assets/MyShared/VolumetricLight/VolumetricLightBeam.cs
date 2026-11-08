@@ -40,7 +40,8 @@ namespace MyShared.VolumetricLight
         [Tooltip("是否在光柱中显示缓慢漂浮的光尘。")]
         public bool showLightParticles = true;
         [Min(0f)] public float particleEmissionRate = 16f;
-        [Min(0.01f)] public float particleRiseSpeed = 0.45f;
+        [Tooltip("光尘在光柱内部的缓慢漂浮幅度，不再代表固定向上的速度。")]
+        [Min(0.01f)] public float particleRiseSpeed = 0.12f;
         [Min(0.1f)] public float particleLifetime = 4f;
         [Min(0.001f)] public float particleSize = 0.055f;
         [Min(1)] public int particleMaxCount = 120;
@@ -315,7 +316,7 @@ namespace MyShared.VolumetricLight
             main.scalingMode = ParticleSystemScalingMode.Local;
             main.maxParticles = Mathf.Max(1, particleMaxCount);
             main.startLifetime = new ParticleSystem.MinMaxCurve(particleLifetime * 0.65f, particleLifetime * 1.35f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(particleRiseSpeed * 0.55f, particleRiseSpeed * 1.35f);
+            main.startSpeed = 0f;
             main.startSize = new ParticleSystem.MinMaxCurve(particleSize * 0.65f, particleSize * 1.35f);
             main.startColor = particleColor;
             main.gravityModifier = 0f;
@@ -327,13 +328,11 @@ namespace MyShared.VolumetricLight
 
             var shape = lightParticleSystem.shape;
             shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.position = new Vector3(0f, -length * 0.48f, 0f);
-            // Circle 形状默认位于本地 XZ 平面，法线沿本地 +Y；
-            // 光尘需要沿光柱本地 +Y 上升，因此不额外旋转发射形状。
+            shape.shapeType = ParticleSystemShapeType.Box;
+            // 使用覆盖整个光柱的盒形体积发射器，让新粒子从底部到顶部都有机会出现。
+            shape.position = Vector3.zero;
             shape.rotation = Vector3.zero;
-            shape.radius = radius * 0.72f;
-            shape.radiusThickness = 1f;
+            shape.scale = new Vector3(radius * 1.45f, length * 0.9f, radius * 1.45f);
 
             var colorOverLifetime = lightParticleSystem.colorOverLifetime;
             colorOverLifetime.enabled = true;
@@ -365,9 +364,9 @@ namespace MyShared.VolumetricLight
             var velocity = lightParticleSystem.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
-            velocity.x = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
-            velocity.y = new ParticleSystem.MinMaxCurve(-0.05f, 0.08f);
-            velocity.z = new ParticleSystem.MinMaxCurve(-0.08f, 0.08f);
+            velocity.x = new ParticleSystem.MinMaxCurve(-particleRiseSpeed * 0.35f, particleRiseSpeed * 0.35f);
+            velocity.y = new ParticleSystem.MinMaxCurve(-particleRiseSpeed * 0.2f, particleRiseSpeed * 0.25f);
+            velocity.z = new ParticleSystem.MinMaxCurve(-particleRiseSpeed * 0.35f, particleRiseSpeed * 0.35f);
 
             if (particleRenderer != null)
             {
@@ -409,7 +408,7 @@ namespace MyShared.VolumetricLight
             var main = lightParticleSystem.main;
             main.maxParticles = Mathf.Max(1, particleMaxCount);
             main.startLifetime = new ParticleSystem.MinMaxCurve(particleLifetime * 0.65f, particleLifetime * 1.35f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(particleRiseSpeed * 0.55f, particleRiseSpeed * 1.35f);
+            main.startSpeed = 0f;
             main.startSize = new ParticleSystem.MinMaxCurve(particleSize * 0.65f, particleSize * 1.35f);
             main.startColor = particleColor;
 
@@ -417,9 +416,9 @@ namespace MyShared.VolumetricLight
             emission.rateOverTime = particleEmissionRate;
 
             var shape = lightParticleSystem.shape;
-            shape.position = new Vector3(0f, -length * 0.48f, 0f);
+            shape.position = Vector3.zero;
             shape.rotation = Vector3.zero;
-            shape.radius = radius * 0.72f;
+            shape.scale = new Vector3(radius * 1.45f, length * 0.9f, radius * 1.45f);
 
             if (particleMaterial != null)
                 particleMaterial.SetFloat("_ParticleIntensity", particleIntensity);
