@@ -37,6 +37,14 @@ namespace MyShared.VolumetricLight
         [Tooltip("参与地面检测的碰撞体层。建议只勾选 Terrain 和 Ground 等地面层。")]
         public LayerMask groundLayers = ~0;
 
+        [Header("地面点光源")]
+        [Tooltip("在光柱实际落点生成 Point Light，照亮附近地面与物体。")]
+        public bool showGroundPointLight = true;
+        [Min(0f)] public float groundPointLightIntensity = 2f;
+        [Min(0.1f)] public float groundPointLightRange = 6f;
+        [Tooltip("点光源离地面的抬高距离，避免光源正好嵌入地表。")]
+        [Min(0f)] public float groundPointLightHeight = 0.15f;
+
         [Tooltip("是否在光柱中显示缓慢漂浮的光尘。")]
         public bool showLightParticles = true;
         [Min(0f)] public float particleEmissionRate = 16f;
@@ -59,6 +67,8 @@ namespace MyShared.VolumetricLight
         private Material groundMaterial;
         private GameObject groundSpotObject;
         private MeshRenderer groundRenderer;
+        private GameObject groundPointLightObject;
+        private Light groundPointLight;
         private GameObject particleObject;
         private ParticleSystem lightParticleSystem;
         private ParticleSystemRenderer particleRenderer;
@@ -97,6 +107,7 @@ namespace MyShared.VolumetricLight
             RemoveProxyCollider();
             CreateMaterials();
             CreateGroundSpot();
+            CreateGroundPointLight();
             CreateLightParticles();
             ApplyTransformScale();
             UpdateProperties();
@@ -124,6 +135,8 @@ namespace MyShared.VolumetricLight
             groundSpotSize = Mathf.Max(0.1f, groundSpotSize);
             groundSpotRayDistance = Mathf.Max(0.1f, groundSpotRayDistance);
             groundSpotMaxStretch = Mathf.Clamp(groundSpotMaxStretch, 1f, 5f);
+            groundPointLightRange = Mathf.Max(0.1f, groundPointLightRange);
+            groundPointLightHeight = Mathf.Max(0f, groundPointLightHeight);
             raymarchSteps = Mathf.Clamp(raymarchSteps, 4, 48);
 
             if (beamFilter == null)
@@ -134,9 +147,10 @@ namespace MyShared.VolumetricLight
 
             ApplyTransformScale();
 
-            if (isActiveAndEnabled && beamMaterial != null)
+            if (isActiveAndEnabled)
             {
                 CreateGroundSpot();
+                CreateGroundPointLight();
                 UpdateProperties();
             }
         }
@@ -198,10 +212,8 @@ namespace MyShared.VolumetricLight
             if (!showGroundSpot)
             {
                 if (groundSpotObject != null) groundSpotObject.SetActive(false);
-                return;
             }
-
-            if (groundSpotObject == null)
+            else if (groundSpotObject == null)
             {
                 groundSpotObject = new GameObject("Ground Light Spot");
                 groundSpotObject.hideFlags = HideFlags.HideAndDontSave;
@@ -219,6 +231,38 @@ namespace MyShared.VolumetricLight
             UpdateGroundSpotTransform();
         }
 
+        private void CreateGroundPointLight()
+        {
+            if (!showGroundPointLight)
+            {
+                if (groundPointLightObject != null)
+                    groundPointLightObject.SetActive(false);
+                return;
+            }
+
+            if (groundPointLightObject == null)
+            {
+                groundPointLightObject = new GameObject("Ground Point Light");
+                groundPointLightObject.hideFlags = HideFlags.HideAndDontSave;
+                groundPointLight = groundPointLightObject.AddComponent<Light>();
+                groundPointLight.type = LightType.Point;
+                groundPointLight.shadows = LightShadows.None;
+                groundPointLight.renderMode = LightRenderMode.Auto;
+                groundPointLight.bounceIntensity = 0f;
+            }
+
+            if (groundPointLight != null)
+            {
+                groundPointLight.color = beamColor;
+                groundPointLight.intensity = groundPointLightIntensity;
+                groundPointLight.range = groundPointLightRange;
+                groundPointLight.shadows = LightShadows.None;
+                groundPointLight.enabled = true;
+            }
+
+            UpdateGroundSpotTransform();
+        }
+
         private void ApplyTransformScale()
         {
             if (transform == null) return;
@@ -228,11 +272,11 @@ namespace MyShared.VolumetricLight
 
         private void UpdateGroundSpotTransform()
         {
-            if (groundSpotObject == null) return;
-
-            if (!showGroundSpot || groundMaterial == null)
+            bool needsGroundHit = showGroundSpot || showGroundPointLight;
+            if (!needsGroundHit)
             {
-                groundSpotObject.SetActive(false);
+                if (groundSpotObject != null) groundSpotObject.SetActive(false);
+                if (groundPointLightObject != null) groundPointLightObject.SetActive(false);
                 return;
             }
 
@@ -242,8 +286,28 @@ namespace MyShared.VolumetricLight
             if (!Physics.Raycast(rayOrigin, beamDirection, out RaycastHit hit,
                     groundSpotRayDistance, groundLayers, QueryTriggerInteraction.Ignore))
             {
-                // 没有真实地面碰撞体时隐藏光斑，避免它悬浮在错误高度。
-                groundSpotObject.SetActive(false);
+                // 没有真实地面碰撞体时，隐藏两种落点效果，避免它们悬浮在错误高度。
+                if (groundSpotObject != null) groundSpotObject.SetActive(false);
+                if (groundPointLightObject != null) groundPointLightObject.SetActive(false);
+                return;
+            }
+
+            if (groundPointLightObject != null)
+            {
+                groundPointLightObject.transform.position = hit.point + hit.normal * groundPointLightHeight;
+                groundPointLightObject.transform.rotation = Quaternion.identity;
+                groundPointLightObject.SetActive(showGroundPointLight && groundPointLight != null);
+                if (groundPointLight != null)
+                {
+                    groundPointLight.color = beamColor;
+                    groundPointLight.intensity = groundPointLightIntensity;
+                    groundPointLight.range = groundPointLightRange;
+                }
+            }
+
+            if (!showGroundSpot || groundMaterial == null || groundSpotObject == null)
+            {
+                if (groundSpotObject != null) groundSpotObject.SetActive(false);
                 return;
             }
 
@@ -514,6 +578,14 @@ namespace MyShared.VolumetricLight
                 else DestroyImmediate(groundSpotObject);
                 groundSpotObject = null;
                 groundRenderer = null;
+            }
+
+            if (groundPointLightObject != null)
+            {
+                if (Application.isPlaying) Destroy(groundPointLightObject);
+                else DestroyImmediate(groundPointLightObject);
+                groundPointLightObject = null;
+                groundPointLight = null;
             }
 
             if (beamRenderer != null && beamRenderer.sharedMaterial != null &&
