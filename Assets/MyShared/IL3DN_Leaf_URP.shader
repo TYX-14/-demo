@@ -213,10 +213,26 @@ Shader "MyShared/IL3DN/Leaf_URP"
                 albedo = lerp(albedo, _SnowColor.rgb, snowMask);
             #endif
 
+            // 主方向光 + 球谐环境光。
             Light mainLight = GetMainLight();
-            float ndotl = saturate(dot(normalWS, mainLight.direction));
-            float3 ambient = SampleSH(normalWS);
-            float3 lighting = ambient + mainLight.color * ndotl;
+            half mainNdotL = saturate(dot(normalWS, mainLight.direction));
+            half3 lighting = SampleSH(normalWS)
+                + mainLight.color * mainNdotL;
+
+            // 逐像素附加光源：让 Point Light / Spot Light 能照亮树叶。
+            #if defined(_ADDITIONAL_LIGHTS)
+                uint additionalLightCount = GetAdditionalLightsCount();
+                for (uint lightIndex = 0u; lightIndex < additionalLightCount; lightIndex++)
+                {
+                    Light additionalLight = GetAdditionalLight(lightIndex, IN.positionWS);
+                    half additionalNdotL = saturate(dot(normalWS, additionalLight.direction));
+                    lighting += additionalLight.color
+                        * additionalNdotL
+                        * additionalLight.distanceAttenuation
+                        * additionalLight.shadowAttenuation;
+                }
+            #endif
+
             return half4(albedo * lighting, 1);
         }
 
@@ -277,6 +293,8 @@ Shader "MyShared/IL3DN/Leaf_URP"
             #pragma shader_feature_local _SNOW_ON
             #pragma shader_feature_local _USE_VERTEX_COLOR_WIND
             #pragma multi_compile GPU_FRUSTUM_ON__
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             ENDHLSL
         }
 
