@@ -151,10 +151,26 @@ Shader "MyShared/IL3DN/Branch_URP"
             half3 normalWS = NormalizeNormalPerPixel(input.normalWS);
             half3 albedo = GetBranchAlbedo(input.uv, normalWS);
 
+            // 主方向光，保留原有实时阴影接收。
             Light mainLight = GetMainLight(input.shadowCoord);
-            half NdotL = saturate(dot(normalWS, mainLight.direction));
+            half mainNdotL = saturate(dot(normalWS, mainLight.direction));
             half3 ambient = SampleSH(normalWS);
-            half3 lighting = ambient + mainLight.color * (NdotL * mainLight.shadowAttenuation);
+            half3 lighting = ambient
+                + mainLight.color * (mainNdotL * mainLight.shadowAttenuation);
+
+            // 逐像素附加光源：支持场景中的 Point Light / Spot Light。
+            #if defined(_ADDITIONAL_LIGHTS)
+                uint additionalLightCount = GetAdditionalLightsCount();
+                for (uint lightIndex = 0u; lightIndex < additionalLightCount; lightIndex++)
+                {
+                    Light additionalLight = GetAdditionalLight(lightIndex, input.positionWS);
+                    half additionalNdotL = saturate(dot(normalWS, additionalLight.direction));
+                    lighting += additionalLight.color
+                        * additionalNdotL
+                        * additionalLight.distanceAttenuation
+                        * additionalLight.shadowAttenuation;
+                }
+            #endif
 
             return half4(albedo * lighting, 1.0);
         }
@@ -176,6 +192,8 @@ Shader "MyShared/IL3DN/Branch_URP"
             #pragma shader_feature_local _SNOW_ON
             #pragma shader_feature_local _USE_VERTEX_COLOR_WIND
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             ENDHLSL
         }
