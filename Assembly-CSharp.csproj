@@ -154,6 +154,7 @@
      <Compile Include="Assets\Scripts\Game\Path Acton\ChallengeAction.cs" />
      <Compile Include="Assets\Scripts\UI\Field Panel\PanelEvents.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TeleType.cs" />
+     <Compile Include="Assets\MYShaders\CloudShadowProjector.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventCheck.cs" />
      <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_UiFrameRateCounter.cs" />
      <Compile Include="Assets\Scripts\UI\Battle UI\TimelineIconController.cs" />
@@ -236,6 +237,7 @@
      <None Include="Assets\Art3\JMO Assets\Cartoon FX Remaster\CFXR Assets\Shaders\CFXR_PASSES.cginc" />
      <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_Decals.shader" />
      <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_Leaf.shader" />
+     <None Include="Assets\MYShaders\CloudShadowOverlay.shader" />
      <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_Cloud.shader" />
      <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_CardComplex.shader" />
      <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
