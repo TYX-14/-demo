@@ -312,7 +312,9 @@ namespace MyShared.VolumetricLight
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Circle;
             shape.position = new Vector3(0f, -length * 0.48f, 0f);
-            shape.rotation = new Vector3(-90f, 0f, 0f);
+            // Circle 形状默认位于本地 XZ 平面，法线沿本地 +Y；
+            // 光尘需要沿光柱本地 +Y 上升，因此不额外旋转发射形状。
+            shape.rotation = Vector3.zero;
             shape.radius = radius * 0.72f;
             shape.radiusThickness = 1f;
 
@@ -398,6 +400,7 @@ namespace MyShared.VolumetricLight
 
             var shape = lightParticleSystem.shape;
             shape.position = new Vector3(0f, -length * 0.48f, 0f);
+            shape.rotation = Vector3.zero;
             shape.radius = radius * 0.72f;
 
             if (particleMaterial != null)
