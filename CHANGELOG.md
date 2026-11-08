@@ -1,3 +1,11 @@
+## 2026-11-08：为 Battle01 建立高反差光照基准
+
+- **仅限 Battle01：** 调整 `Assets/Art2/Scenes/Battel01.scene` 的场景环境光强度，从 1 降至 0.42，并将反射环境强度从 1 降至 0.7；不修改其他场景，也不修改共享 URP Asset / Renderer。
+- **压制亮部泛光：** Battle01 专属 Volume Profile 将 Bloom Threshold 从 0.5 提高到 0.8、Intensity 从 0.5 降至 0.35，保留适度高亮辉光，避免亮部大面积泛白。
+- **收敛暗角：** Vignette Intensity 从 0.463 调整到 0.30，Smoothness 从 0.248 调整到 0.55，保留画面聚焦感，同时避免边缘过早陷入纯黑。
+- **现有光照保留：** 保留场景 Directional Light 的青蓝色调、1.5 强度与软阴影设置；保留已启用的 SSAO Renderer Feature。没有修改共享 Renderer，避免影响其他场景。
+- **验证状态：** 已提交场景与 Volume Profile 配置；尚未在 Unity 中打开 Battle01 实际观察。环境光降低幅度是第一版基准，需根据场景材质、天空盒和相机画面继续微调。
+
 ## 2026-11-08：为体积光柱增加可选的地面 Point Light
 
 - **新增真实局部照明：** `VolumetricLightBeam.cs` 可在光柱射线命中的地面落点生成独立 Point Light，照亮附近地面与支持 URP 附加光源的物体；点光源位置沿地面法线轻微抬高。
