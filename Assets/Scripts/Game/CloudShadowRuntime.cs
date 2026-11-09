@@ -351,7 +351,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour, IEventReceiver<GameModeC
                 float cloudValue = broad * 0.70f + medium * 0.25f + detail * 0.05f;
 
                 float edgeNoise = PeriodicNoise(sampleU + 0.23f, sampleV + 0.41f, 96);
-                float threshold = 0.485f + (edgeNoise - 0.5f) * 0.045f;
+                float threshold = 0.5f + (edgeNoise - 0.5f) * 0.18f;
                 float alpha = Mathf.SmoothStep(threshold - 0.105f, threshold + 0.105f, cloudValue);
                 byte a = (byte)Mathf.RoundToInt(alpha * 255f);
                 pixels[y * TextureSize + x] = new Color32(255, 255, 255, a);
