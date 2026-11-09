@@ -4,8 +4,26 @@ using UnityEngine.Rendering;
 public sealed class CloudShadowRuntime : MonoBehaviour
 {
     private const int TextureSize = 512;
-    private const float PlaneSize = 260f;
-    private const float HeightAboveCamera = 42f;
+
+    [Header("云影外观")]
+    [SerializeField, Range(2f, 20f), Tooltip("数值越大，单位面积内的云块越多，云块越小。")]
+    private float cloudTiling = 8f;
+
+    [SerializeField, Range(20f, 100f), Tooltip("云层投射平面相对初始摄像机高度的高度。")]
+    private float cloudHeight = 45f;
+
+    [SerializeField, Range(120f, 500f), Tooltip("云层投射平面的世界尺寸。")]
+    private float planeSize = 320f;
+
+    [SerializeField, Range(0.0001f, 0.02f), Tooltip("云纹理流动速度。")]
+    private float cloudSpeed = 0.0025f;
+
+    [SerializeField, Range(0.0001f, 0.02f), Tooltip("云纹理横向流动速度。")]
+    private float cloudSideSpeed = 0.0012f;
+
+    [Header("阴影")]
+    [SerializeField, Range(0.1f, 1f)]
+    private float shadowStrength = 0.9f;
 
     private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -17,9 +35,11 @@ public sealed class CloudShadowRuntime : MonoBehaviour
     private Transform cloudPlane;
     private Material cloudMaterial;
     private Texture2D cloudTexture;
-    private Vector2 textureOffset;
 
-    private readonly Vector2 cloudVelocity = new Vector2(0.0035f, 0.0018f);
+    private Vector2 textureOffset;
+    private Vector3 previousCameraPosition;
+    private float fixedCloudAltitude;
+    private bool hasCameraAnchor;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateAtRuntime()
@@ -34,10 +54,19 @@ public sealed class CloudShadowRuntime : MonoBehaviour
 
     private void Update()
     {
-        if (targetCamera == null)
-            targetCamera = FindTargetCamera();
+        // Re-check MainCamera so scene transitions and battle cameras are picked up.
+        Camera currentMainCamera = Camera.main;
+        if (currentMainCamera != null && currentMainCamera.isActiveAndEnabled)
+        {
+            if (targetCamera != currentMainCamera)
+                SetTargetCamera(currentMainCamera);
+        }
+        else if (targetCamera == null || !targetCamera.isActiveAndEnabled)
+        {
+            SetTargetCamera(FindFallbackCamera());
+        }
 
-        if (sun == null)
+        if (sun == null || !sun.isActiveAndEnabled)
             sun = FindSun();
 
         if (cloudPlane == null && targetCamera != null && sun != null)
@@ -47,21 +76,60 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             return;
 
         Vector3 cameraPosition = targetCamera.transform.position;
-        cloudPlane.position = new Vector3(
+
+        // Follow only horizontally for coverage. Keep altitude fixed so changing
+        // the camera pitch/height does not drag the projected shadow up and down.
+        Vector3 nextPlanePosition = new Vector3(
             cameraPosition.x,
-            cameraPosition.y + HeightAboveCamera,
+            fixedCloudAltitude,
             cameraPosition.z);
 
-        textureOffset += cloudVelocity * Time.deltaTime;
+        if (hasCameraAnchor)
+        {
+            Vector3 cameraDelta = nextPlanePosition - cloudPlane.position;
+
+            // Compensate UVs for plane movement. This keeps the cloud pattern
+            // anchored in world space instead of making shadows follow the player.
+            textureOffset.x -= cameraDelta.x / planeSize * cloudTiling;
+            textureOffset.y -= cameraDelta.z / planeSize * cloudTiling;
+        }
+
+        cloudPlane.position = nextPlanePosition;
+        previousCameraPosition = cameraPosition;
+        hasCameraAnchor = true;
+
+        // Only this deliberate texture motion moves the cloud shadows.
+        textureOffset += new Vector2(cloudSideSpeed, cloudSpeed) * Time.deltaTime;
         cloudMaterial.SetTextureOffset(BaseMapId, textureOffset);
     }
 
-    private Camera FindTargetCamera()
+    private void SetTargetCamera(Camera cameraToUse)
     {
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null && mainCamera.isActiveAndEnabled)
-            return mainCamera;
+        if (cameraToUse == null)
+            return;
 
+        targetCamera = cameraToUse;
+
+        if (cloudPlane == null)
+        {
+            fixedCloudAltitude = targetCamera.transform.position.y + cloudHeight;
+        }
+        else
+        {
+            // A newly active camera may be in a different scene or battle setup.
+            // Preserve the cloud layer altitude, but move its coverage to the camera.
+            Vector3 p = cloudPlane.position;
+            cloudPlane.position = new Vector3(
+                targetCamera.transform.position.x,
+                fixedCloudAltitude,
+                targetCamera.transform.position.z);
+            previousCameraPosition = targetCamera.transform.position;
+            hasCameraAnchor = true;
+        }
+    }
+
+    private Camera FindFallbackCamera()
+    {
         Camera[] cameras = FindObjectsOfType<Camera>();
         for (int i = 0; i < cameras.Length; i++)
         {
@@ -102,7 +170,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         }
 
         sun.shadows = LightShadows.Soft;
-        sun.shadowStrength = 0.9f;
+        sun.shadowStrength = shadowStrength;
 
         cloudTexture = GenerateCloudTexture();
         cloudMaterial = new Material(litShader)
@@ -120,13 +188,13 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         cloudMaterial.SetFloat("_Cull", 2f);
         cloudMaterial.EnableKeyword("_ALPHATEST_ON");
         cloudMaterial.SetOverrideTag("RenderType", "TransparentCutout");
-        cloudMaterial.SetTextureScale(BaseMapId, new Vector2(3f, 3f));
+        cloudMaterial.SetTextureScale(BaseMapId, Vector2.one * cloudTiling);
 
         GameObject planeObject = new GameObject("Cloud Shadow Caster");
         planeObject.transform.SetParent(transform, false);
 
         MeshFilter meshFilter = planeObject.AddComponent<MeshFilter>();
-        meshFilter.sharedMesh = CreatePlaneMesh(PlaneSize);
+        meshFilter.sharedMesh = CreatePlaneMesh(planeSize);
 
         MeshRenderer meshRenderer = planeObject.AddComponent<MeshRenderer>();
         meshRenderer.sharedMaterial = cloudMaterial;
@@ -136,8 +204,15 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
 
         cloudPlane = planeObject.transform;
+        fixedCloudAltitude = targetCamera.transform.position.y + cloudHeight;
+        cloudPlane.position = new Vector3(
+            targetCamera.transform.position.x,
+            fixedCloudAltitude,
+            targetCamera.transform.position.z);
+        previousCameraPosition = targetCamera.transform.position;
+        hasCameraAnchor = true;
 
-        Debug.Log("[Cloud Shadows] 已创建云影投射平面，使用 URP 方向光实时阴影。");
+        Debug.Log("[Cloud Shadows] 云影已启动。云块大小、速度和高度可在 Runtime Cloud Shadows 组件中调整。");
     }
 
     private static Mesh CreatePlaneMesh(float size)
@@ -188,17 +263,17 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             {
                 float u = (float)x / TextureSize;
 
-                float warpX = PeriodicNoise(u, v, 3);
-                float warpY = PeriodicNoise(u + 0.37f, v + 0.71f, 3);
-                float sampleU = Mathf.Repeat(u + (warpX - 0.5f) * 0.18f, 1f);
-                float sampleV = Mathf.Repeat(v + (warpY - 0.5f) * 0.18f, 1f);
+                float warpX = PeriodicNoise(u, v, 5);
+                float warpY = PeriodicNoise(u + 0.37f, v + 0.71f, 5);
+                float sampleU = Mathf.Repeat(u + (warpX - 0.5f) * 0.12f, 1f);
+                float sampleV = Mathf.Repeat(v + (warpY - 0.5f) * 0.12f, 1f);
 
-                float broad = PeriodicNoise(sampleU, sampleV, 4);
-                float medium = PeriodicNoise(sampleU, sampleV, 8);
-                float detail = PeriodicNoise(sampleU, sampleV, 16);
-                float cloudValue = broad * 0.70f + medium * 0.22f + detail * 0.08f;
+                float broad = PeriodicNoise(sampleU, sampleV, 6);
+                float medium = PeriodicNoise(sampleU, sampleV, 12);
+                float detail = PeriodicNoise(sampleU, sampleV, 24);
+                float cloudValue = broad * 0.62f + medium * 0.27f + detail * 0.11f;
 
-                float alpha = Mathf.SmoothStep(0.47f, 0.53f, cloudValue);
+                float alpha = Mathf.SmoothStep(0.46f, 0.54f, cloudValue);
                 byte a = (byte)Mathf.RoundToInt(alpha * 255f);
                 pixels[y * TextureSize + x] = new Color32(255, 255, 255, a);
             }
