@@ -1,3 +1,14 @@
+## 2026-11-09：新增全屏深度云影系统（第一版）
+
+- **替换地面贴片思路：** 新增 `CloudShadowRendererFeature` 与全屏 Shader，读取摄像机深度并重建可见像素的世界坐标，再按世界空间噪声计算云影；不再依赖地面网格，因此可统一影响写入深度的地形、草地、树木和建筑像素。
+- **云层投影：** 云影坐标会按主光源方向投影到可配置的云层高度，使不同高度的树冠、建筑表面与地面具有相应的云影偏移。
+- **程序化云形：** 使用多层噪声与域扭曲生成柔和云块，不需要额外噪声贴图；支持覆盖率、边缘柔和、细节、大小、强度、颜色、流动方向和速度。
+- **参数控制：** 新增 `CloudShadowController`，Inspector 参数使用中文；自动读取 `RenderSettings.sun`，没有设置场景主光源时使用手动太阳方向。
+- **URP 接入：** Renderer Feature 请求 Camera Depth，并在透明物体绘制完成、后处理开始前执行；新增材质放在 Resources 中，由 Renderer Feature 自动加载。
+- **安装方式：** 将 `CloudShadowRendererFeature` 添加到当前使用的 URP Renderer Data（当前项目 QualitySettings 的 High Fidelity 档使用 `URP-HighFidelity-Renderer.asset`）；在场景空物体上添加 `CloudShadowController`。旧版 `CloudShadowProjector` 是地面网格方案，启用新系统后应关闭旧投射器，避免地面重复变暗。
+- **当前边界：** 依赖可用的 Camera Depth。没有写入深度的透明物体、屏幕空间 UI 不会获得准确的独立表面云影；透明特效可能按其后方深度采样而出现近似效果。
+- **验证状态：** 已提交脚本、Shader、材质与元数据；尚未在 Unity 2022 / URP 14.1.0 中编译或运行验证。需先检查 Console，再确认 Game View 中地形、草、树、建筑是否同步变暗，云影移动是否连续，以及主光源方向变化时投影偏移是否合理。
+
 ## 2026-11-08：修复体积光柱的场景深度遮挡
 
 - **修正代理网格渲染面：** 光束改为渲染朝向摄像机的代理立方体表面（Cull Back），从近侧表面沿摄像机视线进入场景的方向执行体积积分。
