@@ -37,7 +37,6 @@ public sealed class CloudShadowRuntime : MonoBehaviour
     private Texture2D cloudTexture;
 
     private Vector2 textureOffset;
-    private Vector3 previousCameraPosition;
     private float fixedCloudAltitude;
     private bool hasCameraAnchor;
 
@@ -95,7 +94,6 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         }
 
         cloudPlane.position = nextPlanePosition;
-        previousCameraPosition = cameraPosition;
         hasCameraAnchor = true;
 
         // Only this deliberate texture motion moves the cloud shadows.
@@ -117,12 +115,16 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         else
         {
             // A newly active camera may be in a different scene or battle setup.
-            // Preserve the cloud layer altitude, but move its coverage to the camera.
-            cloudPlane.position = new Vector3(
+            // Shift coverage while compensating UVs so the pattern stays world-anchored.
+            Vector3 oldPosition = cloudPlane.position;
+            Vector3 newPosition = new Vector3(
                 targetCamera.transform.position.x,
                 fixedCloudAltitude,
                 targetCamera.transform.position.z);
-            previousCameraPosition = targetCamera.transform.position;
+            Vector3 cameraDelta = newPosition - oldPosition;
+            textureOffset.x += cameraDelta.x / planeSize * cloudTiling;
+            textureOffset.y += cameraDelta.z / planeSize * cloudTiling;
+            cloudPlane.position = newPosition;
             hasCameraAnchor = true;
         }
     }
@@ -238,7 +240,6 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             targetCamera.transform.position.x,
             fixedCloudAltitude,
             targetCamera.transform.position.z);
-        previousCameraPosition = targetCamera.transform.position;
         hasCameraAnchor = true;
 
         Debug.Log("[Cloud Shadows] 云影已启动。云块大小、速度和高度可在 Runtime Cloud Shadows 组件中调整。");
