@@ -1,16 +1,25 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using MFrameork.Event;
 
-public sealed class CloudShadowRuntime : MonoBehaviour
+public sealed class CloudShadowRuntime : MonoBehaviour, IEventReceiver<GameModeChangedEvent>
 {
-    private const int TextureSize = 512;
+    private const int TextureSize = 1024;
 
     [Header("云影外观")]
     [SerializeField, Range(2f, 20f), Tooltip("数值越大，单位面积内的云块越多，云块越小。")]
     private float cloudTiling = 8f;
 
-    [SerializeField, Range(20f, 100f), Tooltip("云层投射平面相对初始摄像机高度的高度。")]
-    private float cloudHeight = 45f;
+    [SerializeField, Range(5f, 100f), Tooltip("探索模式下，云层投射平面高于初始摄像机的距离。")]
+    private float exploreCloudHeight = 45f;
+
+    [SerializeField, Range(5f, 100f), Tooltip("战斗模式下，云层投射平面高于当前摄像机的距离。")]
+    private float battleCloudHeight = 20f;
+
+    private GameMode currentGameMode = GameMode.Explore;
+
+    private float ActiveCloudHeight =>
+        currentGameMode == GameMode.Battle ? battleCloudHeight : exploreCloudHeight;
 
     [SerializeField, Range(120f, 500f), Tooltip("云层投射平面的世界尺寸。")]
     private float planeSize = 320f;
@@ -51,8 +60,48 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         host.AddComponent<CloudShadowRuntime>();
     }
 
+    private void OnEnable()
+    {
+        EventBus.Subscribe<GameModeChangedEvent>(this);
+    }
+
+    private void OnDisable()
+    {
+        EventBus.Unsubscribe<GameModeChangedEvent>(this);
+    }
+
+    public void OnEvent(GameModeChangedEvent evt)
+    {
+        ApplyGameMode(evt.newMode);
+    }
+
+    private void Start()
+    {
+        if (GameModeManager.Instance != null)
+            ApplyGameMode(GameModeManager.Instance.CurrentGameMode);
+    }
+
+    private void ApplyGameMode(GameMode newMode)
+    {
+        currentGameMode = newMode;
+        if (targetCamera == null)
+            return;
+
+        fixedCloudAltitude = targetCamera.transform.position.y + ActiveCloudHeight;
+        if (cloudPlane != null)
+        {
+            Vector3 position = cloudPlane.position;
+            position.y = fixedCloudAltitude;
+            cloudPlane.position = position;
+        }
+    }
+
     private void Update()
     {
+        if (GameModeManager.Instance != null &&
+            currentGameMode != GameModeManager.Instance.CurrentGameMode)
+            ApplyGameMode(GameModeManager.Instance.CurrentGameMode);
+
         // Re-check MainCamera so scene transitions and battle cameras are picked up.
         Camera currentMainCamera = Camera.main;
         if (currentMainCamera != null && currentMainCamera.isActiveAndEnabled)
@@ -110,7 +159,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour
 
         if (cloudPlane == null)
         {
-            fixedCloudAltitude = targetCamera.transform.position.y + cloudHeight;
+            fixedCloudAltitude = targetCamera.transform.position.y + ActiveCloudHeight;
         }
         else
         {
@@ -151,7 +200,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             Vector3 position = cloudPlane.position;
             position.y = fixedCloudAltitude = (targetCamera != null
                 ? targetCamera.transform.position.y
-                : position.y - cloudHeight) + cloudHeight;
+                : position.y - ActiveCloudHeight) + ActiveCloudHeight;
             cloudPlane.position = position;
         }
 
@@ -277,10 +326,10 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         Texture2D texture = new Texture2D(
             TextureSize, TextureSize, TextureFormat.RGBA32, false, true)
         {
-            name = "Runtime Procedural Cloud Mask",
+            name = "Runtime Soft Billow Cloud Mask",
             wrapMode = TextureWrapMode.Repeat,
-            filterMode = FilterMode.Bilinear,
-            anisoLevel = 1
+            filterMode = FilterMode.Trilinear,
+            anisoLevel = 4
         };
 
         Color32[] pixels = new Color32[TextureSize * TextureSize];
@@ -288,42 +337,56 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         for (int y = 0; y < TextureSize; y++)
         {
             float v = (float)y / TextureSize;
-
             for (int x = 0; x < TextureSize; x++)
             {
                 float u = (float)x / TextureSize;
+                float warpX = Fbm(u, v, 4, 0.52f);
+                float warpY = Fbm(u + 0.317f, v + 0.683f, 4, 0.52f);
+                float sampleU = Mathf.Repeat(u + (warpX - 0.5f) * 0.19f, 1f);
+                float sampleV = Mathf.Repeat(v + (warpY - 0.5f) * 0.19f, 1f);
 
-                float warpX = PeriodicNoise(u, v, 5);
-                float warpY = PeriodicNoise(u + 0.37f, v + 0.71f, 5);
-                float sampleU = Mathf.Repeat(u + (warpX - 0.5f) * 0.12f, 1f);
-                float sampleV = Mathf.Repeat(v + (warpY - 0.5f) * 0.12f, 1f);
+                float broad = Fbm(sampleU, sampleV, 4, 0.55f);
+                float medium = Fbm(sampleU + 0.11f, sampleV - 0.07f, 5, 0.5f);
+                float detail = PeriodicNoise(sampleU, sampleV, 48);
+                float cloudValue = broad * 0.70f + medium * 0.25f + detail * 0.05f;
 
-                float broad = PeriodicNoise(sampleU, sampleV, 6);
-                float medium = PeriodicNoise(sampleU, sampleV, 12);
-                float detail = PeriodicNoise(sampleU, sampleV, 24);
-                float cloudValue = broad * 0.62f + medium * 0.27f + detail * 0.11f;
-
-                float alpha = Mathf.SmoothStep(0.46f, 0.54f, cloudValue);
+                float edgeNoise = PeriodicNoise(sampleU + 0.23f, sampleV + 0.41f, 96);
+                float threshold = 0.485f + (edgeNoise - 0.5f) * 0.045f;
+                float alpha = Mathf.SmoothStep(threshold - 0.105f, threshold + 0.105f, cloudValue);
                 byte a = (byte)Mathf.RoundToInt(alpha * 255f);
                 pixels[y * TextureSize + x] = new Color32(255, 255, 255, a);
             }
         }
 
         texture.SetPixels32(pixels);
-        texture.Apply(false, true);
+        texture.Apply(true, true);
         return texture;
+    }
+
+    private static float Fbm(float u, float v, int octaves, float persistence)
+    {
+        float sum = 0f;
+        float amplitude = 1f;
+        float totalAmplitude = 0f;
+        int frequency = 3;
+        for (int i = 0; i < octaves; i++)
+        {
+            sum += PeriodicNoise(u, v, frequency) * amplitude;
+            totalAmplitude += amplitude;
+            amplitude *= persistence;
+            frequency *= 2;
+        }
+        return sum / totalAmplitude;
     }
 
     private static float PeriodicNoise(float u, float v, int cells)
     {
         float px = u * cells;
         float py = v * cells;
-
         int x0 = Mathf.FloorToInt(px);
         int y0 = Mathf.FloorToInt(py);
         float tx = px - x0;
         float ty = py - y0;
-
         tx = tx * tx * (3f - 2f * tx);
         ty = ty * ty * (3f - 2f * ty);
 
@@ -331,7 +394,6 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         float b = Hash(Mathf.Repeat(x0 + 1, cells), Mathf.Repeat(y0, cells));
         float c = Hash(Mathf.Repeat(x0, cells), Mathf.Repeat(y0 + 1, cells));
         float d = Hash(Mathf.Repeat(x0 + 1, cells), Mathf.Repeat(y0 + 1, cells));
-
         float top = Mathf.Lerp(a, b, tx);
         float bottom = Mathf.Lerp(c, d, tx);
         return Mathf.Lerp(top, bottom, ty);
