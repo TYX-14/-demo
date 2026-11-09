@@ -78,10 +78,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour
 
         // Follow only horizontally for coverage. Keep altitude fixed so changing
         // the camera pitch/height does not drag the projected shadow up and down.
-        Vector3 nextPlanePosition = new Vector3(
-            cameraPosition.x,
-            fixedCloudAltitude,
-            cameraPosition.z);
+        Vector3 nextPlanePosition = CalculateCloudPlanePosition(cameraPosition);
 
         if (hasCameraAnchor)
         {
@@ -117,16 +114,61 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             // A newly active camera may be in a different scene or battle setup.
             // Shift coverage while compensating UVs so the pattern stays world-anchored.
             Vector3 oldPosition = cloudPlane.position;
-            Vector3 newPosition = new Vector3(
-                targetCamera.transform.position.x,
-                fixedCloudAltitude,
-                targetCamera.transform.position.z);
+            Vector3 newPosition = CalculateCloudPlanePosition(targetCamera.transform.position);
             Vector3 cameraDelta = newPosition - oldPosition;
             textureOffset.x += cameraDelta.x / planeSize * cloudTiling;
             textureOffset.y += cameraDelta.z / planeSize * cloudTiling;
             cloudPlane.position = newPosition;
             hasCameraAnchor = true;
         }
+    }
+
+    private Vector3 CalculateCloudPlanePosition(Vector3 cameraPosition)
+    {
+        // Find the ground point below the camera. The cloud caster must be
+        // upstream of that point so the directional-light rays project its
+        // shadow back into the camera's visible area.
+        Vector3 groundPoint = cameraPosition;
+        if (Physics.Raycast(
+            cameraPosition + Vector3.up * 0.1f,
+            Vector3.down,
+            out RaycastHit groundHit,
+            2000f,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore))
+        {
+            groundPoint = groundHit.point;
+        }
+        else
+        {
+            groundPoint.y = 0f;
+        }
+
+        Vector3 casterPosition = new Vector3(
+            cameraPosition.x,
+            fixedCloudAltitude,
+            cameraPosition.z);
+
+        if (sun == null)
+            return casterPosition;
+
+        Vector3 lightRayDirection = sun.transform.forward.normalized;
+
+        // A directional light must point down toward the ground. Near the
+        // horizon the projected distance becomes enormous and unstable.
+        if (lightRayDirection.y >= -0.05f)
+            return casterPosition;
+
+        float heightAboveGround = Mathf.Max(0f, fixedCloudAltitude - groundPoint.y);
+        float rayDistance = heightAboveGround / -lightRayDirection.y;
+        Vector3 horizontalProjection = new Vector3(
+            lightRayDirection.x,
+            0f,
+            lightRayDirection.z) * rayDistance;
+
+        casterPosition.x = groundPoint.x - horizontalProjection.x;
+        casterPosition.z = groundPoint.z - horizontalProjection.z;
+        return casterPosition;
     }
 
     private void OnValidate()
@@ -236,10 +278,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour
 
         cloudPlane = planeObject.transform;
         fixedCloudAltitude = targetCamera.transform.position.y + cloudHeight;
-        cloudPlane.position = new Vector3(
-            targetCamera.transform.position.x,
-            fixedCloudAltitude,
-            targetCamera.transform.position.z);
+        cloudPlane.position = CalculateCloudPlanePosition(targetCamera.transform.position);
         hasCameraAnchor = true;
 
         Debug.Log("[Cloud Shadows] 云影已启动。云块大小、速度和高度可在 Runtime Cloud Shadows 组件中调整。");
