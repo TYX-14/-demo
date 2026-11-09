@@ -90,8 +90,8 @@ public sealed class CloudShadowRuntime : MonoBehaviour
 
             // Compensate UVs for plane movement. This keeps the cloud pattern
             // anchored in world space instead of making shadows follow the player.
-            textureOffset.x -= cameraDelta.x / planeSize * cloudTiling;
-            textureOffset.y -= cameraDelta.z / planeSize * cloudTiling;
+            textureOffset.x += cameraDelta.x / planeSize * cloudTiling;
+            textureOffset.y += cameraDelta.z / planeSize * cloudTiling;
         }
 
         cloudPlane.position = nextPlanePosition;
@@ -118,7 +118,6 @@ public sealed class CloudShadowRuntime : MonoBehaviour
         {
             // A newly active camera may be in a different scene or battle setup.
             // Preserve the cloud layer altitude, but move its coverage to the camera.
-            Vector3 p = cloudPlane.position;
             cloudPlane.position = new Vector3(
                 targetCamera.transform.position.x,
                 fixedCloudAltitude,
@@ -126,6 +125,36 @@ public sealed class CloudShadowRuntime : MonoBehaviour
             previousCameraPosition = targetCamera.transform.position;
             hasCameraAnchor = true;
         }
+    }
+
+    private void OnValidate()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        if (cloudMaterial != null)
+            cloudMaterial.SetTextureScale(BaseMapId, Vector2.one * cloudTiling);
+
+        if (cloudPlane != null)
+        {
+            MeshFilter filter = cloudPlane.GetComponent<MeshFilter>();
+            if (filter != null)
+            {
+                Mesh oldMesh = filter.sharedMesh;
+                filter.sharedMesh = CreatePlaneMesh(planeSize);
+                if (oldMesh != null)
+                    Destroy(oldMesh);
+            }
+
+            Vector3 position = cloudPlane.position;
+            position.y = fixedCloudAltitude = (targetCamera != null
+                ? targetCamera.transform.position.y
+                : position.y - cloudHeight) + cloudHeight;
+            cloudPlane.position = position;
+        }
+
+        if (sun != null)
+            sun.shadowStrength = shadowStrength;
     }
 
     private Camera FindFallbackCamera()
