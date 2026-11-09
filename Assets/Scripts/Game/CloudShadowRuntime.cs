@@ -284,7 +284,7 @@ public sealed class CloudShadowRuntime : MonoBehaviour, IEventReceiver<GameModeC
         meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
 
         cloudPlane = planeObject.transform;
-        fixedCloudAltitude = targetCamera.transform.position.y + cloudHeight;
+        fixedCloudAltitude = targetCamera.transform.position.y + ActiveCloudHeight;
         cloudPlane.position = new Vector3(
             targetCamera.transform.position.x,
             fixedCloudAltitude,
