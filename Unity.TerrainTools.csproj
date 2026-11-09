@@ -40,8 +40,7 @@
     <Analyzer Include="E:\unity\2022.3.62t7\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Runtime\TerrainToolbox\TerrainGroup.cs" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Runtime\Unity.TerrainTools.asmdef" />
+     <Compile Include="Packages\com.unity.terrain-tools\Runtime\TerrainToolbox\TerrainGroup.cs" />
     <Reference Include="UnityEngine">
         <HintPath>E:\unity\2022.3.62t7\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>

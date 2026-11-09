@@ -1,0 +1,33 @@
+* [33m4082840[m Agent host session 6448bb36-e398-4d4a-8352-ce1d6b93915c - turn 1
+* [33maf24f00[m Agent host session 6448bb36-e398-4d4a-8352-ce1d6b93915c - turn 1 start
+* [33mfe6e897[m Agent host session 6448bb36-e398-4d4a-8352-ce1d6b93915c - baseline checkpoint
+* [33m805e605[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Copy IL3DN indirect instancing include for URP leaf shader
+* [33m3a8610b[m Fix URP leaf shader vertex clip function
+* [33ma468553[m Add URP port of IL3DN leaf shader
+[32m|[m * [33mfe8e3e0[m[33m ([m[1;32mrescue-before-reset[m[33m)[m 随心一提
+[32m|[m * [33mbf286df[m 随心一提
+[32m|[m[32m/[m  
+* [33mfe3b412[m 随心一提
+* [33m82b07d0[m 随心一提
+*   [33ma79fd65[m Merge branch 'main' of https://github.com/TYX-14/-demo
+[34m|[m[35m\[m  
+[34m|[m * [33mf28d3f2[m Remove obsolete grass tint and smoothness properties
+* [35m|[m [33me6b5428[m 随心一提
+[35m|[m[35m/[m  
+* [33mc6e3ca2[m 随心一提
+* [33mb3cc830[m Remove non-block nodes from fragment context
+* [33mc7a625f[m Correct Shader Graph fragment block context
+* [33meea3568[m Remove duplicated Shader Graph property references
+* [33m1a706d1[m Fix malformed Shader Graph properties array
+* [33mfc4d9ba[m Connect grass texture RGBA into tint multiply
+* [33me433fd3[m Correct grass tint multiply graph ports
+* [33me27a393[m Merge grass shader graph edge list
+* [33m730a952[m Add grass tint and smoothness controls to Shader Graph
+* [33m8c17286[m 随心一提
+* [33mbc66c92[m Fix legacy grass texture aliases in shadow caster
+* [33m683823a[m Align grass shadow caster with URP 14 Lit pass
+* [33m515cdec[m Upgrade grass shader with URP lit rendering
+* [33m7165ed5[m Add GPU instancing support to grass shader
+* [33m65f8e62[m Add Unity meta for original grass shader
+* [33m7cb7ee7[m Create original grass shader base texture and alpha clipping
+* [33m0f10ecc[m Revert mistakenly added third-party grass shader
