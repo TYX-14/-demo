@@ -11,7 +11,7 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
 {
     [Header("云影纹理")]
     [SerializeField] private Texture2D cloudCookie;
-    [SerializeField, Min(1f)] private float cookieSize = 90f;
+    [SerializeField, Min(1f)] private float cookieSize = 10f;
 
     [Header("流动速度")]
     [SerializeField] private Vector2 scrollSpeed = new Vector2(0.035f, 0.014f);
