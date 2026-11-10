@@ -237,7 +237,7 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     public bool BeginActionPresentation(Sprite attackSprite, Vector3 presentationPosition)
     {
-        if (attackSprite == null || spriteRenderer == null || actionPresentationActive)
+        if (spriteRenderer == null || actionPresentationActive)
             return false;
 
         actionOriginalSprite = spriteRenderer.sprite;
@@ -248,7 +248,9 @@ public class BattleUnit : MonoBehaviour
         if (animator != null)
             animator.enabled = false;
 
-        spriteRenderer.sprite = attackSprite;
+        // attackSprite 允许为空：被攻击者只需要临时移动并冻结当前姿势，不替换图片。
+        if (attackSprite != null)
+            spriteRenderer.sprite = attackSprite;
         transform.position = presentationPosition;
         return true;
     }
