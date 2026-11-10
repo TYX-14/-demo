@@ -72,29 +72,10 @@ public class EnemyAIState : BattleState
                 BattleActionContext actionContext = new BattleActionContext(actor, skill);
                 bool resolved = false;
 
-                if (BattleTargeting.RequiresManualSelection(skill))
-                {
-                    List<BattleEntity> candidates = BattleTargeting.GetLegalTargets(
-                        skill, actor, _controller.AllEntities, _controller.GetLogicalPosition);
-
-                    foreach (BattleEntity candidate in candidates)
-                    {
-                        if (!BattleTargeting.TryResolveSelectedTarget(
-                                skill,
-                                actor,
-                                candidate,
-                                _controller.AllEntities,
-                                _controller.GetLogicalPosition,
-                                out int selectedPosition,
-                                out List<BattleEntity> resolvedTargets))
-                            continue;
-
-                        actionContext.SetResolvedTargets(candidate, selectedPosition, resolvedTargets);
-                        resolved = true;
-                        break;
-                    }
-                }
-                else
+                // 敌方 AI 不走玩家的手动/自动目标选择分支：只要技能需要实体目标，
+                // 就从技能规则筛出的合法候选单位中随机选一个。
+                // AoE 仍由 TryResolveSelectedTarget 根据技能配置扩展为完整影响范围。
+                if (skill.TargetSelectionMode == SkillTargetSelectionMode.None)
                 {
                     resolved = BattleTargeting.TryResolveAutomaticTargets(
                         skill,
@@ -107,6 +88,30 @@ public class EnemyAIState : BattleState
 
                     if (resolved)
                         actionContext.SetResolvedTargets(selectedTarget, selectedPosition, resolvedTargets);
+                }
+                else
+                {
+                    List<BattleEntity> candidates = BattleTargeting.GetLegalTargets(
+                        skill, actor, _controller.AllEntities, _controller.GetLogicalPosition);
+
+                    if (candidates.Count > 0)
+                    {
+                        int randomIndex = Random.Range(0, candidates.Count);
+                        BattleEntity selectedCandidate = candidates[randomIndex];
+
+                        resolved = BattleTargeting.TryResolveSelectedTarget(
+                            skill,
+                            actor,
+                            selectedCandidate,
+                            _controller.AllEntities,
+                            _controller.GetLogicalPosition,
+                            out int selectedPosition,
+                            out List<BattleEntity> resolvedTargets);
+
+                        if (resolved)
+                            actionContext.SetResolvedTargets(
+                                selectedCandidate, selectedPosition, resolvedTargets);
+                    }
                 }
 
                 if (!resolved)
