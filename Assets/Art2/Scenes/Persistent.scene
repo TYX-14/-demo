@@ -30820,6 +30820,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1906250747}
   - component: {fileID: 1906250748}
+  - component: {fileID: 2146624129}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: SceneLoadManager
@@ -35621,6 +35622,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a3b0c6d9ac65dfe40a3021f26242d1e4, type: 3}
+--- !u!114 &2146624129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1906250745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9c3b10e6a2d4c98a7e51f0b3d6c2a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cloudCookie: {fileID: 2800000, guid: 8d7a1c4e9b2f4635a0d6c8e1f3b5a729, type: 3}
+  cookieSize: 90
+  scrollSpeed: {x: 0.035, y: 0.014}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
