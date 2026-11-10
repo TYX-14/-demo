@@ -54,6 +54,12 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     private Vector3 targetCursorBaseLocalPosition;
 
+    // 技能攻击特写期间暂存视觉状态，不改动实体的逻辑站位数据。
+    private Sprite actionOriginalSprite;
+    private Vector3 actionOriginalPosition;
+    private bool actionOriginalAnimatorEnabled;
+    private bool actionPresentationActive;
+
     [Header("合法目标光圈")]
     [SerializeField] private GameObject targetHighlight;
     [SerializeField, Min(0f)] private float targetHighlightGroundOffset = 0.015f;
@@ -226,6 +232,42 @@ public class BattleUnit : MonoBehaviour
     /// 判断屏幕坐标是否落在该单位 SpriteRenderer 投影后的屏幕矩形内。
     /// 用于目标选择，不依赖额外的 2D/3D Collider 配置。
     /// </summary>
+    /// <summary>
+    /// 开始技能攻击图片演出。仅临时移动视觉单位并替换主 Sprite，不修改战斗阵型数据。
+    /// </summary>
+    public bool BeginActionPresentation(Sprite attackSprite, Vector3 presentationPosition)
+    {
+        if (attackSprite == null || spriteRenderer == null || actionPresentationActive)
+            return false;
+
+        actionOriginalSprite = spriteRenderer.sprite;
+        actionOriginalPosition = transform.position;
+        actionOriginalAnimatorEnabled = animator != null && animator.enabled;
+        actionPresentationActive = true;
+
+        if (animator != null)
+            animator.enabled = false;
+
+        spriteRenderer.sprite = attackSprite;
+        transform.position = presentationPosition;
+        return true;
+    }
+
+    /// <summary>结束技能攻击图片演出，恢复原始位置、图片和 Animator 状态。</summary>
+    public void EndActionPresentation()
+    {
+        if (!actionPresentationActive)
+            return;
+
+        transform.position = actionOriginalPosition;
+        if (spriteRenderer != null)
+            spriteRenderer.sprite = actionOriginalSprite;
+        if (animator != null)
+            animator.enabled = actionOriginalAnimatorEnabled;
+
+        actionPresentationActive = false;
+    }
+
     /// <summary>获取角色主精灵的世界空间边界，供攻击特写镜头计算构图。</summary>
     public bool TryGetVisualBounds(out Bounds visualBounds)
     {
