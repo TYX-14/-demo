@@ -36,6 +36,8 @@ public class SkillDefinitionSO : ScriptableObject
     [Header("基本信息")]
     [SerializeField] private string skillName;
     [SerializeField] private Sprite skillIcon;
+    [Tooltip("角色使用该技能时展示的攻击姿势图片，与技能 UI 图标分开配置。")]
+    [SerializeField] private Sprite attackSprite;
     [Tooltip("尚未配置等级效果时使用的备用说明。配置效果后，技能说明会根据等级效果自动生成。")]
     [TextArea(2, 5)]
     [SerializeField] private string description;
@@ -71,6 +73,7 @@ public class SkillDefinitionSO : ScriptableObject
 
     public string SkillName => skillName;
     public Sprite SkillIcon => skillIcon;
+    public Sprite AttackSprite => attackSprite;
     public string Description => description;
     public int SpCost => spCost;
     public DamageType DamageType => damageType;
