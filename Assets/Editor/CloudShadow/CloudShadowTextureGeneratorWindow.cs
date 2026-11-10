@@ -109,7 +109,7 @@ public sealed class CloudShadowTextureGeneratorWindow : EditorWindow
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(outputPath) || !outputPath.Replace('\\\\', '/').StartsWith("Assets/"))
+        if (string.IsNullOrWhiteSpace(outputPath) || !outputPath.Replace('\\', '/').StartsWith("Assets/"))
         {
             Debug.LogError("[Cloud Cookie Generator] 输出路径必须是项目 Assets 文件夹内的相对路径，例如 Assets/MYShaders/CloudShadow/CloudShadowCookie_Layered.png。");
             return;
