@@ -103,10 +103,14 @@ public class PerformActionState : BattleState
             // 这样镜头里的交战双方会一起被“拎出来”，而不是只把攻击者送到目标脚边。
             Vector3 engagementCenter = (actorPosition + targetPosition) * 0.5f;
             float gap = 0.05f;
+            // 两人先保持面对面的相对位置，再整体沿地面朝镜头前移，形成独立的前景交战层。
+            Vector3 cameraFrontOffset = actionCamera != null
+                ? actionCamera.GetCameraFrontGroundOffset()
+                : Vector3.zero;
             Vector3 actorEngagementPosition =
-                engagementCenter - direction * (actorRadius + gap * 0.5f);
+                engagementCenter - direction * (actorRadius + gap * 0.5f) + cameraFrontOffset;
             Vector3 targetEngagementPosition =
-                engagementCenter + direction * (targetRadius + gap * 0.5f);
+                engagementCenter + direction * (targetRadius + gap * 0.5f) + cameraFrontOffset;
 
             actionPresentationStarted = presentationActor.BeginActionPresentation(
                 _actionContext.Skill.AttackSprite, actorEngagementPosition);
@@ -120,6 +124,7 @@ public class PerformActionState : BattleState
 
         int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
         bool movementTriggered;
+        bool criticalHit;
         int totalDamage = BattleSkillEffectExecutor.Execute(
             _controller,
             _actionContext.Actor,
@@ -127,9 +132,14 @@ public class PerformActionState : BattleState
             skillLevel,
             _actionContext.ResolvedTargets,
             _actionContext.SelectedInputTarget,
-            out movementTriggered);
+            out movementTriggered,
+            out criticalHit);
 
-        Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。");
+        Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}；暴击：{criticalHit}。");
+
+        // 当前暴击判定尚未接入；执行器先提供暴击结果出口，未来接入后自动切换更强震屏。
+        if (totalDamage > 0 && cameraFocusStarted && actionCamera != null)
+            yield return actionCamera.ShakeImpact(criticalHit);
 
         if (actionPresentationStarted || targetPresentationStarted)
         {
