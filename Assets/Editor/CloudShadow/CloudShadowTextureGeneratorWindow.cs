@@ -103,11 +103,23 @@ public sealed class CloudShadowTextureGeneratorWindow : EditorWindow
             return;
         }
 
-        string absoluteOutputPath = Path.GetFullPath(outputPath);
-        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-        if (!absoluteOutputPath.StartsWith(projectRoot))
+        if (!sourceTexture.isReadable)
         {
-            Debug.LogError("[Cloud Cookie Generator] 输出路径必须位于当前 Unity 项目的 Assets 文件夹内。");
+            Debug.LogError("[Cloud Cookie Generator] 基础云图没有启用 Read/Write。请在纹理 Import Settings 中启用后再生成。");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(outputPath) || !outputPath.Replace('\\\\', '/').StartsWith("Assets/"))
+        {
+            Debug.LogError("[Cloud Cookie Generator] 输出路径必须是项目 Assets 文件夹内的相对路径，例如 Assets/MYShaders/CloudShadow/CloudShadowCookie_Layered.png。");
+            return;
+        }
+
+        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+        string absoluteOutputPath = Path.GetFullPath(Path.Combine(projectRoot, outputPath));
+        if (!absoluteOutputPath.StartsWith(projectRoot + Path.DirectorySeparatorChar))
+        {
+            Debug.LogError("[Cloud Cookie Generator] 输出路径不能离开当前 Unity 项目。");
             return;
         }
 
