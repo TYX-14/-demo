@@ -79,16 +79,27 @@ public class PerformActionState : BattleState
             : null;
         bool actionPresentationStarted = false;
         bool targetPresentationStarted = false;
+        Vector3 cameraImpactDirection = Vector3.zero;
+        if (presentationActor != null && presentationTarget != null &&
+            presentationActor != presentationTarget)
+        {
+            cameraImpactDirection = Vector3.ProjectOnPlane(
+                presentationTarget.transform.position - presentationActor.transform.position,
+                Vector3.up);
+            if (cameraImpactDirection.sqrMagnitude < 0.0001f)
+                cameraImpactDirection = presentationActor.transform.forward;
+            cameraImpactDirection.Normalize();
+        }
+
         if (_actionContext.Skill.AttackSprite != null &&
             presentationActor != null && presentationTarget != null &&
             presentationActor != presentationTarget)
         {
             Vector3 actorPosition = presentationActor.transform.position;
             Vector3 targetPosition = presentationTarget.transform.position;
-            Vector3 direction = Vector3.ProjectOnPlane(targetPosition - actorPosition, Vector3.up);
-            if (direction.sqrMagnitude < 0.0001f)
-                direction = presentationActor.transform.forward;
-            direction.Normalize();
+            Vector3 direction = cameraImpactDirection.sqrMagnitude > 0.0001f
+                ? cameraImpactDirection
+                : Vector3.ProjectOnPlane(targetPosition - actorPosition, Vector3.up).normalized;
 
             float actorRadius = 0.25f;
             float targetRadius = 0.25f;
@@ -139,7 +150,7 @@ public class PerformActionState : BattleState
 
         // 当前暴击判定尚未接入；执行器先提供暴击结果出口，未来接入后自动切换更强震屏。
         if (totalDamage > 0 && cameraFocusStarted && actionCamera != null)
-            yield return actionCamera.ShakeImpact(criticalHit);
+            yield return actionCamera.ShakeImpact(criticalHit, cameraImpactDirection);
 
         if (actionPresentationStarted || targetPresentationStarted)
         {
