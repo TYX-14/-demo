@@ -28,10 +28,20 @@ public sealed class BattleActionCamera : MonoBehaviour
     [SerializeField, InspectorName("普通命中震屏时长"), Min(0f), Tooltip("普通命中震屏持续的时间，单位为秒。")] private float hitShakeDuration = 0.16f;
     [SerializeField, InspectorName("暴击震屏幅度"), Min(0f), Tooltip("暴击命中时镜头震动的幅度。需要后续接入暴击判定后才会生效。")] private float criticalShakeStrength = 0.14f;
     [SerializeField, InspectorName("暴击震屏时长"), Min(0f), Tooltip("暴击命中震屏持续的时间，单位为秒。需要后续接入暴击判定后才会生效。")] private float criticalShakeDuration = 0.24f;
-    [SerializeField, InspectorName("震屏后推进距离"), Min(0f), Tooltip("震屏结束后，镜头沿最后的冲击方向继续平滑移动的距离。设为 0 可关闭后续推进。")]
-    private float hitFollowThroughDistance = 0.28f;
-    [SerializeField, InspectorName("震屏后推进时间"), Min(0f), Tooltip("震屏结束后，镜头完成顺势推进所需的时间，单位为秒。")]
-    private float hitFollowThroughDuration = 0.14f;
+    [SerializeField, InspectorName("普通命中旋转角度"), Range(0f, 15f), Tooltip("普通命中后镜头倾斜的角度。建议从 4 度左右开始调整。")]
+    private float hitFollowThroughRotation = 4f;
+    [SerializeField, InspectorName("暴击命中旋转角度"), Range(0f, 20f), Tooltip("暴击命中后镜头倾斜的角度。需要接入暴击判定后才会生效。")]
+    private float criticalFollowThroughRotation = 6f;
+    [SerializeField, InspectorName("普通命中水平偏移"), Min(0f), Tooltip("普通命中后镜头沿攻击方向产生的水平偏移量，单位为世界单位。")]
+    private float hitFollowThroughHorizontal = 0.16f;
+    [SerializeField, InspectorName("普通命中垂直偏移"), Min(0f), Tooltip("普通命中后镜头沿攻击方向产生的垂直偏移量，单位为世界单位。")]
+    private float hitFollowThroughVertical = 0.08f;
+    [SerializeField, InspectorName("普通命中深度偏移"), Min(0f), Tooltip("普通命中后镜头沿自身朝向产生的前后偏移量，单位为世界单位。")]
+    private float hitFollowThroughDepth = 0.10f;
+    [SerializeField, InspectorName("暴击偏移倍率"), Min(1f), Tooltip("暴击时水平、垂直和深度偏移相对于普通命中的倍率。")]
+    private float criticalFollowThroughMultiplier = 1.35f;
+    [SerializeField, InspectorName("冲击姿态过渡时间"), Min(0f), Tooltip("镜头从震屏状态过渡到倾斜及偏移姿态所需的时间，单位为秒。")]
+    private float hitFollowThroughDuration = 0.16f;
 
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
@@ -51,10 +61,10 @@ public sealed class BattleActionCamera : MonoBehaviour
     }
 
     /// <summary>
-    /// 命中瞬间震动特写镜头。震动结束后保留冲击方向的偏移，
-    /// 再顺着该方向平滑推进一小段，直到行动流程主动恢复战场镜头。
+    /// 命中瞬间震动特写镜头，随后根据攻击方向形成轻微倾斜与位移的冲击姿态。
+    /// 该姿态会一直保留，直到行动流程主动恢复战场镜头。
     /// </summary>
-    public IEnumerator ShakeImpact(bool isCritical)
+    public IEnumerator ShakeImpact(bool isCritical, Vector3 attackDirection)
     {
         if (!_initialized || !isActiveAndEnabled)
             yield break;
@@ -65,12 +75,19 @@ public sealed class BattleActionCamera : MonoBehaviour
             yield break;
 
         Vector3 basePosition = transform.position;
-        Vector3 right = _battleRotation * Vector3.right;
-        Vector3 up = _battleRotation * Vector3.up;
-        Vector2 impactDirection = Random.insideUnitCircle;
-        if (impactDirection.sqrMagnitude < 0.001f)
-            impactDirection = Vector2.right;
-        impactDirection.Normalize();
+        Quaternion baseRotation = transform.rotation;
+        Vector3 right = baseRotation * Vector3.right;
+        Vector3 up = baseRotation * Vector3.up;
+        Vector3 forward = baseRotation * Vector3.forward;
+
+        // 将世界空间攻击方向转换为镜头屏幕方向，让镜头偏移与攻击方向保持关联。
+        Vector3 projectedAttack = Vector3.ProjectOnPlane(attackDirection, forward);
+        Vector2 screenDirection = new Vector2(
+            Vector3.Dot(projectedAttack, right),
+            Vector3.Dot(projectedAttack, up));
+        if (screenDirection.sqrMagnitude < 0.001f)
+            screenDirection = Vector2.right;
+        screenDirection.Normalize();
 
         float elapsed = 0f;
         while (elapsed < duration)
@@ -79,22 +96,30 @@ public sealed class BattleActionCamera : MonoBehaviour
             float damping = 1f - Mathf.Clamp01(elapsed / duration);
             Vector2 randomOffset = Random.insideUnitCircle * (strength * damping);
             transform.position = basePosition + right * randomOffset.x + up * randomOffset.y;
+            transform.rotation = baseRotation;
             yield return null;
         }
 
-        // 让震动以一个明确的冲击方向收尾，不把镜头弹回震动前的位置。
-        Vector3 impactOffset =
-            (right * impactDirection.x + up * impactDirection.y) * (strength * 0.35f);
-        Vector3 impactEndPosition = basePosition + impactOffset;
-        yield return AnimatePosition(impactEndPosition, 0.07f);
+        // 攻击方向决定镜头倾斜的方向；暴击使用更明显的旋转和位移。
+        float multiplier = isCritical ? criticalFollowThroughMultiplier : 1f;
+        float rotationAngle = isCritical
+            ? criticalFollowThroughRotation
+            : hitFollowThroughRotation;
+        float rotationSign = Mathf.Abs(screenDirection.x) > 0.05f
+            ? -Mathf.Sign(screenDirection.x)
+            : Mathf.Sign(screenDirection.y);
+        Quaternion impactRotation = Quaternion.AngleAxis(
+            rotationAngle * rotationSign, forward) * baseRotation;
 
-        // 顺着最后的震动方向再推进一点，随后停留在这里，等待攻击特写结束。
-        if (hitFollowThroughDistance > 0f && hitFollowThroughDuration > 0f)
-        {
-            Vector3 followThroughPosition =
-                impactEndPosition + impactOffset.normalized * hitFollowThroughDistance;
-            yield return AnimatePosition(followThroughPosition, hitFollowThroughDuration);
-        }
+        float horizontalOffset = hitFollowThroughHorizontal * multiplier * screenDirection.x;
+        float verticalOffset = hitFollowThroughVertical * multiplier * screenDirection.y;
+        float depthOffset = hitFollowThroughDepth * multiplier;
+        Vector3 impactPosition = basePosition +
+            right * horizontalOffset +
+            up * verticalOffset +
+            forward * depthOffset;
+
+        yield return AnimatePose(impactPosition, impactRotation, hitFollowThroughDuration);
     }
 
     private void Awake()
@@ -145,7 +170,7 @@ public sealed class BattleActionCamera : MonoBehaviour
         if (!_initialized)
             yield break;
 
-        yield return AnimatePosition(_battlePosition, focusOutDuration);
+        yield return AnimatePose(_battlePosition, _battleRotation, focusOutDuration);
     }
 
     private bool TryBuildVisualBounds(
@@ -238,7 +263,16 @@ public sealed class BattleActionCamera : MonoBehaviour
 
     private IEnumerator AnimatePosition(Vector3 targetPosition, float duration)
     {
+        yield return AnimatePose(targetPosition, transform.rotation, duration);
+    }
+
+    private IEnumerator AnimatePose(
+        Vector3 targetPosition,
+        Quaternion targetRotation,
+        float duration)
+    {
         Vector3 startPosition = transform.position;
+        Quaternion startRotation = transform.rotation;
         duration = Mathf.Max(0.01f, duration);
         float elapsed = 0f;
 
@@ -248,10 +282,11 @@ public sealed class BattleActionCamera : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / duration);
             float easedT = t * t * (3f - 2f * t);
             transform.position = Vector3.LerpUnclamped(startPosition, targetPosition, easedT);
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, easedT);
             yield return null;
         }
 
-        transform.position = targetPosition;
+        transform.SetPositionAndRotation(targetPosition, targetRotation);
     }
 
     private void RestoreImmediately()
