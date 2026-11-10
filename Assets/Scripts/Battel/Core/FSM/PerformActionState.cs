@@ -150,7 +150,18 @@ public class PerformActionState : BattleState
                 presentationTarget.EndActionPresentation();
         }
 
-        // 目前项目尚未建立技能动作播放/完成事件，因此即时结算完成后直接进入后置位移阶段。
+        // 攻击特写只负责展示攻击与命中。特写结束后先恢复战场全景，
+        // 再执行前进/后退等后置位移，避免镜头跟着角色位移阶段继续停留在特写。
+        if (cameraFocusStarted && actionCamera != null &&
+            actionCamera.FocusHoldDuration > 0f)
+        {
+            yield return new WaitForSecondsRealtime(actionCamera.FocusHoldDuration);
+        }
+
+        if (cameraFocusStarted && actionCamera != null && actionCamera.isActiveAndEnabled)
+            yield return actionCamera.RestoreBattleView();
+
+        // 目前项目尚未建立技能动作播放/完成事件，因此镜头复位完成后再执行后置位移。
         bool postActionMovementTriggered = BattleSkillEffectExecutor.ExecutePostActionMovementEffects(
             _controller,
             _actionContext.Actor,
@@ -163,11 +174,6 @@ public class PerformActionState : BattleState
 
         if (isEnemyAction && _controller.EnemyActionRecoveryDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionRecoveryDelay);
-        else if (cameraFocusStarted && actionCamera != null && actionCamera.FocusHoldDuration > 0f)
-            yield return new WaitForSecondsRealtime(actionCamera.FocusHoldDuration);
-
-        if (cameraFocusStarted && actionCamera != null && actionCamera.isActiveAndEnabled)
-            yield return actionCamera.RestoreBattleView();
 
         if (isEnemyAction && BattleVFXManager.Instance != null)
             BattleVFXManager.Instance.ClearEnemyActionTargets();
