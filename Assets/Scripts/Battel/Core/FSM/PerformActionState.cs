@@ -78,8 +78,10 @@ public class PerformActionState : BattleState
             ? _actionContext.ResolvedTargets[0]?.Unit
             : null;
         bool actionPresentationStarted = false;
+        bool targetPresentationStarted = false;
         if (_actionContext.Skill.AttackSprite != null &&
-            presentationActor != null && presentationTarget != null)
+            presentationActor != null && presentationTarget != null &&
+            presentationActor != presentationTarget)
         {
             Vector3 actorPosition = presentationActor.transform.position;
             Vector3 targetPosition = presentationTarget.transform.position;
@@ -97,11 +99,23 @@ public class PerformActionState : BattleState
                 targetRadius = Mathf.Abs(direction.x) * targetBounds.extents.x +
                                Mathf.Abs(direction.z) * targetBounds.extents.z;
 
-            Vector3 engagementPosition = targetPosition - direction * (targetRadius + actorRadius * 0.55f);
+            // 将两人作为一个整体收拢到原本两者之间的中心点，保留朝向并让双方贴近。
+            // 这样镜头里的交战双方会一起被“拎出来”，而不是只把攻击者送到目标脚边。
+            Vector3 engagementCenter = (actorPosition + targetPosition) * 0.5f;
+            float gap = 0.05f;
+            Vector3 actorEngagementPosition =
+                engagementCenter - direction * (actorRadius + gap * 0.5f);
+            Vector3 targetEngagementPosition =
+                engagementCenter + direction * (targetRadius + gap * 0.5f);
+
             actionPresentationStarted = presentationActor.BeginActionPresentation(
-                _actionContext.Skill.AttackSprite, engagementPosition);
+                _actionContext.Skill.AttackSprite, actorEngagementPosition);
             if (actionPresentationStarted)
+            {
+                targetPresentationStarted = presentationTarget.BeginActionPresentation(
+                    null, targetEngagementPosition);
                 yield return new WaitForSecondsRealtime(0.25f);
+            }
         }
 
         int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
@@ -117,10 +131,13 @@ public class PerformActionState : BattleState
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。");
 
-        if (actionPresentationStarted)
+        if (actionPresentationStarted || targetPresentationStarted)
         {
             yield return new WaitForSecondsRealtime(0.12f);
-            presentationActor.EndActionPresentation();
+            if (actionPresentationStarted)
+                presentationActor.EndActionPresentation();
+            if (targetPresentationStarted)
+                presentationTarget.EndActionPresentation();
         }
 
         // 目前项目尚未建立技能动作播放/完成事件，因此即时结算完成后直接进入后置位移阶段。
