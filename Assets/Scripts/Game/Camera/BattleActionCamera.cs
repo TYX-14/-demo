@@ -19,11 +19,60 @@ public sealed class BattleActionCamera : MonoBehaviour
     [SerializeField, Range(0.5f, 0.95f), Tooltip("参与单位在画面半宽/半高中的最大占比，数值越小留白越多。")]
     private float framePadding = 0.82f;
 
+    [Header("攻击演出")]
+    [SerializeField, Min(0f), Tooltip("攻击双方沿地面朝镜头方向额外前移的距离。")]
+    private float presentationCameraFrontOffset = 1.25f;
+
+    [Header("命中震屏")]
+    [SerializeField, Min(0f)] private float hitShakeStrength = 0.055f;
+    [SerializeField, Min(0f)] private float hitShakeDuration = 0.16f;
+    [SerializeField, Min(0f)] private float criticalShakeStrength = 0.14f;
+    [SerializeField, Min(0f)] private float criticalShakeDuration = 0.24f;
+
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
     private bool _initialized;
 
     public float FocusHoldDuration => focusHoldDuration;
+
+    /// <summary>取得沿地面朝向镜头的偏移，避免角色因相同 Z 坐标而互相遮挡。</summary>
+    public Vector3 GetCameraFrontGroundOffset()
+    {
+        Vector3 towardCamera = Vector3.ProjectOnPlane(
+            -(_battleRotation * Vector3.forward), Vector3.up);
+        if (towardCamera.sqrMagnitude < 0.0001f)
+            return Vector3.zero;
+
+        return towardCamera.normalized * presentationCameraFrontOffset;
+    }
+
+    /// <summary>在命中结算时震动特写镜头；暴击使用更大的幅度和更长的持续时间。</summary>
+    public IEnumerator ShakeImpact(bool isCritical)
+    {
+        if (!_initialized || !isActiveAndEnabled)
+            yield break;
+
+        float strength = isCritical ? criticalShakeStrength : hitShakeStrength;
+        float duration = isCritical ? criticalShakeDuration : hitShakeDuration;
+        if (strength <= 0f || duration <= 0f)
+            yield break;
+
+        Vector3 basePosition = transform.position;
+        Vector3 right = _battleRotation * Vector3.right;
+        Vector3 up = _battleRotation * Vector3.up;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float damping = 1f - Mathf.Clamp01(elapsed / duration);
+            Vector2 randomOffset = Random.insideUnitCircle * (strength * damping);
+            transform.position = basePosition + right * randomOffset.x + up * randomOffset.y;
+            yield return null;
+        }
+
+        transform.position = basePosition;
+    }
 
     private void Awake()
     {
