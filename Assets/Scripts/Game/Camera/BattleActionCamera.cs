@@ -15,6 +15,8 @@ public sealed class BattleActionCamera : MonoBehaviour
     [SerializeField, InspectorName("镜头推进时间"), Min(0.01f), Tooltip("从战场全景推进到攻击特写所需的时间，单位为秒。数值越小，推进越快。")] private float focusInDuration = 0.22f;
     [SerializeField, InspectorName("镜头复位时间"), Min(0.01f), Tooltip("攻击演出结束后，镜头恢复到战场全景所需的时间，单位为秒。")] private float focusOutDuration = 0.18f;
     [SerializeField, InspectorName("特写额外停留时间"), Min(0f), Tooltip("攻击演出流程结束前，额外保持特写的时间，单位为秒。设为 0 可关闭额外等待。")] private float focusHoldDuration = 0.3f;
+    [SerializeField, InspectorName("特写持续推进速度"), Min(0f), Tooltip("特写构图完成后，镜头在特写期间持续向画面深处缓慢推进的速度，单位为世界单位/秒。设为 0 可关闭。")]
+    private float focusPushSpeed = 0.18f;
     [SerializeField, InspectorName("特写最小镜头距离"), Min(0.1f), Tooltip("自动构图时允许的最小镜头距离。数值越大，镜头越不容易贴近角色。")] private float minimumFocusDistance = 4.5f;
     [SerializeField, InspectorName("画面留白比例"), Range(0.5f, 0.95f), Tooltip("参与单位在画面半宽和半高中的最大占比。数值越小，角色周围留白越多；数值越大，镜头构图越紧。")]
     private float framePadding = 0.82f;
@@ -46,6 +48,7 @@ public sealed class BattleActionCamera : MonoBehaviour
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
     private bool _initialized;
+    private bool _focusPushActive;
 
     public float FocusHoldDuration => focusHoldDuration;
 
@@ -133,6 +136,28 @@ public sealed class BattleActionCamera : MonoBehaviour
         Initialize();
     }
 
+    private void LateUpdate()
+    {
+        if (!_focusPushActive || !_initialized || focusPushSpeed <= 0f)
+            return;
+
+        // 在其他镜头协程完成本帧位置更新后，再沿镜头朝向叠加微小推进。
+        transform.position += transform.forward * (focusPushSpeed * Time.unscaledDeltaTime);
+    }
+
+    /// <summary>特写构图完成后，开始持续向前缓慢推进。</summary>
+    public void BeginFocusPush()
+    {
+        if (_initialized && isActiveAndEnabled)
+            _focusPushActive = true;
+    }
+
+    /// <summary>停止持续推进，随后即可安全执行镜头复位。</summary>
+    public void EndFocusPush()
+    {
+        _focusPushActive = false;
+    }
+
     private void OnDisable()
     {
         RestoreImmediately();
@@ -176,6 +201,7 @@ public sealed class BattleActionCamera : MonoBehaviour
         if (!_initialized)
             yield break;
 
+        EndFocusPush();
         yield return AnimatePose(_battlePosition, _battleRotation, focusOutDuration);
     }
 
@@ -297,6 +323,7 @@ public sealed class BattleActionCamera : MonoBehaviour
 
     private void RestoreImmediately()
     {
+        EndFocusPush();
         if (!_initialized)
             return;
 
