@@ -12,9 +12,13 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     [Header("云影纹理")]
     [SerializeField] private Texture2D cloudCookie;
     [SerializeField, Min(1f)] private float cookieSize = 10f;
+    [SerializeField, Min(0.01f)] private Vector2 cookieSizeMultiplier = Vector2.one;
 
-    [Header("流动速度")]
+    [Header("云影流动")]
+    [SerializeField] private bool enableScrolling = true;
     [SerializeField] private Vector2 scrollSpeed = new Vector2(0.035f, 0.014f);
+    [SerializeField, Min(0f)] private float scrollSpeedMultiplier = 1f;
+    [SerializeField] private Vector2 initialOffset = Vector2.zero;
 
     private Light activeLight;
     private UniversalAdditionalLightData activeLightData;
@@ -49,8 +53,8 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         if (scene.handle != activeSceneHandle)
             BindToActiveScene();
 
-        if (activeLightData != null)
-            activeLightData.lightCookieOffset += scrollSpeed * Time.deltaTime;
+        if (activeLightData != null && enableScrolling)
+            activeLightData.lightCookieOffset += scrollSpeed * (scrollSpeedMultiplier * Time.deltaTime);
     }
 
     private void OnActiveSceneChanged(Scene previousScene, Scene newScene)
@@ -134,8 +138,10 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
             RenderSettings.sun = target;
 
         target.cookie = cloudCookie;
-        activeLightData.lightCookieSize = Vector2.one * cookieSize;
-        activeLightData.lightCookieOffset = originalCookieOffset;
+        activeLightData.lightCookieSize = new Vector2(
+            cookieSize * cookieSizeMultiplier.x,
+            cookieSize * cookieSizeMultiplier.y);
+        activeLightData.lightCookieOffset = originalCookieOffset + initialOffset;
 
         Debug.Log($"[Cloud Cookie] 已应用到场景 {scene.name} 的方向光：{target.name}", target);
     }
