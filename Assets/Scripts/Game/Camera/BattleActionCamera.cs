@@ -61,17 +61,17 @@ public sealed class BattleActionCamera : MonoBehaviour
     }
 
     /// <summary>
-    /// 命中瞬间震动特写镜头，随后根据攻击方向形成轻微倾斜与位移的冲击姿态。
-    /// 该姿态会一直保留，直到行动流程主动恢复战场镜头。
+    /// 命中瞬间同时启动冲击位移、旋转与短促震动。
+    /// 根据攻击者和目标的 X 坐标判断左右方向，整个过程连续过渡到最终冲击姿态。
     /// </summary>
-    public IEnumerator ShakeImpact(bool isCritical, Vector3 attackDirection)
+    public IEnumerator ShakeImpact(bool isCritical, float actorX, float targetX)
     {
         if (!_initialized || !isActiveAndEnabled)
             yield break;
 
         float strength = isCritical ? criticalShakeStrength : hitShakeStrength;
         float duration = isCritical ? criticalShakeDuration : hitShakeDuration;
-        if (strength <= 0f || duration <= 0f)
+        if (duration <= 0f)
             yield break;
 
         Vector3 basePosition = transform.position;
@@ -80,46 +80,52 @@ public sealed class BattleActionCamera : MonoBehaviour
         Vector3 up = baseRotation * Vector3.up;
         Vector3 forward = baseRotation * Vector3.forward;
 
-        // 将世界空间攻击方向转换为镜头屏幕方向，让镜头偏移与攻击方向保持关联。
-        Vector3 projectedAttack = Vector3.ProjectOnPlane(attackDirection, forward);
-        Vector2 screenDirection = new Vector2(
-            Vector3.Dot(projectedAttack, right),
-            Vector3.Dot(projectedAttack, up));
-        if (screenDirection.sqrMagnitude < 0.001f)
-            screenDirection = Vector2.right;
-        screenDirection.Normalize();
+        // 直接比较世界 X 坐标，明确判断目标位于攻击者左侧还是右侧。
+        float horizontalSign = Mathf.Sign(targetX - actorX);
+        if (Mathf.Approximately(horizontalSign, 0f))
+            horizontalSign = 1f;
+
+        float multiplier = isCritical ? criticalFollowThroughMultiplier : 1f;
+        float rotationAngle = isCritical
+            ? criticalFollowThroughRotation
+            : hitFollowThroughRotation;
+
+        // 最终保留的冲击姿态。位移方向跟随目标所在的左右方向。
+        Vector3 finalOffset =
+            right * (hitFollowThroughHorizontal * multiplier * horizontalSign) +
+            up * (hitFollowThroughVertical * multiplier) +
+            forward * (hitFollowThroughDepth * multiplier);
+        float rotationSign = -horizontalSign;
+        Quaternion finalRotation = Quaternion.AngleAxis(
+            rotationAngle * rotationSign, forward) * baseRotation;
 
         float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float damping = 1f - Mathf.Clamp01(elapsed / duration);
-            Vector2 randomOffset = Random.insideUnitCircle * (strength * damping);
-            transform.position = basePosition + right * randomOffset.x + up * randomOffset.y;
-            transform.rotation = baseRotation;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            // 从命中第一刻就启动主冲击：先快速受力到峰值，再自然衰减到最终姿态。
+            float settle = t * t * (3f - 2f * t);
+            float impulse = 4f * t * (1f - t);
+            Vector3 mainOffset = finalOffset * (settle + impulse * 0.65f);
+            float rotationProgress = settle + impulse * 0.30f;
+            Quaternion mainRotation = Quaternion.Slerp(
+                baseRotation, finalRotation, Mathf.Clamp01(rotationProgress));
+
+            // 叠加幅度较小、快速衰减的连续振动，不再逐帧随机跳方向。
+            float damping = (1f - t) * (1f - t);
+            float vibrationX = Mathf.Sin(elapsed * 92f) * strength * damping;
+            float vibrationY = Mathf.Sin(elapsed * 117f + 0.8f) * strength * damping * 0.65f;
+
+            transform.position = basePosition + mainOffset +
+                right * vibrationX + up * vibrationY;
+            transform.rotation = mainRotation;
             yield return null;
         }
 
-        // 攻击方向决定镜头倾斜的方向；暴击使用更明显的旋转和位移。
-        float multiplier = isCritical ? criticalFollowThroughMultiplier : 1f;
-        float rotationAngle = isCritical
-            ? criticalFollowThroughRotation
-            : hitFollowThroughRotation;
-        float rotationSign = Mathf.Abs(screenDirection.x) > 0.05f
-            ? -Mathf.Sign(screenDirection.x)
-            : Mathf.Sign(screenDirection.y);
-        Quaternion impactRotation = Quaternion.AngleAxis(
-            rotationAngle * rotationSign, forward) * baseRotation;
-
-        float horizontalOffset = hitFollowThroughHorizontal * multiplier * screenDirection.x;
-        float verticalOffset = hitFollowThroughVertical * multiplier * screenDirection.y;
-        float depthOffset = hitFollowThroughDepth * multiplier;
-        Vector3 impactPosition = basePosition +
-            right * horizontalOffset +
-            up * verticalOffset +
-            forward * depthOffset;
-
-        yield return AnimatePose(impactPosition, impactRotation, hitFollowThroughDuration);
+        // 精确停在最终姿态，避免循环最后一帧留下细微误差。
+        transform.SetPositionAndRotation(basePosition + finalOffset, finalRotation);
     }
 
     private void Awake()
