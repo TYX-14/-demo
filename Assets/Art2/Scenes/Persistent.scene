@@ -21819,6 +21819,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1360190924}
   - component: {fileID: 1360190923}
+  - component: {fileID: 1360190925}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: Battle Camera
@@ -21870,6 +21871,24 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
+--- !u!114 &1360190925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360190922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8c6f2a4b1e49a3a5c7d9e0f2b4c6a8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  battleVirtualCamera: {fileID: 1360190923}
+  focusInDuration: 0.22
+  focusOutDuration: 0.18
+  focusHoldDuration: 0.3
+  minimumFocusDistance: 4.5
+  framePadding: 0.82
 --- !u!4 &1360190924
 Transform:
   m_ObjectHideFlags: 0

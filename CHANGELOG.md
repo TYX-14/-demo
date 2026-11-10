@@ -1,3 +1,28 @@
+## 2026-11-10：战斗攻击特写镜头原型
+
+### 目标与原因
+- 角色发动技能时，镜头从战场全景快速推进，让行动者与本次行动的全部实际目标同时出现在画面中。
+- 当前暂时使用角色现有站位图验证镜头演出，不等待正式攻击动画资源。
+
+### 实现方案
+- 复用 Persistent 场景中的现有 `Battle Camera` Cinemachine 虚拟相机，不创建第二台输出相机。
+- `BattleActionCamera` 根据行动者与 `BattleActionContext.ResolvedTargets` 中所有目标的主精灵边界计算整体构图。
+- 根据透视镜头视野角、屏幕宽高比和参与者边界动态计算推进距离，确保多目标技能的所有参与者同时留在画面内。
+- 行动开始前推进镜头，行动结算与现有后摇/位移等待结束后恢复战斗全景；切换离开战斗镜头时立即复位。
+
+### 涉及脚本与场景
+- `Assets/Scripts/Game/Camera/BattleActionCamera.cs`：控制特写推进、动态构图和镜头复位。
+- `Assets/Scripts/Battel/Runtime/Components/BattleUnit.cs`：提供主精灵世界边界。
+- `Assets/Scripts/Battel/Core/FSM/PerformActionState.cs`：在统一行动流程中调用特写镜头，不改目标解析与伤害执行器。
+- `Assets/Art2/Scenes/Persistent.scene`：将镜头控制组件挂到现有 Battle Camera，并引用其 CinemachineCamera。
+
+### 当前边界
+- 暂时所有具有实体目标的技能都会触发特写，包括治疗或自身技能；后续可根据技能效果类型细分演出。
+- 当前只有镜头推进与复位，没有攻击动画、命中特效同步、景深或镜头震动。
+- 尚未在 Unity 中编译或运行验证。
+
+---
+
 ## 2026-11-09：新增全屏深度云影系统（第一版）
 
 - **替换地面贴片思路：** 新增 `CloudShadowRendererFeature` 与全屏 Shader，读取摄像机深度并重建可见像素的世界坐标，再按世界空间噪声计算云影；不再依赖地面网格，因此可统一影响写入深度的地形、草地、树木和建筑像素。

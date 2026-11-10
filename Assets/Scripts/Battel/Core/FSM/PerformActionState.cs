@@ -44,7 +44,6 @@ public class PerformActionState : BattleState
             yield break;
         }
 
-        // 只有行动正式启动后才扣 SP，取消选目标或目标非法不会消耗资源。
         if (_actionContext.Skill.SpCost > 0)
             _actionContext.Actor.RuntimeData.ModifyMp(-_actionContext.Skill.SpCost);
 
@@ -63,6 +62,12 @@ public class PerformActionState : BattleState
         if (isEnemyAction && BattleVFXManager.Instance != null)
             BattleVFXManager.Instance.ShowEnemyActionTargets(_actionContext.ResolvedTargets);
 
+        // 所有行动者与本次行动的全部实际目标同时进入特写；没有实体目标的技能不移动镜头。
+        BattleActionCamera actionCamera = Object.FindAnyObjectByType<BattleActionCamera>();
+        bool cameraFocusStarted = actionCamera != null && _actionContext.ResolvedTargets.Count > 0;
+        if (cameraFocusStarted)
+            yield return actionCamera.FocusOnAction(_actionContext.Actor, _actionContext.ResolvedTargets);
+
         if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
 
@@ -79,7 +84,6 @@ public class PerformActionState : BattleState
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。");
 
-        // 【未来接入动作系统的钩子】在这里等待行动者的技能动作完成信号。
         // 目前项目尚未建立技能动作播放/完成事件，因此即时结算完成后直接进入后置位移阶段。
         bool postActionMovementTriggered = BattleSkillEffectExecutor.ExecutePostActionMovementEffects(
             _controller,
@@ -88,14 +92,17 @@ public class PerformActionState : BattleState
             skillLevel);
         movementTriggered |= postActionMovementTriggered;
 
-        // 让位移协程完成后再推进 CTB，避免下一行动者在队形移动中开始行动。
         if (movementTriggered)
             yield return new WaitForSecondsRealtime(0.9f);
 
         if (isEnemyAction && _controller.EnemyActionRecoveryDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionRecoveryDelay);
+        else if (cameraFocusStarted && actionCamera != null && actionCamera.FocusHoldDuration > 0f)
+            yield return new WaitForSecondsRealtime(actionCamera.FocusHoldDuration);
 
-        // 前摇、技能结算、位移与后摇期间保持攻击意图可见；行动即将交还 CTB 时再清理。
+        if (cameraFocusStarted && actionCamera != null && actionCamera.isActiveAndEnabled)
+            yield return actionCamera.RestoreBattleView();
+
         if (isEnemyAction && BattleVFXManager.Instance != null)
             BattleVFXManager.Instance.ClearEnemyActionTargets();
 

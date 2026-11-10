@@ -226,6 +226,18 @@ public class BattleUnit : MonoBehaviour
     /// 判断屏幕坐标是否落在该单位 SpriteRenderer 投影后的屏幕矩形内。
     /// 用于目标选择，不依赖额外的 2D/3D Collider 配置。
     /// </summary>
+    /// <summary>获取角色主精灵的世界空间边界，供攻击特写镜头计算构图。</summary>
+    public bool TryGetVisualBounds(out Bounds visualBounds)
+    {
+        visualBounds = default;
+        if (spriteRenderer == null || spriteRenderer.sprite == null ||
+            !spriteRenderer.enabled || !spriteRenderer.gameObject.activeInHierarchy)
+            return false;
+
+        visualBounds = spriteRenderer.bounds;
+        return true;
+    }
+
     public bool TryGetScreenBounds(Camera targetCamera, out Rect screenBounds)
     {
         screenBounds = default;
