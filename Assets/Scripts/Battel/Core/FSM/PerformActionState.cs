@@ -67,6 +67,8 @@ public class PerformActionState : BattleState
         bool cameraFocusStarted = actionCamera != null && _actionContext.ResolvedTargets.Count > 0;
         if (cameraFocusStarted)
             yield return actionCamera.FocusOnAction(_actionContext.Actor, _actionContext.ResolvedTargets);
+        if (cameraFocusStarted)
+            actionCamera.BeginFocusPush();
 
         if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
@@ -158,22 +160,26 @@ public class PerformActionState : BattleState
         if (totalDamage > 0 && cameraFocusStarted && actionCamera != null)
             yield return actionCamera.ShakeImpact(criticalHit, impactActorX, impactTargetX);
 
+        // 命中后保留短暂停顿，但不提前恢复攻击者与目标的视觉状态。
+        // 攻击图片和目标冻结姿势会一直维持到特写正式结束。
         if (actionPresentationStarted || targetPresentationStarted)
-        {
             yield return new WaitForSecondsRealtime(0.12f);
-            if (actionPresentationStarted)
-                presentationActor.EndActionPresentation();
-            if (targetPresentationStarted)
-                presentationTarget.EndActionPresentation();
-        }
 
-        // 攻击特写只负责展示攻击与命中。特写结束后先恢复战场全景，
-        // 再执行前进/后退等后置位移，避免镜头跟着角色位移阶段继续停留在特写。
+        // 额外特写时间也属于攻击图片展示时间，结束特写前才恢复角色 Animator。
         if (cameraFocusStarted && actionCamera != null &&
             actionCamera.FocusHoldDuration > 0f)
         {
             yield return new WaitForSecondsRealtime(actionCamera.FocusHoldDuration);
         }
+
+        if (actionPresentationStarted)
+            presentationActor.EndActionPresentation();
+        if (targetPresentationStarted)
+            presentationTarget.EndActionPresentation();
+
+        // 先停止持续推进，再恢复战场全景，最后执行前进/后退等后置位移。
+        if (cameraFocusStarted && actionCamera != null)
+            actionCamera.EndFocusPush();
 
         if (cameraFocusStarted && actionCamera != null && actionCamera.isActiveAndEnabled)
             yield return actionCamera.RestoreBattleView();
