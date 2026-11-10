@@ -13,9 +13,11 @@ public static class BattleSkillEffectExecutor
         int skillLevel,
         IReadOnlyList<BattleEntity> targets,
         BattleEntity selectedInputTarget,
-        out bool movementTriggered)
+        out bool movementTriggered,
+        out bool criticalHit)
     {
         movementTriggered = false;
+        criticalHit = false;
         if (controller == null || actor == null || actor.RuntimeData == null ||
             skill == null || targets == null || !actor.IsAlive)
             return 0;
@@ -57,7 +59,7 @@ public static class BattleSkillEffectExecutor
                 {
                     int damage = BattleDamageCalculator.CalculateDamage(
                         actor.RuntimeData, target.RuntimeData, skill.DamageType,
-                        damageModifier, isCritical: false);
+                        damageModifier, isCritical: criticalHit);
 
                     // 零伤害不调用 ModifyHp，避免误触发死门判定。
                     if (damage > 0)
