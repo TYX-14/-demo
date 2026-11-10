@@ -35346,6 +35346,27 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &2146624129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1906250745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9c3b10e6a2d4c98a7e51f0b3d6c2a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cloudCookie: {fileID: 2800000, guid: 305d5d9d8bf04e34b96397a2c182a558, type: 3}
+  cookieSize: 15
+  cookieSizeMultiplier: {x: 2.01, y: 1}
+  shadowCoverageThreshold: 0.38
+  shadowDepth: 0.8
+  enableScrolling: 1
+  scrollSpeed: {x: 0.1, y: 0.5}
+  scrollSpeedMultiplier: 1.5
+  initialOffset: {x: 0, y: 0}
 --- !u!1001 &4556617135225262579
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35622,21 +35643,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a3b0c6d9ac65dfe40a3021f26242d1e4, type: 3}
---- !u!114 &2146624129
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1906250745}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9c3b10e6a2d4c98a7e51f0b3d6c2a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cloudCookie: {fileID: 2800000, guid: 8d7a1c4e9b2f4635a0d6c8e1f3b5a729, type: 3}
-  cookieSize: 90
-  scrollSpeed: {x: 0.035, y: 0.014}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

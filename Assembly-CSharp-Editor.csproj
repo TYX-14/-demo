@@ -40,11 +40,13 @@
     <Analyzer Include="E:\unity\2022.3.62t7\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Editor\CloudShadow\CloudShadowTextureGeneratorWindow.cs" />
      <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorManagerTextures_Editor.cs" />
      <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorManagerEffects_Editor.cs" />
      <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_Snow_Editor.cs" />
      <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_Wind_Editor.cs" />
      <Compile Include="Assets\Editor\SkillDefinitionSOEditor.cs" />
+     <Compile Include="Assets\Editor\CloudShadow\CloudShadowDoubleMaskGeneratorWindow.cs" />
      <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorController_Editor.cs" />
     <Reference Include="UnityEngine">
         <HintPath>E:\unity\2022.3.62t7\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
