@@ -71,6 +71,39 @@ public class PerformActionState : BattleState
         if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
             yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
 
+        // 技能配置了攻击图片时，临时将攻击者放到目标前方并展示该图片。
+        // 只处理视觉 Transform，BattleEntity/阵型数据保持不变。
+        BattleUnit presentationActor = _actionContext.Actor.Unit;
+        BattleUnit presentationTarget = _actionContext.ResolvedTargets.Count > 0
+            ? _actionContext.ResolvedTargets[0]?.Unit
+            : null;
+        bool actionPresentationStarted = false;
+        if (_actionContext.Skill.AttackSprite != null &&
+            presentationActor != null && presentationTarget != null)
+        {
+            Vector3 actorPosition = presentationActor.transform.position;
+            Vector3 targetPosition = presentationTarget.transform.position;
+            Vector3 direction = Vector3.ProjectOnPlane(targetPosition - actorPosition, Vector3.up);
+            if (direction.sqrMagnitude < 0.0001f)
+                direction = presentationActor.transform.forward;
+            direction.Normalize();
+
+            float actorRadius = 0.25f;
+            float targetRadius = 0.25f;
+            if (presentationActor.TryGetVisualBounds(out Bounds actorBounds))
+                actorRadius = Mathf.Abs(direction.x) * actorBounds.extents.x +
+                              Mathf.Abs(direction.z) * actorBounds.extents.z;
+            if (presentationTarget.TryGetVisualBounds(out Bounds targetBounds))
+                targetRadius = Mathf.Abs(direction.x) * targetBounds.extents.x +
+                               Mathf.Abs(direction.z) * targetBounds.extents.z;
+
+            Vector3 engagementPosition = targetPosition - direction * (targetRadius + actorRadius * 0.55f);
+            actionPresentationStarted = presentationActor.BeginActionPresentation(
+                _actionContext.Skill.AttackSprite, engagementPosition);
+            if (actionPresentationStarted)
+                yield return new WaitForSecondsRealtime(0.25f);
+        }
+
         int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
         bool movementTriggered;
         int totalDamage = BattleSkillEffectExecutor.Execute(
@@ -83,6 +116,12 @@ public class PerformActionState : BattleState
             out movementTriggered);
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}。");
+
+        if (actionPresentationStarted)
+        {
+            yield return new WaitForSecondsRealtime(0.12f);
+            presentationActor.EndActionPresentation();
+        }
 
         // 目前项目尚未建立技能动作播放/完成事件，因此即时结算完成后直接进入后置位移阶段。
         bool postActionMovementTriggered = BattleSkillEffectExecutor.ExecutePostActionMovementEffects(
