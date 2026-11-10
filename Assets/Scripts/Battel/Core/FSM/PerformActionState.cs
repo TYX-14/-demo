@@ -80,6 +80,12 @@ public class PerformActionState : BattleState
         bool actionPresentationStarted = false;
         bool targetPresentationStarted = false;
         Vector3 cameraImpactDirection = Vector3.zero;
+        float impactActorX = presentationActor != null
+            ? presentationActor.transform.position.x
+            : 0f;
+        float impactTargetX = presentationTarget != null
+            ? presentationTarget.transform.position.x
+            : impactActorX + 1f;
         if (presentationActor != null && presentationTarget != null &&
             presentationActor != presentationTarget)
         {
@@ -150,7 +156,7 @@ public class PerformActionState : BattleState
 
         // 当前暴击判定尚未接入；执行器先提供暴击结果出口，未来接入后自动切换更强震屏。
         if (totalDamage > 0 && cameraFocusStarted && actionCamera != null)
-            yield return actionCamera.ShakeImpact(criticalHit, cameraImpactDirection);
+            yield return actionCamera.ShakeImpact(criticalHit, impactActorX, impactTargetX);
 
         if (actionPresentationStarted || targetPresentationStarted)
         {
