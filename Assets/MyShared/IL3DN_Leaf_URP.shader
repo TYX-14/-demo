@@ -215,6 +215,9 @@ Shader "MyShared/IL3DN/Leaf_URP"
 
             // 主方向光 + 球谐环境光。
             Light mainLight = GetMainLight();
+            #if defined(_LIGHT_COOKIES)
+                mainLight.color *= SampleMainLightCookie(IN.positionWS);
+            #endif
             half mainNdotL = saturate(dot(normalWS, mainLight.direction));
             half3 lighting = SampleSH(normalWS)
                 + mainLight.color * mainNdotL;
@@ -294,6 +297,7 @@ Shader "MyShared/IL3DN/Leaf_URP"
             #pragma shader_feature_local _USE_VERTEX_COLOR_WIND
             #pragma multi_compile GPU_FRUSTUM_ON__
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             ENDHLSL
         }

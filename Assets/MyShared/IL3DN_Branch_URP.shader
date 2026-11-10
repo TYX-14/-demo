@@ -153,6 +153,9 @@ Shader "MyShared/IL3DN/Branch_URP"
 
             // 主方向光，保留原有实时阴影接收。
             Light mainLight = GetMainLight(input.shadowCoord);
+            #if defined(_LIGHT_COOKIES)
+                mainLight.color *= SampleMainLightCookie(input.positionWS);
+            #endif
             half mainNdotL = saturate(dot(normalWS, mainLight.direction));
             half3 ambient = SampleSH(normalWS);
             half3 lighting = ambient
@@ -192,6 +195,7 @@ Shader "MyShared/IL3DN/Branch_URP"
             #pragma shader_feature_local _SNOW_ON
             #pragma shader_feature_local _USE_VERTEX_COLOR_WIND
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT

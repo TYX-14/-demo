@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// 为当前激活的游戏场景主方向光应用并滚动云影 Cookie。
@@ -16,9 +17,11 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     [SerializeField] private Vector2 scrollSpeed = new Vector2(0.035f, 0.014f);
 
     private Light activeLight;
+    private UniversalAdditionalLightData activeLightData;
     private Texture originalCookie;
-    private float originalCookieSize;
+    private Vector2 originalCookieSize;
     private Vector2 originalCookieOffset;
+    private bool addedLightData;
     private Light originalSun;
     private bool changedSun;
     private int activeSceneHandle = int.MinValue;
@@ -46,8 +49,8 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         if (scene.handle != activeSceneHandle)
             BindToActiveScene();
 
-        if (activeLight != null)
-            activeLight.cookieOffset += scrollSpeed * Time.deltaTime;
+        if (activeLightData != null)
+            activeLightData.lightCookieOffset += scrollSpeed * Time.deltaTime;
     }
 
     private void OnActiveSceneChanged(Scene previousScene, Scene newScene)
@@ -117,8 +120,13 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
 
         activeLight = target;
         originalCookie = target.cookie;
-        originalCookieSize = target.cookieSize;
-        originalCookieOffset = target.cookieOffset;
+
+        addedLightData = !target.TryGetComponent(out activeLightData);
+        if (addedLightData)
+            activeLightData = target.GetUniversalAdditionalLightData();
+
+        originalCookieSize = activeLightData.lightCookieSize;
+        originalCookieOffset = activeLightData.lightCookieOffset;
 
         originalSun = RenderSettings.sun;
         changedSun = originalSun != target;
@@ -126,8 +134,8 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
             RenderSettings.sun = target;
 
         target.cookie = cloudCookie;
-        target.cookieSize = cookieSize;
-        target.cookieOffset = originalCookieOffset;
+        activeLightData.lightCookieSize = Vector2.one * cookieSize;
+        activeLightData.lightCookieOffset = originalCookieOffset;
 
         Debug.Log($"[Cloud Cookie] 已应用到场景 {scene.name} 的方向光：{target.name}", target);
     }
@@ -139,8 +147,15 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
 
         Light previousLight = activeLight;
         previousLight.cookie = originalCookie;
-        previousLight.cookieSize = originalCookieSize;
-        previousLight.cookieOffset = originalCookieOffset;
+
+        if (activeLightData != null)
+        {
+            activeLightData.lightCookieSize = originalCookieSize;
+            activeLightData.lightCookieOffset = originalCookieOffset;
+
+            if (addedLightData)
+                Destroy(activeLightData);
+        }
 
         if (restoreSun &&
             changedSun &&
@@ -150,7 +165,9 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         }
 
         activeLight = null;
+        activeLightData = null;
         originalCookie = null;
+        addedLightData = false;
         changedSun = false;
     }
 }
