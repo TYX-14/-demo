@@ -14,8 +14,11 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     [SerializeField, Min(1f)] private float cookieSize = 10f;
     [SerializeField, Min(0.01f)] private Vector2 cookieSizeMultiplier = Vector2.one;
 
-    [Header("云影浓度")]
-    [SerializeField, Range(0.1f, 4f)] private float shadowDensity = 1f;
+    [Header("云影范围与深度")]
+    [Tooltip("阈值越高，越多灰度区域会被识别为云影，阴影覆盖范围越大。")]
+    [SerializeField, Range(0f, 1f)] private float shadowCoverageThreshold = 0.2f;
+    [Tooltip("控制云影最深处的遮光程度。0 为没有阴影，1 为完全遮挡方向光。")]
+    [SerializeField, Range(0f, 1f)] private float shadowDepth = 0.8f;
 
     [Header("云影流动")]
     [SerializeField] private bool enableScrolling = true;
@@ -32,6 +35,8 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     private bool addedLightData;
     private Light originalSun;
     private bool changedSun;
+    private float appliedCoverageThreshold = -1f;
+    private float appliedShadowDepth = -1f;
     private int activeSceneHandle = int.MinValue;
 
     private void OnEnable()
@@ -56,6 +61,13 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         // 作为事件回调之外的保险，确保激活场景变化后重新绑定。
         if (scene.handle != activeSceneHandle)
             BindToActiveScene();
+
+        if (activeLight != null &&
+            (!Mathf.Approximately(shadowCoverageThreshold, appliedCoverageThreshold) ||
+             !Mathf.Approximately(shadowDepth, appliedShadowDepth)))
+        {
+            ApplyAdjustedCookie();
+        }
 
         if (activeLightData != null && enableScrolling)
             activeLightData.lightCookieOffset += scrollSpeed * (scrollSpeedMultiplier * Time.deltaTime);
@@ -141,8 +153,7 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         if (changedSun)
             RenderSettings.sun = target;
 
-        runtimeCookie = CreateAdjustedCookie();
-        target.cookie = runtimeCookie != null ? runtimeCookie : cloudCookie;
+        ApplyAdjustedCookie();
         activeLightData.lightCookieSize = new Vector2(
             cookieSize * cookieSizeMultiplier.x,
             cookieSize * cookieSizeMultiplier.y);
@@ -151,31 +162,57 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         Debug.Log($"[Cloud Cookie] 已应用到场景 {scene.name} 的方向光：{target.name}", target);
     }
 
+    private void ApplyAdjustedCookie()
+    {
+        Texture2D newRuntimeCookie = CreateAdjustedCookie();
+        Texture nextCookie = newRuntimeCookie != null ? newRuntimeCookie : cloudCookie;
+
+        if (activeLight != null)
+            activeLight.cookie = nextCookie;
+
+        if (runtimeCookie != null)
+            Destroy(runtimeCookie);
+
+        runtimeCookie = newRuntimeCookie;
+        appliedCoverageThreshold = shadowCoverageThreshold;
+        appliedShadowDepth = shadowDepth;
+    }
+
     private Texture2D CreateAdjustedCookie()
     {
-        // 1 是原始浓度，低于 1 会变淡，高于 1 会加深中间灰度。
-        if (Mathf.Approximately(shadowDensity, 1f))
+        if (cloudCookie == null)
             return null;
 
         if (!cloudCookie.isReadable)
         {
-            Debug.LogError("[Cloud Cookie] 云影纹理必须启用 Read/Write，才能调整云影浓度。", this);
+            Debug.LogError("[Cloud Cookie] 云影纹理必须启用 Read/Write，才能调整云影范围和深度。", this);
             return null;
         }
 
         Color32[] pixels = cloudCookie.GetPixels32();
-        float exponent = Mathf.Max(0.01f, shadowDensity);
+        const float edgeSoftness = 0.25f;
 
         for (int i = 0; i < pixels.Length; i++)
         {
             Color32 pixel = pixels[i];
-            pixel.r = AdjustCookieChannel(pixel.r, exponent);
-            pixel.g = AdjustCookieChannel(pixel.g, exponent);
-            pixel.b = AdjustCookieChannel(pixel.b, exponent);
+            float source = (pixel.r + pixel.g + pixel.b) / (3f * 255f);
+
+            // 灰度低于阈值的区域成为云影；边缘用平滑过渡避免硬切边。
+            float t = Mathf.Clamp01((source - shadowCoverageThreshold) / edgeSoftness);
+            float smooth = t * t * (3f - 2f * t);
+            float shadowMask = 1f - smooth;
+
+            // 深度只决定遮光强度，不再把整张图的灰度一起压暗。
+            float transmission = 1f - shadowMask * shadowDepth;
+            byte adjusted = (byte)Mathf.RoundToInt(transmission * 255f);
+
+            pixel.r = adjusted;
+            pixel.g = adjusted;
+            pixel.b = adjusted;
             pixels[i] = pixel;
         }
 
-        Texture2D adjusted = new Texture2D(
+        Texture2D adjustedCookie = new Texture2D(
             cloudCookie.width,
             cloudCookie.height,
             TextureFormat.RGBA32,
@@ -188,18 +225,9 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
             anisoLevel = cloudCookie.anisoLevel
         };
 
-        adjusted.SetPixels32(pixels);
-        adjusted.Apply(true, true);
-        return adjusted;
-    }
-
-    private static byte AdjustCookieChannel(byte channel, float exponent)
-    {
-        float normalized = channel / 255f;
-        return (byte)Mathf.Clamp(
-            Mathf.RoundToInt(Mathf.Pow(normalized, exponent) * 255f),
-            0,
-            255);
+        adjustedCookie.SetPixels32(pixels);
+        adjustedCookie.Apply(true, true);
+        return adjustedCookie;
     }
 
     private void RestoreLight(bool restoreSun)
@@ -235,6 +263,8 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         activeLight = null;
         activeLightData = null;
         originalCookie = null;
+        appliedCoverageThreshold = -1f;
+        appliedShadowDepth = -1f;
         addedLightData = false;
         changedSun = false;
     }
