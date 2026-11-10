@@ -22,6 +22,44 @@ public class EnemyAIState : BattleState
             yield break;
         }
 
+        // AI 状态可以先被状态机选中，但必须等 CTB 大头像完成入场后才真正开始行动。
+        // BattleController 会缓存展示完成的行动者，避免头像动画极短或同步事件先到时漏接事件。
+        while (_controller.IsBattleRunning &&
+               _controller.CurrentEntity == actor &&
+               _controller.CurrentState == this &&
+               !_controller.IsCTBDisplayReadyFor(actor))
+        {
+            yield return null;
+        }
+
+        if (!_controller.IsBattleRunning ||
+            _controller.CurrentEntity != actor ||
+            _controller.CurrentState != this)
+            yield break;
+
+        if (!actor.IsAlive)
+        {
+            _controller.SkipCurrentTurn(actor);
+            yield break;
+        }
+
+        // 蓝色行动圈由 BattleVFXManager 在同一个 CTB 展示完成事件中点亮。
+        // 使用真实时间等待，让暂停/时间缩放不会意外改变敌方思考时长。
+        if (_controller.EnemyDecisionDelay > 0f)
+            yield return new WaitForSecondsRealtime(_controller.EnemyDecisionDelay);
+
+        // 等待期间若战斗结束、行动者变化或状态被替换，不再提交过期决策。
+        if (!_controller.IsBattleRunning ||
+            _controller.CurrentEntity != actor ||
+            _controller.CurrentState != this)
+            yield break;
+
+        if (!actor.IsAlive)
+        {
+            _controller.SkipCurrentTurn(actor);
+            yield break;
+        }
+
         IReadOnlyList<SkillDefinitionSO> skills = actor.RuntimeData.EquippedSkills;
         if (skills != null)
         {
