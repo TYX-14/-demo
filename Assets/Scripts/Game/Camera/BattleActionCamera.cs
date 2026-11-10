@@ -28,6 +28,10 @@ public sealed class BattleActionCamera : MonoBehaviour
     [SerializeField, Min(0f)] private float hitShakeDuration = 0.16f;
     [SerializeField, Min(0f)] private float criticalShakeStrength = 0.14f;
     [SerializeField, Min(0f)] private float criticalShakeDuration = 0.24f;
+    [SerializeField, Min(0f), Tooltip("震屏结束后，镜头沿最后的冲击方向继续移动的距离。")]
+    private float hitFollowThroughDistance = 0.28f;
+    [SerializeField, Min(0f), Tooltip("震屏结束后镜头顺势移动的时间。")]
+    private float hitFollowThroughDuration = 0.14f;
 
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
@@ -46,7 +50,10 @@ public sealed class BattleActionCamera : MonoBehaviour
         return towardCamera.normalized * presentationCameraFrontOffset;
     }
 
-    /// <summary>在命中结算时震动特写镜头；暴击使用更大的幅度和更长的持续时间。</summary>
+    /// <summary>
+    /// 命中瞬间震动特写镜头。震动结束后保留冲击方向的偏移，
+    /// 再顺着该方向平滑推进一小段，直到行动流程主动恢复战场镜头。
+    /// </summary>
     public IEnumerator ShakeImpact(bool isCritical)
     {
         if (!_initialized || !isActiveAndEnabled)
@@ -60,8 +67,12 @@ public sealed class BattleActionCamera : MonoBehaviour
         Vector3 basePosition = transform.position;
         Vector3 right = _battleRotation * Vector3.right;
         Vector3 up = _battleRotation * Vector3.up;
-        float elapsed = 0f;
+        Vector2 impactDirection = Random.insideUnitCircle;
+        if (impactDirection.sqrMagnitude < 0.001f)
+            impactDirection = Vector2.right;
+        impactDirection.Normalize();
 
+        float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
@@ -71,7 +82,19 @@ public sealed class BattleActionCamera : MonoBehaviour
             yield return null;
         }
 
-        transform.position = basePosition;
+        // 让震动以一个明确的冲击方向收尾，不把镜头弹回震动前的位置。
+        Vector3 impactOffset =
+            (right * impactDirection.x + up * impactDirection.y) * (strength * 0.35f);
+        Vector3 impactEndPosition = basePosition + impactOffset;
+        yield return AnimatePosition(impactEndPosition, 0.07f);
+
+        // 顺着最后的震动方向再推进一点，随后停留在这里，等待攻击特写结束。
+        if (hitFollowThroughDistance > 0f && hitFollowThroughDuration > 0f)
+        {
+            Vector3 followThroughPosition =
+                impactEndPosition + impactOffset.normalized * hitFollowThroughDistance;
+            yield return AnimatePosition(followThroughPosition, hitFollowThroughDuration);
+        }
     }
 
     private void Awake()
