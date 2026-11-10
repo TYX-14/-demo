@@ -11,26 +11,26 @@ using UnityEngine;
 public sealed class BattleActionCamera : MonoBehaviour
 {
     [Header("战斗特写镜头")]
-    [SerializeField] private CinemachineCamera battleVirtualCamera;
-    [SerializeField, Min(0.01f)] private float focusInDuration = 0.22f;
-    [SerializeField, Min(0.01f)] private float focusOutDuration = 0.18f;
-    [SerializeField, Min(0f)] private float focusHoldDuration = 0.3f;
-    [SerializeField, Min(0.1f)] private float minimumFocusDistance = 4.5f;
-    [SerializeField, Range(0.5f, 0.95f), Tooltip("参与单位在画面半宽/半高中的最大占比，数值越小留白越多。")]
+    [SerializeField, InspectorName("战斗虚拟相机"), Tooltip("引用 Persistent 场景中 Battle Camera 对象上的 CinemachineCamera。通常保持现有引用即可。")] private CinemachineCamera battleVirtualCamera;
+    [SerializeField, InspectorName("镜头推进时间"), Min(0.01f), Tooltip("从战场全景推进到攻击特写所需的时间，单位为秒。数值越小，推进越快。")] private float focusInDuration = 0.22f;
+    [SerializeField, InspectorName("镜头复位时间"), Min(0.01f), Tooltip("攻击演出结束后，镜头恢复到战场全景所需的时间，单位为秒。")] private float focusOutDuration = 0.18f;
+    [SerializeField, InspectorName("特写额外停留时间"), Min(0f), Tooltip("攻击演出流程结束前，额外保持特写的时间，单位为秒。设为 0 可关闭额外等待。")] private float focusHoldDuration = 0.3f;
+    [SerializeField, InspectorName("特写最小镜头距离"), Min(0.1f), Tooltip("自动构图时允许的最小镜头距离。数值越大，镜头越不容易贴近角色。")] private float minimumFocusDistance = 4.5f;
+    [SerializeField, InspectorName("画面留白比例"), Range(0.5f, 0.95f), Tooltip("参与单位在画面半宽和半高中的最大占比。数值越小，角色周围留白越多；数值越大，镜头构图越紧。")]
     private float framePadding = 0.82f;
 
     [Header("攻击演出")]
-    [SerializeField, Min(0f), Tooltip("攻击双方沿地面朝镜头方向额外前移的距离。")]
+    [SerializeField, InspectorName("角色朝镜头前移距离"), Min(0f), Tooltip("攻击者与目标的交战位置沿地面朝镜头方向整体前移的距离。数值越大，角色越靠近镜头。")]
     private float presentationCameraFrontOffset = 1.25f;
 
     [Header("命中震屏")]
-    [SerializeField, Min(0f)] private float hitShakeStrength = 0.055f;
-    [SerializeField, Min(0f)] private float hitShakeDuration = 0.16f;
-    [SerializeField, Min(0f)] private float criticalShakeStrength = 0.14f;
-    [SerializeField, Min(0f)] private float criticalShakeDuration = 0.24f;
-    [SerializeField, Min(0f), Tooltip("震屏结束后，镜头沿最后的冲击方向继续移动的距离。")]
+    [SerializeField, InspectorName("普通命中震屏幅度"), Min(0f), Tooltip("普通命中时镜头随机震动的幅度。设为 0 可关闭普通命中震屏。")] private float hitShakeStrength = 0.055f;
+    [SerializeField, InspectorName("普通命中震屏时长"), Min(0f), Tooltip("普通命中震屏持续的时间，单位为秒。")] private float hitShakeDuration = 0.16f;
+    [SerializeField, InspectorName("暴击震屏幅度"), Min(0f), Tooltip("暴击命中时镜头震动的幅度。需要后续接入暴击判定后才会生效。")] private float criticalShakeStrength = 0.14f;
+    [SerializeField, InspectorName("暴击震屏时长"), Min(0f), Tooltip("暴击命中震屏持续的时间，单位为秒。需要后续接入暴击判定后才会生效。")] private float criticalShakeDuration = 0.24f;
+    [SerializeField, InspectorName("震屏后推进距离"), Min(0f), Tooltip("震屏结束后，镜头沿最后的冲击方向继续平滑移动的距离。设为 0 可关闭后续推进。")]
     private float hitFollowThroughDistance = 0.28f;
-    [SerializeField, Min(0f), Tooltip("震屏结束后镜头顺势移动的时间。")]
+    [SerializeField, InspectorName("震屏后推进时间"), Min(0f), Tooltip("震屏结束后，镜头完成顺势推进所需的时间，单位为秒。")]
     private float hitFollowThroughDuration = 0.14f;
 
     private Vector3 _battlePosition;
