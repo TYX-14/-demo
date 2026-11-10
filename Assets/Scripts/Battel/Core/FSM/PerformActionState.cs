@@ -118,7 +118,7 @@ public class PerformActionState : BattleState
             {
                 targetPresentationStarted = presentationTarget.BeginActionPresentation(
                     null, targetEngagementPosition);
-                yield return new WaitForSecondsRealtime(0.25f);
+                // 近战攻击图片就是命中帧，因此不在这里等待，下一步立即结算伤害并触发震屏。
             }
         }
 
