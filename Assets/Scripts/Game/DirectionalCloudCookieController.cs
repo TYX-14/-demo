@@ -14,6 +14,9 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     [SerializeField, Min(1f)] private float cookieSize = 10f;
     [SerializeField, Min(0.01f)] private Vector2 cookieSizeMultiplier = Vector2.one;
 
+    [Header("云影浓度")]
+    [SerializeField, Range(0.1f, 4f)] private float shadowDensity = 1f;
+
     [Header("云影流动")]
     [SerializeField] private bool enableScrolling = true;
     [SerializeField] private Vector2 scrollSpeed = new Vector2(0.035f, 0.014f);
@@ -23,6 +26,7 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
     private Light activeLight;
     private UniversalAdditionalLightData activeLightData;
     private Texture originalCookie;
+    private Texture2D runtimeCookie;
     private Vector2 originalCookieSize;
     private Vector2 originalCookieOffset;
     private bool addedLightData;
@@ -137,13 +141,65 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
         if (changedSun)
             RenderSettings.sun = target;
 
-        target.cookie = cloudCookie;
+        runtimeCookie = CreateAdjustedCookie();
+        target.cookie = runtimeCookie != null ? runtimeCookie : cloudCookie;
         activeLightData.lightCookieSize = new Vector2(
             cookieSize * cookieSizeMultiplier.x,
             cookieSize * cookieSizeMultiplier.y);
         activeLightData.lightCookieOffset = originalCookieOffset + initialOffset;
 
         Debug.Log($"[Cloud Cookie] 已应用到场景 {scene.name} 的方向光：{target.name}", target);
+    }
+
+    private Texture2D CreateAdjustedCookie()
+    {
+        // 1 是原始浓度，低于 1 会变淡，高于 1 会加深中间灰度。
+        if (Mathf.Approximately(shadowDensity, 1f))
+            return null;
+
+        if (!cloudCookie.isReadable)
+        {
+            Debug.LogError("[Cloud Cookie] 云影纹理必须启用 Read/Write，才能调整云影浓度。", this);
+            return null;
+        }
+
+        Color32[] pixels = cloudCookie.GetPixels32();
+        float exponent = Mathf.Max(0.01f, shadowDensity);
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            Color32 pixel = pixels[i];
+            pixel.r = AdjustCookieChannel(pixel.r, exponent);
+            pixel.g = AdjustCookieChannel(pixel.g, exponent);
+            pixel.b = AdjustCookieChannel(pixel.b, exponent);
+            pixels[i] = pixel;
+        }
+
+        Texture2D adjusted = new Texture2D(
+            cloudCookie.width,
+            cloudCookie.height,
+            TextureFormat.RGBA32,
+            cloudCookie.mipmapCount > 1,
+            true)
+        {
+            name = cloudCookie.name + "_RuntimeAdjusted",
+            wrapMode = cloudCookie.wrapMode,
+            filterMode = cloudCookie.filterMode,
+            anisoLevel = cloudCookie.anisoLevel
+        };
+
+        adjusted.SetPixels32(pixels);
+        adjusted.Apply(true, true);
+        return adjusted;
+    }
+
+    private static byte AdjustCookieChannel(byte channel, float exponent)
+    {
+        float normalized = channel / 255f;
+        return (byte)Mathf.Clamp(
+            Mathf.RoundToInt(Mathf.Pow(normalized, exponent) * 255f),
+            0,
+            255);
     }
 
     private void RestoreLight(bool restoreSun)
@@ -153,6 +209,12 @@ public sealed class DirectionalCloudCookieController : MonoBehaviour
 
         Light previousLight = activeLight;
         previousLight.cookie = originalCookie;
+
+        if (runtimeCookie != null)
+        {
+            Destroy(runtimeCookie);
+            runtimeCookie = null;
+        }
 
         if (activeLightData != null)
         {
