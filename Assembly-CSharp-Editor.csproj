@@ -49,13 +49,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\CloudShadow\CloudShadowTextureGeneratorWindow.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorManagerTextures_Editor.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorManagerEffects_Editor.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_Snow_Editor.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_Wind_Editor.cs" />
     <Compile Include="Assets\Editor\SkillDefinitionSOEditor.cs" />
     <Compile Include="Assets\Editor\CloudShadow\CloudShadowDoubleMaskGeneratorWindow.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\Editor\IL3DN_ColorController_Editor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1289,15 +1284,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Assembly-CSharp.csproj" />
-    <ProjectReference Include="CFXREditor.csproj" />
     <ProjectReference Include="Boxophobic.Utils.Editor.csproj" />
     <ProjectReference Include="Boxophobic.AtmosphericHeightFog.Editor.csproj" />
-    <ProjectReference Include="CFXRDemo.csproj" />
     <ProjectReference Include="Boxophobic.AtmosphericHeightFog.Runtime.csproj" />
-    <ProjectReference Include="CFXRRuntime.csproj" />
-    <ProjectReference Include="ToonyColorsPro.Demo.Editor.csproj" />
-    <ProjectReference Include="KinoBloom.Runtime.csproj" />
-    <ProjectReference Include="CFXR.WelcomeScreen.csproj" />
     <ProjectReference Include="Boxophobic.Utils.Scripts.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />

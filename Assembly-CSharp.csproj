@@ -48,7 +48,6 @@
     <Analyzer Include="E:\unity\2022.3.62t7\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_ColorManagerEffects.cs" />
     <Compile Include="Assets\Scripts\Game\SceneTranstion\SceneLoadRequest.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\Combat\BattleDamageCalculator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventHandler.cs" />
@@ -60,7 +59,6 @@
     <Compile Include="Assets\Scripts\Game\Character\EnemyDfinitionSo.cs" />
     <Compile Include="Assets\Scripts\MFramewrok\Event\IEventReceiver.cs" />
     <Compile Include="Assets\Scripts\MFramewrok\Event\IEvent.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_SimpleMouseLook.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI\BattleItemEntryUI.cs" />
     <Compile Include="Assets\Scripts\UI\Equipment\EquipmentStatPreviewPanel.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
@@ -112,11 +110,9 @@
     <Compile Include="Assets\Scripts\Game\Path Acton\StealAction.cs" />
     <Compile Include="Assets\Scripts\UI\Equipment\EquipmentService.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_SimpleFPSController.cs" />
     <Compile Include="Assets\Scripts\Game\Inventory\ConsumableItemSO.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\BattleCommandUI\SkillPositionDiagram.cs" />
     <Compile Include="Assets\Scripts\Game\Character\SkillEffectTypes.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_Fog_PP.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark03.cs" />
     <Compile Include="Assets\Scripts\Game\Character\StatusEffectDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\Battel\Runtime\Services\BattleVFXManager.cs" />
@@ -126,9 +122,7 @@
     <Compile Include="Assets\Scripts\UI\Field Panel\ShopPanelController.cs" />
     <Compile Include="Assets\Scripts\Game\Inventory\EquipmentItemSO.cs" />
     <Compile Include="Assets\Scripts\Game\DirectionalCloudCookieController.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_ColorController.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\FSM\SetNextEntityState.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_ChangeWalkingSound.cs" />
     <Compile Include="Assets\Scripts\UI\Battle UI\HealthBarController.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_ExampleScript_01.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
@@ -138,14 +132,12 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_PlayRandomSound.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\FSM\TargetSelectionState.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\FSM\BattleSetupState.cs" />
     <Compile Include="Assets\Scripts\Game\Party\PartyManager.cs" />
     <Compile Include="Assets\Scripts\Game\Path Acton\RecruitiActon.cs" />
     <Compile Include="Assets\Scripts\UI\Field Panel\RecruitPanelController.cs" />
     <Compile Include="Assets\Scripts\Battel\Core\FSM\PlayerInputState.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_ColorManagerTextures.cs" />
     <Compile Include="Assets\Scripts\UI\Inventory\ItemButton.cs" />
     <Compile Include="Assets\Scripts\UI\Party\PartyFormationEntryView.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ObjectSpin.cs" />
@@ -184,7 +176,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
     <Compile Include="Assets\Scripts\Game\Interaction\InteractionBase.cs" />
     <Compile Include="Assets\Scripts\Game\Inventory\ItemIconSetSO.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_Fog.cs" />
     <Compile Include="Assets\Scripts\Game\Character\SkillEffectData.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\Scripts\UI\Inventory\ShopItemButton.cs" />
@@ -194,14 +185,13 @@
     <Compile Include="Assets\Scripts\Game\Path Acton\ShopAction.cs" />
     <Compile Include="Assets\Scripts\Game\Character\CharacterDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\Battel\Runtime\Components\BattleUnit.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_Snow.cs" />
     <Compile Include="Assets\Scripts\Game\Character\CharacterStressSystem.cs" />
     <Compile Include="Assets\Scripts\Game\Input\InputSystemController.cs" />
     <Compile Include="Assets\Scripts\Game\Camera\BattleActionCamera.cs" />
     <Compile Include="Assets\Scripts\Game\Path Acton\ActionBase.cs" />
     <Compile Include="Assets\Scripts\Game\Party\ExpeditionManager.cs" />
     <Compile Include="Assets\Scripts\MFramewrok\Event\EventBus.cs" />
-    <Compile Include="Assets\Art3\IL3DN\Scripts\IL3DN_Wind.cs" />
+    <Compile Include="Assets\Scripts\Battel\Runtime\BattleFloatingText.cs" />
     <Compile Include="Assets\Scripts\Utility\Global Using.cs" />
     <Compile Include="Assets\Scripts\Game\Character\GobalGrowthConfigSO.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
@@ -225,8 +215,10 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\MYShaders\MyShared\VolumetricLight\VolumetricLightGroundSpot.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
+    <None Include="Assets\MYShaders\IL3DN\VS_indirect.cginc" />
     <None Include="Assets\Art2\Effect\Shaders\PCS_VFX_AlphaBlend.shader" />
     <None Include="Assets\MYShaders\MyShared\DistanceFog_URP.shader" />
+    <None Include="Assets\MYShaders\IL3DN\IL3DN_Leaf_URP.shader" />
     <None Include="Assets\Art3\IL3DN\Shaders\IL3DN_Pine.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\Art2\Effect\Shaders\Dreamscape_Waterfall.shader" />
@@ -1417,15 +1409,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="CFXREditor.csproj" />
     <ProjectReference Include="Boxophobic.Utils.Editor.csproj" />
     <ProjectReference Include="Boxophobic.AtmosphericHeightFog.Editor.csproj" />
-    <ProjectReference Include="CFXRDemo.csproj" />
     <ProjectReference Include="Boxophobic.AtmosphericHeightFog.Runtime.csproj" />
-    <ProjectReference Include="CFXRRuntime.csproj" />
-    <ProjectReference Include="ToonyColorsPro.Demo.Editor.csproj" />
-    <ProjectReference Include="KinoBloom.Runtime.csproj" />
-    <ProjectReference Include="CFXR.WelcomeScreen.csproj" />
     <ProjectReference Include="Boxophobic.Utils.Scripts.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />

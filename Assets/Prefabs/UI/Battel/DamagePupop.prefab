@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9122030133293094722}
   - component: {fileID: 4090936531917032678}
   - component: {fileID: 2230159676858493170}
+  - component: {fileID: 8852386666629334079}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: DamagePupop
@@ -176,3 +177,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 4090936531917032678}
   m_maskType: 0
+--- !u!114 &8852386666629334079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6626978652472517110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e23afd840790487479ee30ec91973ca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  text: {fileID: 2230159676858493170}
+  criticalScaleMultiplier: 1.3
+  textScaleRoot: {fileID: 0}
