@@ -14,10 +14,12 @@ public static class BattleSkillEffectExecutor
         IReadOnlyList<BattleEntity> targets,
         BattleEntity selectedInputTarget,
         out bool movementTriggered,
-        out bool criticalHit)
+        out bool criticalHit,
+        out bool damageEventTriggered)
     {
         movementTriggered = false;
         criticalHit = false;
+        damageEventTriggered = false;
         if (controller == null || actor == null || actor.RuntimeData == null ||
             skill == null || targets == null || !actor.IsAlive)
             return 0;
@@ -62,9 +64,11 @@ public static class BattleSkillEffectExecutor
                         target,
                         skill.DamageType,
                         damageModifier,
-                        criticalHit);
+                        criticalHit,
+                        out bool eventPublished);
 
                     totalCalculatedDamage += damage;
+                    damageEventTriggered |= eventPublished;
 
                     if (!target.IsAlive)
                         break;
