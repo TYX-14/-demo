@@ -9,15 +9,18 @@ public static class BattleDamageSystem
 {
     /// <summary>
     /// 对目标造成一次伤害，返回本次计算出的伤害数值。
-    /// 只有实际造成正数伤害时，才会修改生命值并发布伤害事件。
+    /// 只要攻击有效命中，就发布伤害事件；即使最终伤害为 0，也代表目标确实受到了攻击。
     /// </summary>
     public static int ApplyDamage(
         BattleEntity attacker,
         BattleEntity target,
         DamageType damageType,
         float damageModifierPercent = 0f,
-        bool isCritical = false)
+        bool isCritical = false,
+        out bool damageEventPublished)
     {
+        damageEventPublished = false;
+
         if (attacker == null || attacker.RuntimeData == null ||
             target == null || target.RuntimeData == null ||
             !attacker.IsAlive || !target.IsAlive)
@@ -30,10 +33,9 @@ public static class BattleDamageSystem
             damageModifierPercent,
             isCritical);
 
-        if (damage <= 0)
-            return 0;
-
-        target.RuntimeData.ModifyHp(-damage);
+        // 只有正数伤害才扣除生命值；0 点伤害仍然属于一次有效命中。
+        if (damage > 0)
+            target.RuntimeData.ModifyHp(-damage);
 
         EventBus.Publish(new BattleDamageEvent(
             attacker,
@@ -41,6 +43,7 @@ public static class BattleDamageSystem
             damage,
             damageType,
             isCritical));
+        damageEventPublished = true;
 
         return damage;
     }
