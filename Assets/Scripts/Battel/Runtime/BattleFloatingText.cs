@@ -26,6 +26,22 @@ public sealed class BattleFloatingText : MonoBehaviour
     [SerializeField, Tooltip("飘字使用的 TextMeshPro 组件。留空时自动从子物体查找。")]
     private TMP_Text text;
 
+    [Header("运动表现")]
+    [SerializeField, Min(0.01f), Tooltip("飘字从出现到销毁的持续时间，使用非缩放时间。")]
+    private float animationDuration = 0.32f;
+
+    [SerializeField, Min(0f), Tooltip("飘字在动画期间移动的总距离。")]
+    private float driftDistance = 0.75f;
+
+    [SerializeField, Min(0f), Tooltip("运动方向中向上的分量。数值越大，飘字越偏向上方。")]
+    private float upwardDriftRatio = 0.8f;
+
+    [SerializeField, Min(0f), Tooltip("运动方向中沿攻击方向的横向分量。")]
+    private float horizontalDriftRatio = 0.4f;
+
+    [SerializeField, Range(0f, 1f), Tooltip("动画进行到该比例时开始渐隐。0 表示立即渐隐，1 表示直到结束前都保持清晰。")]
+    private float fadeStartRatio = 0.18f;
+
     [Header("暴击表现")]
     [SerializeField, Min(1f), Tooltip("暴击飘字的放大倍率。颜色仍然沿用原伤害类型。")]
     private float criticalScaleMultiplier = 1.3f;
@@ -85,21 +101,26 @@ public sealed class BattleFloatingText : MonoBehaviour
     /// 播放短暂的飘动与渐隐，并在动画结束后销毁自身。
     /// 使用非缩放时间，确保暂停或慢动作时仍能按攻击特写时序结束。
     /// </summary>
-    public void PlayAnimation(
-        Vector3 driftDirection,
-        float duration = 0.32f,
-        float distance = 0.75f)
+    public void PlayAnimation(Vector3 horizontalDirection)
     {
         if (text == null)
             return;
+
+        horizontalDirection.y = 0f;
+        if (horizontalDirection.sqrMagnitude > 0.0001f)
+            horizontalDirection.Normalize();
+
+        Vector3 driftDirection =
+            Vector3.up * upwardDriftRatio +
+            horizontalDirection * horizontalDriftRatio;
 
         if (driftDirection.sqrMagnitude < 0.0001f)
             driftDirection = Vector3.up;
 
         StartCoroutine(AnimateAndDestroy(
             driftDirection.normalized,
-            Mathf.Max(0.01f, duration),
-            Mathf.Max(0f, distance)));
+            Mathf.Max(0.01f, animationDuration),
+            Mathf.Max(0f, driftDistance)));
     }
 
     private IEnumerator AnimateAndDestroy(
@@ -119,8 +140,11 @@ public sealed class BattleFloatingText : MonoBehaviour
 
             transform.position = Vector3.Lerp(startPosition, endPosition, t);
 
-            // 前 18% 时间保持清晰可读，之后逐渐淡出。
-            float fade = Mathf.Clamp01((t - 0.18f) / 0.82f);
+            float fadeDuration = 1f - fadeStartRatio;
+            float fade = fadeDuration <= 0f
+                ? (t >= 1f ? 1f : 0f)
+                : Mathf.Clamp01((t - fadeStartRatio) / fadeDuration);
+
             Color currentColor = originalColor;
             currentColor.a = originalColor.a * (1f - fade);
             text.color = currentColor;
