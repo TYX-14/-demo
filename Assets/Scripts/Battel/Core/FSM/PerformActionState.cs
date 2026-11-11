@@ -174,7 +174,7 @@ public class PerformActionState : BattleState
 
         // 命中后保留短暂停顿，但不提前恢复攻击者与目标的视觉状态。
         // 攻击图片和目标冻结姿势会一直维持到特写正式结束。
-        if (actionPresentationStarted || targetPresentationStarted)
+        if (actionPresentationStarted || presentedTargets.Count > 0)
             yield return new WaitForSecondsRealtime(0.12f);
 
         // 额外特写时间也属于攻击图片展示时间，结束特写前才恢复角色 Animator。
