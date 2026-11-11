@@ -130,21 +130,24 @@ public class PerformActionState : BattleState
             Vector3 cameraFrontOffset = actionCamera != null
                 ? actionCamera.GetCameraFrontGroundOffset()
                 : Vector3.zero;
+            // 友方 AoE 不使用近战交战中点，只沿世界 Z 轴整体前移。
+            // 保留镜头朝向所决定的前后符号，但不改变任何单位的 X/Y 坐标。
+            Vector3 friendlyAoeOffset = new Vector3(0f, 0f, cameraFrontOffset.z);
             Vector3 actorEngagementPosition = isFriendlyAoe
-                ? actorPosition
+                ? actorPosition + friendlyAoeOffset
                 : engagementCenter - direction * (actorRadius + gap * 0.5f) + cameraFrontOffset;
             Vector3 targetEngagementPosition = isFriendlyAoe
-                ? targetPosition + cameraFrontOffset
+                ? targetPosition + friendlyAoeOffset
                 : engagementCenter + direction * (targetRadius + gap * 0.5f) + cameraFrontOffset;
 
             actionPresentationStarted = presentationActor.BeginActionPresentation(
                 _actionContext.Skill.AttackSprite, actorEngagementPosition);
             if (actionPresentationStarted)
             {
-                // 普通攻击将目标组拉到交战位置；友方 AoE 则让施法者留在原位，
-                // 只将所有受影响队友整体朝镜头前方移动，避免与施法者或相邻站位重叠。
+                // 普通攻击将目标组拉到交战位置；友方 AoE 则让施法者与所有受影响队友
+                // 沿同一个世界 Z 轴偏移量整体前移，保持四人的相对站位不变。
                 Vector3 targetGroupOffset = isFriendlyAoe
-                    ? cameraFrontOffset
+                    ? friendlyAoeOffset
                     : targetEngagementPosition - targetPosition;
                 foreach (BattleEntity resolvedTarget in _actionContext.ResolvedTargets)
                 {
