@@ -123,6 +123,14 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
         }
     }
 
+    /// <summary>角色正式进入行动特写时，隐藏蓝色行动者光圈和所有红色目标光圈。</summary>
+    public void HideActionHighlights()
+    {
+        ClearLegalTargetHighlights();
+        ClearEnemyActionTargets();
+        HideBlueEffect();
+    }
+
     /// <summary>清除当前技能的所有红色合法目标光圈，但不影响蓝色行动者光圈。</summary>
     public void ClearLegalTargetHighlights()
     {
