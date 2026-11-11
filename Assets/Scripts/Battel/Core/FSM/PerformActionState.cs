@@ -169,6 +169,7 @@ public class PerformActionState : BattleState
         int skillLevel = _actionContext.Actor.RuntimeData.GetSkillLevel(_actionContext.Skill);
         bool movementTriggered;
         bool criticalHit;
+        bool damageEventTriggered;
         int totalDamage = BattleSkillEffectExecutor.Execute(
             _controller,
             _actionContext.Actor,
@@ -177,12 +178,14 @@ public class PerformActionState : BattleState
             _actionContext.ResolvedTargets,
             _actionContext.SelectedInputTarget,
             out movementTriggered,
-            out criticalHit);
+            out criticalHit,
+            out damageEventTriggered);
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}；暴击：{criticalHit}。");
 
-        // 当前暴击判定尚未接入；执行器先提供暴击结果出口，未来接入后自动切换更强震屏。
-        if (totalDamage > 0 && cameraFocusStarted && actionCamera != null)
+        // 振屏依据是否发生有效伤害命中，而不是伤害数值是否大于 0。
+        // 0 点伤害仍然是命中；只有闪避等未命中情况才不应触发伤害事件与振屏。
+        if (damageEventTriggered && cameraFocusStarted && actionCamera != null)
             yield return actionCamera.ShakeImpact(criticalHit, impactActorX, impactTargetX);
 
         // 命中后保留短暂停顿，但不提前恢复攻击者与目标的视觉状态。
