@@ -9,7 +9,7 @@ public static class BattleDamageSystem
 {
     /// <summary>
     /// 对目标造成一次伤害，返回本次计算出的伤害数值。
-    /// 零伤害不会修改生命值，也不会发布伤害事件。
+    /// 只有实际造成正数伤害时，才会修改生命值并发布伤害事件。
     /// </summary>
     public static int ApplyDamage(
         BattleEntity attacker,
