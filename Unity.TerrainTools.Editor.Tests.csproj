@@ -40,36 +40,19 @@
     <Analyzer Include="E:\unity\2022.3.62t7\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\TerrainFloatMinMaxValueTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\RegressionTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\BrushPlaybackTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\BaseTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\FilterTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PaintTextureTest.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\EnterExitPlayModeTest.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PaintDetails.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\RenderTextureTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\ToolboxUtilitiesSplatmapTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\BrushRotationVariatorTests.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\BrushSizeTest.cs" />
-     <Compile Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\ToolboxHelperTests.cs" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\PaintHeightHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\Logo.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\PaintTextureHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\StampHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\PaintHeightHistoryW.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\PaintHistory_Null.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\StampToolHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\PaintHeightHistory_Null.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\Unity.TerrainTools.Editor.Tests.asmdef" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\SmileHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\NoiseHeightHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\SetHeightHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\VerticalZigzagHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\NoiseTests.shader" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\DetailScatterHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\SculptToolHistory.txt" />
-     <None Include="Library\PackageCache\com.unity.terrain-tools@5.0.6\Tests\Editor\PlaybackData\VerticalZigzag.txt" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\TerrainFloatMinMaxValueTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\RegressionTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\BrushPlaybackTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\BaseTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\FilterTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\PaintTextureTest.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\EnterExitPlayModeTest.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\PaintDetails.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\RenderTextureTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\ToolboxUtilitiesSplatmapTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\BrushRotationVariatorTests.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\BrushSizeTest.cs" />
+     <Compile Include="Packages\com.unity.terrain-tools\Tests\Editor\ToolboxHelperTests.cs" />
     <Reference Include="UnityEngine">
         <HintPath>E:\unity\2022.3.62t7\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>

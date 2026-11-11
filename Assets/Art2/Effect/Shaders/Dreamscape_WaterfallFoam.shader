@@ -188,6 +188,7 @@ Shader "Polyart/Dreamscape Waterfall Foam"
 
 			#pragma vertex vert
 			#pragma fragment frag
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
 
 			#define SHADERPASS_FORWARD
 
@@ -539,7 +540,7 @@ Shader "Polyart/Dreamscape Waterfall Foam"
 				{
 					float shadow = _TransmissionShadow;
 
-					Light mainLight = GetMainLight( inputData.shadowCoord );
+					Light mainLight = GetMainLight( inputData.shadowCoord, inputData.positionWS, half4(1, 1, 1, 1) );
 					float3 mainAtten = mainLight.color * mainLight.distanceAttenuation;
 					mainAtten = lerp( mainAtten, mainAtten * mainLight.shadowAttenuation, shadow );
 					half3 mainTransmission = max(0 , -dot(inputData.normalWS, mainLight.direction)) * mainAtten * Transmission;
@@ -569,7 +570,7 @@ Shader "Polyart/Dreamscape Waterfall Foam"
 					float ambient = _TransAmbient;
 					float strength = _TransStrength;
 
-					Light mainLight = GetMainLight( inputData.shadowCoord );
+					Light mainLight = GetMainLight( inputData.shadowCoord, inputData.positionWS, half4(1, 1, 1, 1) );
 					float3 mainAtten = mainLight.color * mainLight.distanceAttenuation;
 					mainAtten = lerp( mainAtten, mainAtten * mainLight.shadowAttenuation, shadow );
 

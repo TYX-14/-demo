@@ -7,19 +7,36 @@ using System.Collections.Generic;
 /// 战斗系统控制器。
 /// 负责管理战斗状态的流转、实体的集合，并通过状态机模式驱动整体战斗循环的运行与停止。
 /// </summary>
-public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEvent>
+public class BattleController : MonoBehaviour,
+    IEventReceiver<GameModeChangedEvent>,
+    IEventReceiver<CTBDisplayedActorChangedEvent>
 {
     [Header("场地管理")]
     [SerializeField] private BattleFieldManager fieldManager;
     public BattleFieldManager FieldManager => fieldManager;
 
     [Header("敌方行动节奏")]
+    [SerializeField, Min(0f), Tooltip("CTB 大头像完成入场、蓝色行动圈亮起后，敌方 AI 开始选择技能和目标前的思考时间。")]
+    private float enemyDecisionDelay = 0.8f;
     [SerializeField, Min(0f), Tooltip("当前尚未接入攻击动画时，敌方造成伤害前的短暂停顿。")]
     private float enemyActionWindupDelay = 0.25f;
     [SerializeField, Min(0f), Tooltip("敌方技能结算后、CTB 切换到下一行动者前的停顿。")]
     private float enemyActionRecoveryDelay = 0.65f;
+    public float EnemyDecisionDelay => enemyDecisionDelay;
     public float EnemyActionWindupDelay => enemyActionWindupDelay;
     public float EnemyActionRecoveryDelay => enemyActionRecoveryDelay;
+
+    // 记录最近一次完成 CTB 大头像展示的行动者，避免 AI 在订阅事件前错过同步信号。
+    private BattleEntity _ctbDisplayedActor;
+
+    public bool IsCTBDisplayReadyFor(BattleEntity entity) =>
+        entity != null && ReferenceEquals(_ctbDisplayedActor, entity);
+
+    public void OnEvent(CTBDisplayedActorChangedEvent evt)
+    {
+        if (evt.Entity == CurrentEntity)
+            _ctbDisplayedActor = evt.Entity;
+    }
 
     private readonly List<BattleEntity> _allEntities = new();
     public List<BattleEntity> AllEntities => _allEntities;
@@ -32,6 +49,7 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
     /// <summary>战斗流程的当前行动者唯一写入入口，并统一发布变更事件。</summary>
     public void SetCurrentEntity(BattleEntity entity)
     {
+        _ctbDisplayedActor = null;
         CurrentEntity = entity;
         EventBus.Publish(new CurrentEntityChangedEvent(entity));
     }
@@ -294,12 +312,14 @@ public class BattleController : MonoBehaviour, IEventReceiver<GameModeChangedEve
 
     private void OnEnable()
     {
-        EventBus.Subscribe(this);
+        EventBus.Subscribe<GameModeChangedEvent>(this);
+        EventBus.Subscribe<CTBDisplayedActorChangedEvent>(this);
     }
 
     private void OnDisable()
     {
-        EventBus.Unsubscribe(this);
+        EventBus.Unsubscribe<GameModeChangedEvent>(this);
+        EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
     }
 
     public void OnEvent(GameModeChangedEvent evt)
