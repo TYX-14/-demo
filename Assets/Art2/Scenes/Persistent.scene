@@ -21871,24 +21871,6 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
---- !u!114 &1360190925
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1360190922}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d8c6f2a4b1e49a3a5c7d9e0f2b4c6a8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  battleVirtualCamera: {fileID: 1360190923}
-  focusInDuration: 0.22
-  focusOutDuration: 0.18
-  focusHoldDuration: 0.3
-  minimumFocusDistance: 4.5
-  framePadding: 0.82
 --- !u!4 &1360190924
 Transform:
   m_ObjectHideFlags: 0
@@ -21904,6 +21886,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 8, y: 0, z: 0}
+--- !u!114 &1360190925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360190922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8c6f2a4b1e49a3a5c7d9e0f2b4c6a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  battleVirtualCamera: {fileID: 1360190923}
+  focusInDuration: 0.01
+  focusOutDuration: 0.1
+  focusHoldDuration: 0.8
+  focusPushSpeed: 0.18
+  minimumFocusDistance: 4.5
+  framePadding: 0.82
+  presentationCameraFrontOffset: 1
+  hitShakeStrength: 0.08
+  hitShakeDuration: 0.16
+  criticalShakeStrength: 0.14
+  criticalShakeDuration: 0.24
+  hitFollowThroughRotation: 1.78
+  criticalFollowThroughRotation: 3.4
+  hitFollowThroughHorizontal: 0.08
+  hitFollowThroughVertical: 0.04
+  hitFollowThroughDepth: 0.06
+  criticalFollowThroughMultiplier: 1.35
+  hitFollowThroughDuration: 0
 --- !u!1 &1363556208
 GameObject:
   m_ObjectHideFlags: 0
@@ -29606,6 +29619,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fieldManager: {fileID: 419918057}
+  enemyDecisionDelay: 0.8
   enemyActionWindupDelay: 0.25
   enemyActionRecoveryDelay: 0.65
 --- !u!4 &1833260759
