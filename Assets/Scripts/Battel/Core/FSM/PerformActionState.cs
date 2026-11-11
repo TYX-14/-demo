@@ -72,7 +72,13 @@ public class PerformActionState : BattleState
         BattleActionCamera actionCamera = Object.FindAnyObjectByType<BattleActionCamera>();
         bool cameraFocusStarted = actionCamera != null && _actionContext.ResolvedTargets.Count > 0;
         if (cameraFocusStarted)
+        {
+            // 角色正式进入攻击特写，行动已经开始；此时不再显示行动者蓝圈或目标红圈。
+            if (BattleVFXManager.Instance != null)
+                BattleVFXManager.Instance.HideActionHighlights();
+
             yield return actionCamera.FocusOnAction(_actionContext.Actor, _actionContext.ResolvedTargets);
+        }
         if (cameraFocusStarted)
             actionCamera.BeginFocusPush();
 
