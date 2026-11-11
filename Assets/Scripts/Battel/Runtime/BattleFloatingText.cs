@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -78,6 +79,56 @@ public sealed class BattleFloatingText : MonoBehaviour
             float scale = isCritical ? Mathf.Max(1f, criticalScaleMultiplier) : 1f;
             textScaleRoot.localScale = _originalTextScale * scale;
         }
+    }
+
+    /// <summary>
+    /// 播放短暂的飘动与渐隐，并在动画结束后销毁自身。
+    /// 使用非缩放时间，确保暂停或慢动作时仍能按攻击特写时序结束。
+    /// </summary>
+    public void PlayAnimation(
+        Vector3 driftDirection,
+        float duration = 0.32f,
+        float distance = 0.75f)
+    {
+        if (text == null)
+            return;
+
+        if (driftDirection.sqrMagnitude < 0.0001f)
+            driftDirection = Vector3.up;
+
+        StartCoroutine(AnimateAndDestroy(
+            driftDirection.normalized,
+            Mathf.Max(0.01f, duration),
+            Mathf.Max(0f, distance)));
+    }
+
+    private IEnumerator AnimateAndDestroy(
+        Vector3 driftDirection,
+        float duration,
+        float distance)
+    {
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = startPosition + driftDirection * distance;
+        Color originalColor = text.color;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            transform.position = Vector3.Lerp(startPosition, endPosition, t);
+
+            // 前 18% 时间保持清晰可读，之后逐渐淡出。
+            float fade = Mathf.Clamp01((t - 0.18f) / 0.82f);
+            Color currentColor = originalColor;
+            currentColor.a = originalColor.a * (1f - fade);
+            text.color = currentColor;
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
     }
 
     /// <summary>按 Sprite Asset 中连续排列的 0-9 数字索引拼接 TMP 精灵标签。</summary>
