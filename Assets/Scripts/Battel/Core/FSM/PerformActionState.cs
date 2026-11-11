@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -76,11 +77,13 @@ public class PerformActionState : BattleState
         // 技能配置了攻击图片时，临时将攻击者放到目标前方并展示该图片。
         // 只处理视觉 Transform，BattleEntity/阵型数据保持不变。
         BattleUnit presentationActor = _actionContext.Actor.Unit;
-        BattleUnit presentationTarget = _actionContext.ResolvedTargets.Count > 0
-            ? _actionContext.ResolvedTargets[0]?.Unit
-            : null;
+        // 以第一个有效且非自身的目标确定交战方向；其余 AoE 目标沿用同一位移量，
+        // 这样既能一起前移，也能保留原本的相对阵型，不会全部挤到同一个点。
+        BattleUnit presentationTarget = _actionContext.ResolvedTargets
+            .Select(target => target != null ? target.Unit : null)
+            .FirstOrDefault(unit => unit != null && unit != presentationActor);
         bool actionPresentationStarted = false;
-        bool targetPresentationStarted = false;
+        List<BattleUnit> presentedTargets = new List<BattleUnit>();
         Vector3 cameraImpactDirection = Vector3.zero;
         float impactActorX = presentationActor != null
             ? presentationActor.transform.position.x
@@ -88,8 +91,7 @@ public class PerformActionState : BattleState
         float impactTargetX = presentationTarget != null
             ? presentationTarget.transform.position.x
             : impactActorX + 1f;
-        if (presentationActor != null && presentationTarget != null &&
-            presentationActor != presentationTarget)
+        if (presentationActor != null && presentationTarget != null)
         {
             cameraImpactDirection = Vector3.ProjectOnPlane(
                 presentationTarget.transform.position - presentationActor.transform.position,
@@ -100,8 +102,7 @@ public class PerformActionState : BattleState
         }
 
         if (_actionContext.Skill.AttackSprite != null &&
-            presentationActor != null && presentationTarget != null &&
-            presentationActor != presentationTarget)
+            presentationActor != null && presentationTarget != null)
         {
             Vector3 actorPosition = presentationActor.transform.position;
             Vector3 targetPosition = presentationTarget.transform.position;
@@ -118,11 +119,8 @@ public class PerformActionState : BattleState
                 targetRadius = Mathf.Abs(direction.x) * targetBounds.extents.x +
                                Mathf.Abs(direction.z) * targetBounds.extents.z;
 
-            // 将两人作为一个整体收拢到原本两者之间的中心点，保留朝向并让双方贴近。
-            // 这样镜头里的交战双方会一起被“拎出来”，而不是只把攻击者送到目标脚边。
             Vector3 engagementCenter = (actorPosition + targetPosition) * 0.5f;
             float gap = 0.05f;
-            // 两人先保持面对面的相对位置，再整体沿地面朝镜头前移，形成独立的前景交战层。
             Vector3 cameraFrontOffset = actionCamera != null
                 ? actionCamera.GetCameraFrontGroundOffset()
                 : Vector3.zero;
@@ -135,8 +133,22 @@ public class PerformActionState : BattleState
                 _actionContext.Skill.AttackSprite, actorEngagementPosition);
             if (actionPresentationStarted)
             {
-                targetPresentationStarted = presentationTarget.BeginActionPresentation(
-                    null, targetEngagementPosition);
+                // 先计算首个目标的前移量，再将完全相同的位移应用到所有受影响目标。
+                // 目标之间原有的距离和站位关系因此保持不变。
+                Vector3 targetGroupOffset = targetEngagementPosition - targetPosition;
+                foreach (BattleEntity resolvedTarget in _actionContext.ResolvedTargets)
+                {
+                    BattleUnit targetUnit = resolvedTarget != null ? resolvedTarget.Unit : null;
+                    if (targetUnit == null || targetUnit == presentationActor ||
+                        presentedTargets.Contains(targetUnit))
+                        continue;
+
+                    Vector3 targetPresentationPosition =
+                        targetUnit.transform.position + targetGroupOffset;
+                    if (targetUnit.BeginActionPresentation(null, targetPresentationPosition))
+                        presentedTargets.Add(targetUnit);
+                }
+
                 // 近战攻击图片就是命中帧，因此不在这里等待，下一步立即结算伤害并触发震屏。
             }
         }
@@ -174,8 +186,8 @@ public class PerformActionState : BattleState
 
         if (actionPresentationStarted)
             presentationActor.EndActionPresentation();
-        if (targetPresentationStarted)
-            presentationTarget.EndActionPresentation();
+        foreach (BattleUnit presentedTarget in presentedTargets)
+            presentedTarget.EndActionPresentation();
 
         // 先停止持续推进，再恢复战场全景，最后执行前进/后退等后置位移。
         if (cameraFocusStarted && actionCamera != null)
