@@ -77,17 +77,17 @@ public class BattleController : MonoBehaviour,
 
         popup.Show(evt.Damage, floatingType, evt.IsCritical);
 
-        Vector3 driftDirection = Vector3.up * 0.8f;
+        Vector3 horizontalDirection = Vector3.zero;
         BattleUnit attackerUnit = evt.Attacker != null ? evt.Attacker.Unit : null;
         if (attackerUnit != null)
         {
-            float horizontalDirection = targetUnit.transform.position.x -
-                                       attackerUnit.transform.position.x;
-            if (Mathf.Abs(horizontalDirection) > 0.01f)
-                driftDirection += Vector3.right * Mathf.Sign(horizontalDirection) * 0.4f;
+            float horizontalOffset = targetUnit.transform.position.x -
+                                     attackerUnit.transform.position.x;
+            if (Mathf.Abs(horizontalOffset) > 0.01f)
+                horizontalDirection = Vector3.right * Mathf.Sign(horizontalOffset);
         }
 
-        popup.PlayAnimation(driftDirection, 0.32f, 0.75f);
+        popup.PlayAnimation(horizontalDirection);
         _activeDamagePopups.Add(popup);
     }
 
