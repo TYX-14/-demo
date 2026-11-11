@@ -15,9 +15,9 @@ public static class BattleDamageSystem
         BattleEntity attacker,
         BattleEntity target,
         DamageType damageType,
+        out bool damageEventPublished,
         float damageModifierPercent = 0f,
-        bool isCritical = false,
-        out bool damageEventPublished)
+        bool isCritical = false)
     {
         damageEventPublished = false;
 
