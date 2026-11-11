@@ -197,6 +197,9 @@ public class PerformActionState : BattleState
             yield return new WaitForSecondsRealtime(actionCamera.FocusHoldDuration);
         }
 
+        // 伤害飘字的生命周期不能越过攻击特写；镜头复位前统一清理。
+        _controller.ClearDamagePopups();
+
         if (actionPresentationStarted)
             presentationActor.EndActionPresentation();
         foreach (BattleUnit presentedTarget in presentedTargets)
