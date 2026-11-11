@@ -57,17 +57,14 @@ public static class BattleSkillEffectExecutor
 
                 if (effect is DamageEffect)
                 {
-                    int damage = BattleDamageCalculator.CalculateDamage(
-                        actor.RuntimeData, target.RuntimeData, skill.DamageType,
-                        damageModifier, isCritical: criticalHit);
+                    int damage = BattleDamageSystem.ApplyDamage(
+                        actor,
+                        target,
+                        skill.DamageType,
+                        damageModifier,
+                        criticalHit);
 
-                    // 零伤害不调用 ModifyHp，避免误触发死门判定。
-                    if (damage > 0)
-                    {
-                        target.RuntimeData.ModifyHp(-damage);
-                        totalCalculatedDamage += damage;
-                        target.Unit?.UpdateVisuals();
-                    }
+                    totalCalculatedDamage += damage;
 
                     if (!target.IsAlive)
                         break;
