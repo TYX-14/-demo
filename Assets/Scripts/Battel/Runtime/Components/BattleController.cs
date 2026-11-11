@@ -20,6 +20,12 @@ public class BattleController : MonoBehaviour,
     [SerializeField, Tooltip("伤害事件发生时生成的世界空间飘字预制体。请指定 Assets/Prefabs/UI/Battel/DamagePupop.prefab。")]
     private BattleFloatingText damagePopupPrefab;
 
+    [SerializeField, Min(0f), Tooltip("飘字相对角色图片中心向上偏移的距离，使飘字出现在身体中间偏上的位置。")]
+    private float damagePopupVerticalOffset = 0.2f;
+
+    [SerializeField, Min(0f), Tooltip("飘字沿角色背后方向的水平偏移距离。方向根据攻击者与受击者的位置自动判断。")]
+    private float damagePopupBehindOffset = 0.15f;
+
     [SerializeField, Min(0f), Tooltip("飘字沿 Z 轴向摄像机方向偏移的距离，用于避免与角色图片重叠闪烁。")]
     private float damagePopupDepthOffset = 0.05f;
 
@@ -60,10 +66,24 @@ public class BattleController : MonoBehaviour,
         if (damagePopupPrefab == null)
             return;
 
-        // 以角色主精灵的边界中心作为飘字起点，而不是放在头顶。
+        // 攻击方向由攻击者指向受击者；对受击者而言，这也是其背后的水平偏移方向。
+        Vector3 horizontalDirection = Vector3.zero;
+        BattleUnit attackerUnit = evt.Attacker != null ? evt.Attacker.Unit : null;
+        if (attackerUnit != null)
+        {
+            float horizontalOffset = targetUnit.transform.position.x -
+                                     attackerUnit.transform.position.x;
+            if (Mathf.Abs(horizontalOffset) > 0.01f)
+                horizontalDirection = Vector3.right * Mathf.Sign(horizontalOffset);
+        }
+
+        // 以角色主精灵的边界中心为基准，向上和背后各偏移一点。
         Vector3 popupPosition = targetUnit.transform.position;
         if (targetUnit.TryGetVisualBounds(out Bounds visualBounds))
             popupPosition = visualBounds.center;
+
+        popupPosition += Vector3.up * damagePopupVerticalOffset;
+        popupPosition += horizontalDirection * damagePopupBehindOffset;
 
         // Z 轴向摄像机一侧轻微偏移，避免飘字与角色精灵处于同一深度而闪烁。
         Camera mainCamera = Camera.main;
@@ -83,16 +103,6 @@ public class BattleController : MonoBehaviour,
             : FloatingTextType.PhysicalDamage;
 
         popup.Show(evt.Damage, floatingType, evt.IsCritical);
-
-        Vector3 horizontalDirection = Vector3.zero;
-        BattleUnit attackerUnit = evt.Attacker != null ? evt.Attacker.Unit : null;
-        if (attackerUnit != null)
-        {
-            float horizontalOffset = targetUnit.transform.position.x -
-                                     attackerUnit.transform.position.x;
-            if (Mathf.Abs(horizontalOffset) > 0.01f)
-                horizontalDirection = Vector3.right * Mathf.Sign(horizontalOffset);
-        }
 
         popup.PlayAnimation(horizontalDirection);
         _activeDamagePopups.Add(popup);
