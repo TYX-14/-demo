@@ -78,3 +78,30 @@ public readonly struct CTBQueueUpdatedEvent : IEvent
         NextRoundNodes = nextRoundNodes ?? System.Array.Empty<CTBDisplayNode>();
     }
 }
+
+/// <summary>
+/// 一次伤害成功结算后的通知。
+/// 只描述伤害结果，不承载治疗、压力变化或其他技能效果。
+/// </summary>
+public readonly struct BattleDamageEvent : IEvent
+{
+    public BattleEntity Attacker { get; }
+    public BattleEntity Target { get; }
+    public int Damage { get; }
+    public DamageType DamageType { get; }
+    public bool IsCritical { get; }
+
+    public BattleDamageEvent(
+        BattleEntity attacker,
+        BattleEntity target,
+        int damage,
+        DamageType damageType,
+        bool isCritical)
+    {
+        Attacker = attacker;
+        Target = target;
+        Damage = damage;
+        DamageType = damageType;
+        IsCritical = isCritical;
+    }
+}
