@@ -9,11 +9,18 @@ using System.Collections.Generic;
 /// </summary>
 public class BattleController : MonoBehaviour,
     IEventReceiver<GameModeChangedEvent>,
-    IEventReceiver<CTBDisplayedActorChangedEvent>
+    IEventReceiver<CTBDisplayedActorChangedEvent>,
+    IEventReceiver<BattleDamageEvent>
 {
     [Header("场地管理")]
     [SerializeField] private BattleFieldManager fieldManager;
     public BattleFieldManager FieldManager => fieldManager;
+
+    [Header("伤害飘字")]
+    [SerializeField, Tooltip("伤害事件发生时生成的世界空间飘字预制体。请指定 Assets/Prefabs/UI/Battel/DamagePupop.prefab。")]
+    private BattleFloatingText damagePopupPrefab;
+
+    private readonly List<BattleFloatingText> _activeDamagePopups = new();
 
     [Header("敌方行动节奏")]
     [SerializeField, Min(0f), Tooltip("CTB 大头像完成入场、蓝色行动圈亮起后，敌方 AI 开始选择技能和目标前的思考时间。")]
@@ -36,6 +43,64 @@ public class BattleController : MonoBehaviour,
     {
         if (evt.Entity == CurrentEntity)
             _ctbDisplayedActor = evt.Entity;
+    }
+
+    /// <summary>伤害结算后更新受击单位，并在其世界位置生成飘字。</summary>
+    public void OnEvent(BattleDamageEvent evt)
+    {
+        BattleUnit targetUnit = evt.Target != null ? evt.Target.Unit : null;
+        if (targetUnit == null)
+            return;
+
+        targetUnit.UpdateVisuals();
+
+        if (damagePopupPrefab == null)
+            return;
+
+        Vector3 popupPosition = targetUnit.transform.position + Vector3.up;
+        if (targetUnit.TryGetVisualBounds(out Bounds visualBounds))
+        {
+            popupPosition = new Vector3(
+                visualBounds.center.x,
+                visualBounds.max.y + 0.2f,
+                visualBounds.center.z);
+        }
+
+        BattleFloatingText popup = Instantiate(
+            damagePopupPrefab,
+            popupPosition,
+            Quaternion.identity);
+
+        FloatingTextType floatingType = evt.DamageType == DamageType.Magical
+            ? FloatingTextType.MagicalDamage
+            : FloatingTextType.PhysicalDamage;
+
+        popup.Show(evt.Damage, floatingType, evt.IsCritical);
+
+        Vector3 driftDirection = Vector3.up * 0.8f;
+        BattleUnit attackerUnit = evt.Attacker != null ? evt.Attacker.Unit : null;
+        if (attackerUnit != null)
+        {
+            float horizontalDirection = targetUnit.transform.position.x -
+                                       attackerUnit.transform.position.x;
+            if (Mathf.Abs(horizontalDirection) > 0.01f)
+                driftDirection += Vector3.right * Mathf.Sign(horizontalDirection) * 0.4f;
+        }
+
+        popup.PlayAnimation(driftDirection, 0.32f, 0.75f);
+        _activeDamagePopups.Add(popup);
+    }
+
+    /// <summary>在攻击特写结束、镜头复位前清理本次行动残留的伤害飘字。</summary>
+    public void ClearDamagePopups()
+    {
+        foreach (BattleFloatingText popup in _activeDamagePopups)
+        {
+            if (popup != null)
+                Destroy(popup.gameObject);
+        }
+
+        _activeDamagePopups.Clear();
     }
 
     private readonly List<BattleEntity> _allEntities = new();
@@ -314,12 +379,15 @@ public class BattleController : MonoBehaviour,
     {
         EventBus.Subscribe<GameModeChangedEvent>(this);
         EventBus.Subscribe<CTBDisplayedActorChangedEvent>(this);
+        EventBus.Subscribe<BattleDamageEvent>(this);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe<GameModeChangedEvent>(this);
         EventBus.Unsubscribe<CTBDisplayedActorChangedEvent>(this);
+        EventBus.Unsubscribe<BattleDamageEvent>(this);
+        ClearDamagePopups();
     }
 
     public void OnEvent(GameModeChangedEvent evt)
