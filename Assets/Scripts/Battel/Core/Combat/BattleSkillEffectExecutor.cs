@@ -63,9 +63,9 @@ public static class BattleSkillEffectExecutor
                         actor,
                         target,
                         skill.DamageType,
+                        out bool eventPublished,
                         damageModifier,
-                        criticalHit,
-                        out bool eventPublished);
+                        criticalHit);
 
                     totalCalculatedDamage += damage;
                     damageEventTriggered |= eventPublished;
