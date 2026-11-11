@@ -20,6 +20,9 @@ public class BattleController : MonoBehaviour,
     [SerializeField, Tooltip("伤害事件发生时生成的世界空间飘字预制体。请指定 Assets/Prefabs/UI/Battel/DamagePupop.prefab。")]
     private BattleFloatingText damagePopupPrefab;
 
+    [SerializeField, Min(0f), Tooltip("飘字沿 Z 轴向摄像机方向偏移的距离，用于避免与角色图片重叠闪烁。")]
+    private float damagePopupDepthOffset = 0.05f;
+
     private readonly List<BattleFloatingText> _activeDamagePopups = new();
 
     [Header("敌方行动节奏")]
@@ -57,14 +60,18 @@ public class BattleController : MonoBehaviour,
         if (damagePopupPrefab == null)
             return;
 
-        Vector3 popupPosition = targetUnit.transform.position + Vector3.up;
+        // 以角色主精灵的边界中心作为飘字起点，而不是放在头顶。
+        Vector3 popupPosition = targetUnit.transform.position;
         if (targetUnit.TryGetVisualBounds(out Bounds visualBounds))
-        {
-            popupPosition = new Vector3(
-                visualBounds.center.x,
-                visualBounds.max.y + 0.2f,
-                visualBounds.center.z);
-        }
+            popupPosition = visualBounds.center;
+
+        // Z 轴向摄像机一侧轻微偏移，避免飘字与角色精灵处于同一深度而闪烁。
+        Camera mainCamera = Camera.main;
+        float towardCameraSign = mainCamera != null &&
+                                 mainCamera.transform.position.z > popupPosition.z
+            ? 1f
+            : -1f;
+        popupPosition.z += towardCameraSign * damagePopupDepthOffset;
 
         BattleFloatingText popup = Instantiate(
             damagePopupPrefab,
