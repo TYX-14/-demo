@@ -71,7 +71,7 @@ public sealed class BattleFloatingText : MonoBehaviour
         }
 
         text.richText = true;
-        text.text = BuildSpriteNumber(Mathf.Abs((long)amount), baseIndex);
+        text.text = BuildSpriteNumber(System.Math.Abs((long)amount), baseIndex);
 
         if (textScaleRoot != null)
         {
