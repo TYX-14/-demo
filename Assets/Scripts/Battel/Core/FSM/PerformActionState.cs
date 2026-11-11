@@ -63,6 +63,11 @@ public class PerformActionState : BattleState
         if (isEnemyAction && BattleVFXManager.Instance != null)
             BattleVFXManager.Instance.ShowEnemyActionTargets(_actionContext.ResolvedTargets);
 
+        // 敌方先完成攻击预警与前摇，再进入特写；避免镜头在攻击尚未开始时提前推进。
+        // 玩家与敌方从这里开始共用完全相同的镜头特写和命中演出时序。
+        if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
+            yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
+
         // 所有行动者与本次行动的全部实际目标同时进入特写；没有实体目标的技能不移动镜头。
         BattleActionCamera actionCamera = Object.FindAnyObjectByType<BattleActionCamera>();
         bool cameraFocusStarted = actionCamera != null && _actionContext.ResolvedTargets.Count > 0;
@@ -70,9 +75,6 @@ public class PerformActionState : BattleState
             yield return actionCamera.FocusOnAction(_actionContext.Actor, _actionContext.ResolvedTargets);
         if (cameraFocusStarted)
             actionCamera.BeginFocusPush();
-
-        if (isEnemyAction && _controller.EnemyActionWindupDelay > 0f)
-            yield return new WaitForSecondsRealtime(_controller.EnemyActionWindupDelay);
 
         // 技能配置了攻击图片时，临时将攻击者放到目标前方并展示该图片。
         // 只处理视觉 Transform，BattleEntity/阵型数据保持不变。
