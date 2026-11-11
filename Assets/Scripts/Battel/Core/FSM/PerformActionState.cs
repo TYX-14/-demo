@@ -121,23 +121,31 @@ public class PerformActionState : BattleState
                 targetRadius = Mathf.Abs(direction.x) * targetBounds.extents.x +
                                Mathf.Abs(direction.z) * targetBounds.extents.z;
 
+            bool isFriendlyAoe =
+                _actionContext.Skill.TargetRelation == SkillTargetRelation.Ally &&
+                _actionContext.Skill.TargetType == SkillTargetType.AoE;
+
             Vector3 engagementCenter = (actorPosition + targetPosition) * 0.5f;
             float gap = 0.05f;
             Vector3 cameraFrontOffset = actionCamera != null
                 ? actionCamera.GetCameraFrontGroundOffset()
                 : Vector3.zero;
-            Vector3 actorEngagementPosition =
-                engagementCenter - direction * (actorRadius + gap * 0.5f) + cameraFrontOffset;
-            Vector3 targetEngagementPosition =
-                engagementCenter + direction * (targetRadius + gap * 0.5f) + cameraFrontOffset;
+            Vector3 actorEngagementPosition = isFriendlyAoe
+                ? actorPosition
+                : engagementCenter - direction * (actorRadius + gap * 0.5f) + cameraFrontOffset;
+            Vector3 targetEngagementPosition = isFriendlyAoe
+                ? targetPosition + cameraFrontOffset
+                : engagementCenter + direction * (targetRadius + gap * 0.5f) + cameraFrontOffset;
 
             actionPresentationStarted = presentationActor.BeginActionPresentation(
                 _actionContext.Skill.AttackSprite, actorEngagementPosition);
             if (actionPresentationStarted)
             {
-                // 先计算首个目标的前移量，再将完全相同的位移应用到所有受影响目标。
-                // 目标之间原有的距离和站位关系因此保持不变。
-                Vector3 targetGroupOffset = targetEngagementPosition - targetPosition;
+                // 普通攻击将目标组拉到交战位置；友方 AoE 则让施法者留在原位，
+                // 只将所有受影响队友整体朝镜头前方移动，避免与施法者或相邻站位重叠。
+                Vector3 targetGroupOffset = isFriendlyAoe
+                    ? cameraFrontOffset
+                    : targetEngagementPosition - targetPosition;
                 foreach (BattleEntity resolvedTarget in _actionContext.ResolvedTargets)
                 {
                     BattleUnit targetUnit = resolvedTarget != null ? resolvedTarget.Unit : null;
