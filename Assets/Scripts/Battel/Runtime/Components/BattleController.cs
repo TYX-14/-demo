@@ -23,7 +23,7 @@ public class BattleController : MonoBehaviour,
     [SerializeField, Min(0f), Tooltip("飘字相对角色图片中心向上偏移的距离，使飘字出现在身体中间偏上的位置。")]
     private float damagePopupVerticalOffset = 0.2f;
 
-    [SerializeField, Min(0f), Tooltip("飘字沿角色背后方向的水平偏移距离。方向根据攻击者与受击者的位置自动判断。")]
+    [SerializeField, Min(0f), Tooltip("飘字沿角色背后方向的水平偏移距离。我方角色向右偏移，敌方角色向左偏移。")]
     private float damagePopupBehindOffset = 0.15f;
 
     [SerializeField, Min(0f), Tooltip("飘字沿 Z 轴向摄像机方向偏移的距离，用于避免与角色图片重叠闪烁。")]
@@ -66,16 +66,11 @@ public class BattleController : MonoBehaviour,
         if (damagePopupPrefab == null)
             return;
 
-        // 攻击方向由攻击者指向受击者；对受击者而言，这也是其背后的水平偏移方向。
-        Vector3 horizontalDirection = Vector3.zero;
-        BattleUnit attackerUnit = evt.Attacker != null ? evt.Attacker.Unit : null;
-        if (attackerUnit != null)
-        {
-            float horizontalOffset = targetUnit.transform.position.x -
-                                     attackerUnit.transform.position.x;
-            if (Mathf.Abs(horizontalOffset) > 0.01f)
-                horizontalDirection = Vector3.right * Mathf.Sign(horizontalOffset);
-        }
+        // 战场双方相向而立：我方角色在右侧，背后朝右；敌方角色在左侧，背后朝左。
+        // 不依赖攻击者坐标，避免攻击者与受击者的坐标关系导致偏移方向判断反转。
+        Vector3 horizontalDirection = evt.Target.IsPlayer
+            ? Vector3.right
+            : Vector3.left;
 
         // 以角色主精灵的边界中心为基准，向上和背后各偏移一点。
         Vector3 popupPosition = targetUnit.transform.position;
