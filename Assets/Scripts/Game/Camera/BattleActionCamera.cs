@@ -111,7 +111,7 @@ public sealed class BattleActionCamera : MonoBehaviour
     /// 命中冲击：镜头沿攻击方向轻微平移，并朝目标所在方向倾斜，最后定格在冲击姿态。
     /// 参数是两个单位在屏幕上的 X（不是世界坐标），因此左右方向与玩家看到的一致。
     /// </summary>
-    public IEnumerator ShakeImpact(bool isCritical, float actorScreenX, float targetScreenX)
+    public IEnumerator ShakeImpact(bool isCritical, float actorScreenX, float targetScreenX, float tiltDirection)
     {
         if (!_initialized || !isActiveAndEnabled)
             yield break;
@@ -129,9 +129,8 @@ public sealed class BattleActionCamera : MonoBehaviour
         if (Mathf.Approximately(attackDirection, 0f))
             attackDirection = 1f;
 
-        // 倾斜方向与攻击方向一致：目标在左则向左倾，目标在右则向右倾。
-        // 不再通过 Inspector 开关反转方向，避免配置遗留导致镜头始终朝反方向倾斜。
-        float tiltDirection = attackDirection;
+        // 倾斜方向由战场阵营规则明确传入，与屏幕坐标无关。
+        // 水平偏移和震动仍使用 attackDirection，保持原有攻击方向反馈。
 
         Vector3 restPosition = transform.position;
         Quaternion restRotation = transform.rotation;
