@@ -80,7 +80,7 @@ public sealed class BattleActionPresentation
         // 0 点伤害仍然是命中；只有闪避等未命中情况才不应触发伤害事件与振屏。
         IEnumerator shake = null;
         if (damageEventTriggered && _cameraFocusStarted && _actionCamera != null)
-            shake = _actionCamera.ShakeImpact(criticalHit, _impactActorScreenX, _impactTargetScreenX);
+            shake = _actionCamera.ShakeImpact(criticalHit, _impactActorScreenX, _impactTargetScreenX, _isEnemyAction ? -1f : 1f);
 
         // 滑动是命中之后的惯性：与震屏同帧开始，不推迟命中帧。
         yield return RunTogether(shake, PlaySlide());
