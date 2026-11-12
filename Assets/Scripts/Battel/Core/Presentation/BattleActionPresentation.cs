@@ -79,8 +79,10 @@ public sealed class BattleActionPresentation
         // 振屏依据是否发生有效伤害命中，而不是伤害数值是否大于 0。
         // 0 点伤害仍然是命中；只有闪避等未命中情况才不应触发伤害事件与振屏。
         IEnumerator shake = null;
+        // 固定阵型：我方在右、敌方在左，因此倾斜方向直接由阵营决定，不依赖屏幕坐标。
+        float tiltDirection = _isEnemyAction ? -1f : 1f;
         if (damageEventTriggered && _cameraFocusStarted && _actionCamera != null)
-            shake = _actionCamera.ShakeImpact(criticalHit, _impactActorScreenX, _impactTargetScreenX, _isEnemyAction ? -1f : 1f);
+            shake = _actionCamera.ShakeImpact(criticalHit, _impactActorScreenX, _impactTargetScreenX, tiltDirection);
 
         // 滑动是命中之后的惯性：与震屏同帧开始，不推迟命中帧。
         yield return RunTogether(shake, PlaySlide());

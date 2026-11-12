@@ -108,8 +108,9 @@ public sealed class BattleActionCamera : MonoBehaviour
     }
 
     /// <summary>
-    /// 命中冲击：镜头沿攻击方向轻微平移，并朝目标所在方向倾斜，最后定格在冲击姿态。
-    /// 参数是两个单位在屏幕上的 X（不是世界坐标），因此左右方向与玩家看到的一致。
+    /// 命中冲击：镜头沿攻击方向轻微平移，并按 tiltDirection 倾斜，最后定格在冲击姿态。
+    /// actorScreenX / targetScreenX 是屏幕坐标，只用于决定位移与振动的方向；
+    /// tiltDirection 由调用方按阵营给出（当前战场固定为「敌方在左、我方在右」）。
     /// </summary>
     public IEnumerator ShakeImpact(bool isCritical, float actorScreenX, float targetScreenX, float tiltDirection)
     {
@@ -131,6 +132,18 @@ public sealed class BattleActionCamera : MonoBehaviour
 
         // 倾斜方向由战场阵营规则明确传入，与屏幕坐标无关。
         // 水平偏移和震动仍使用 attackDirection，保持原有攻击方向反馈。
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // 当前阵型固定为「敌方在左、我方在右」，此时阵营方向应恒等于「−攻击方向」。
+        // 一旦两者不一致，说明阵型、站位或镜头朝向已经偏离假设，调用方需要同步修改。
+        if (Mathf.Abs(targetScreenX - actorScreenX) > 1f &&
+            !Mathf.Approximately(tiltDirection, -attackDirection))
+        {
+            Debug.LogWarning(
+                $"[镜头倾斜] 阵营方向({tiltDirection})与画面攻击方向({attackDirection})不一致，" +
+                "请检查战斗阵型是否仍满足「敌方在左、我方在右」。", this);
+        }
+#endif
 
         Vector3 restPosition = transform.position;
         Quaternion restRotation = transform.rotation;
