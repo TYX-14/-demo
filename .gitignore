@@ -9,3 +9,7 @@ Logs/
 .idea/
 Build/
 Builds/
+# Unity 自动生成的工程文件（编辑器会重建）
+*.csproj
+*.sln
+*.slnx
