@@ -37,8 +37,9 @@ public class TargetSelectionState : BattleState
             yield break;
         }
 
-        SetAllTargetCursors(false);
-        SetLegalTargetHighlights(true);
+        // 玩家真正选出技能后才显示蓝色行动光圈；所有合法目标用半透明小手标识。
+        ShowActorRing();
+        RefreshTargetCursors(null);
         yield break;
     }
 
@@ -57,7 +58,7 @@ public class TargetSelectionState : BattleState
             if (mouse != null)
             {
                 Vector2 mousePosition = mouse.position.ReadValue();
-                UpdateHoveredTargetCursor(mousePosition);
+                RefreshTargetCursors(mousePosition);
 
                 if (mouse.leftButton.wasPressedThisFrame)
                 {
@@ -96,7 +97,7 @@ public class TargetSelectionState : BattleState
             }
             else
             {
-                SetAllTargetCursors(false);
+                RefreshTargetCursors(null);
             }
 
             yield return null;
@@ -109,11 +110,11 @@ public class TargetSelectionState : BattleState
         yield break;
     }
 
-    /// <summary>立即清除本状态负责的目标光圈和鼠标小手提示。</summary>
+    /// <summary>收起本次技能选择的全部反馈：小手与玩家行动光圈。</summary>
     public void ClearTargetFeedback()
     {
         SetAllTargetCursors(false);
-        SetLegalTargetHighlights(false);
+        HideActorRing();
     }
 
     private bool WasCancelPressed()
@@ -125,36 +126,44 @@ public class TargetSelectionState : BattleState
                (mouse != null && mouse.rightButton.wasPressedThisFrame);
     }
 
-    private void UpdateHoveredTargetCursor(Vector2 screenPosition)
+    /// <summary>
+    /// 刷新所有单位的小手状态：
+    /// 合法目标常驻半透明小手；鼠标悬停时，单体技能只高亮指针下的目标，
+    /// AoE 技能会同时高亮所有实际会被该技能命中的目标（即全部合法目标）。
+    /// </summary>
+    private void RefreshTargetCursors(Vector2? screenPosition)
     {
-        if (IsPointerOverUI(screenPosition))
+        BattleEntity hoveredTarget = null;
+
+        if (screenPosition.HasValue && !IsPointerOverUI(screenPosition.Value))
         {
-            SetAllTargetCursors(false);
-            return;
+            if (_battleCamera == null)
+                _battleCamera = Camera.main;
+
+            if (_battleCamera != null)
+                hoveredTarget = FindTargetAtScreenPosition(screenPosition.Value);
         }
 
-        if (_battleCamera == null)
-            _battleCamera = Camera.main;
-
-        BattleEntity hoveredTarget = _battleCamera != null
-            ? FindTargetAtScreenPosition(screenPosition)
-            : null;
-
-        // AoE 悬停任意一个合法目标时，所有实际会被该技能覆盖的合法目标同时显示小手。
-        // 单体技能仍然只在当前悬停目标上显示小手。
-        bool showAllAreaTargets = hoveredTarget != null &&
-                                  _actionContext?.Skill?.TargetType == SkillTargetType.AoE;
+        // AoE 的结算范围与合法目标列表一致，因此悬停到任意一个合法目标时，
+        // 其余合法目标也应一起进入高亮浮动，提前展示“这一发会打到谁”。
+        bool highlightAllAreaTargets = hoveredTarget != null &&
+                                       _actionContext?.Skill != null &&
+                                       _actionContext.Skill.TargetType == SkillTargetType.AoE;
 
         foreach (BattleEntity entity in _controller.AllEntities)
         {
             if (entity == null || entity.Unit == null)
                 continue;
 
-            bool showCursor = showAllAreaTargets
-                ? IsLegalTarget(entity)
-                : entity == hoveredTarget;
+            BattleUnit.TargetCursorMode mode;
+            if (!IsLegalTarget(entity))
+                mode = BattleUnit.TargetCursorMode.Hidden;
+            else if (entity == hoveredTarget || highlightAllAreaTargets)
+                mode = BattleUnit.TargetCursorMode.Hovered;
+            else
+                mode = BattleUnit.TargetCursorMode.Candidate;
 
-            entity.Unit.SetTargetSelection(showCursor);
+            entity.Unit.SetTargetCursorMode(mode);
         }
     }
 
@@ -204,29 +213,20 @@ public class TargetSelectionState : BattleState
                    _controller.GetLogicalPosition);
     }
 
-    private void SetLegalTargetHighlights(bool visible)
+    /// <summary>玩家选定技能后点亮自己的蓝色行动光圈。</summary>
+    private void ShowActorRing()
     {
         BattleVFXManager vfxManager = BattleVFXManager.Instance;
-        if (vfxManager == null)
-        {
-            Debug.LogWarning("TargetSelectionState：Persistent 场景中没有启用 BattleVFXManager，无法显示合法目标光圈。");
-            return;
-        }
+        if (vfxManager != null)
+            vfxManager.ShowCurrentActorRing(_actionContext?.Actor);
+    }
 
-        if (!visible)
-        {
-            vfxManager.ClearLegalTargetHighlights();
-            return;
-        }
-
-        List<BattleEntity> legalTargets = new List<BattleEntity>();
-        foreach (BattleEntity entity in _controller.AllEntities)
-        {
-            if (IsLegalTarget(entity))
-                legalTargets.Add(entity);
-        }
-
-        vfxManager.ShowLegalTargetHighlights(legalTargets, _controller.GetLogicalPosition);
+    /// <summary>取消或结束技能选择时收起行动光圈。</summary>
+    private static void HideActorRing()
+    {
+        BattleVFXManager vfxManager = BattleVFXManager.Instance;
+        if (vfxManager != null)
+            vfxManager.HideCurrentActorRing();
     }
 
     private void SetAllTargetCursors(bool visible)

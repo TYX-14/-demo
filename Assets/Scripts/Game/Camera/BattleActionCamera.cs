@@ -4,8 +4,12 @@ using Unity.Cinemachine;
 using UnityEngine;
 
 /// <summary>
-/// 战斗行动特写镜头。
-/// 直接控制现有 Battle Camera 虚拟相机，不创建第二台输出相机。
+/// 战斗行动特写镜头。直接控制 Persistent 场景中的 Battle Camera 虚拟相机，不创建第二台输出相机。
+///
+/// 相机姿态只有两个来源，互斥：
+/// 1. 协程动画（聚焦 / 复位）—— 每帧直接写 transform；
+/// 2. 命中姿态保持（ImpactHeld）—— 由 LateUpdate 每帧重写，直到 EndFocusPush / RestoreBattleView。
+/// 这样命中姿态不会因为其他系统在同一帧写 transform 而被抹掉。
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class BattleActionCamera : MonoBehaviour
@@ -42,13 +46,23 @@ public sealed class BattleActionCamera : MonoBehaviour
     private float hitFollowThroughDepth = 0.10f;
     [SerializeField, InspectorName("暴击偏移倍率"), Min(1f), Tooltip("暴击时水平、垂直和深度偏移相对于普通命中的倍率。")]
     private float criticalFollowThroughMultiplier = 1.35f;
-    [SerializeField, InspectorName("冲击姿态过渡时间"), Min(0f), Tooltip("镜头从震屏状态过渡到倾斜及偏移姿态所需的时间，单位为秒。")]
+    [SerializeField, InspectorName("冲击姿态过渡时间"), Min(0f), Tooltip("镜头从震屏状态过渡到倾斜及偏移姿态所需的时间，单位为秒。目前由震屏时长驱动，保留字段用于兼容。")]
     private float hitFollowThroughDuration = 0.16f;
+    [SerializeField, InspectorName("朝目标反侧倾斜"), Tooltip("开启时镜头朝攻击方向的反侧倾斜（远离目标）；关闭则朝目标一侧倾斜。")]
+    private bool tiltAwayFromTarget = true;
 
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
     private bool _initialized;
-    private bool _focusPushActive;
+
+    // 命中姿态保持：由 LateUpdate 每帧重写，直到被 EndFocusPush / RestoreBattleView 释放。
+    private bool _impactHeld;
+    private Vector3 _impactPosition;
+    private Quaternion _impactRotation;
+
+    // 特写期间的持续推进。
+    private bool _pushActive;
+    private float _pushDistance;
 
     public float FocusHoldDuration => focusHoldDuration;
 
@@ -63,104 +77,139 @@ public sealed class BattleActionCamera : MonoBehaviour
         return towardCamera.normalized * presentationCameraFrontOffset;
     }
 
+    private void Awake()
+    {
+        Initialize();
+    }
+
+    private void OnDisable()
+    {
+        RestoreImmediately();
+    }
+
     /// <summary>
-    /// 命中瞬间同时启动冲击位移、旋转与短促震动。
-    /// 根据攻击者和目标的 X 坐标判断左右方向，整个过程连续过渡到最终冲击姿态。
+    /// 命中姿态优先：只要处于保持状态，每帧都重写 transform，
+    /// 因此相机不会被其他系统在同一帧改回去。
     /// </summary>
-    public IEnumerator ShakeImpact(bool isCritical, float actorX, float targetX)
+    private void LateUpdate()
+    {
+        if (!_initialized)
+            return;
+
+        if (_pushActive && focusPushSpeed > 0f)
+            _pushDistance += focusPushSpeed * Time.unscaledDeltaTime;
+
+        if (_impactHeld)
+        {
+            ApplyImpactPose();
+            return;
+        }
+
+        if (_pushActive && focusPushSpeed > 0f)
+            transform.position += transform.forward * (focusPushSpeed * Time.unscaledDeltaTime);
+    }
+
+    /// <summary>
+    /// 命中冲击：镜头沿攻击方向轻微平移，并朝攻击方向的反侧倾斜，最后定格在冲击姿态。
+    /// 参数是两个单位在屏幕上的 X（不是世界坐标），因此左右方向与玩家看到的一致。
+    /// </summary>
+    public IEnumerator ShakeImpact(bool isCritical, float actorScreenX, float targetScreenX)
     {
         if (!_initialized || !isActiveAndEnabled)
             yield break;
 
-        float strength = isCritical ? criticalShakeStrength : hitShakeStrength;
         float duration = isCritical ? criticalShakeDuration : hitShakeDuration;
         if (duration <= 0f)
             yield break;
 
-        Vector3 basePosition = transform.position;
-        Quaternion baseRotation = transform.rotation;
-        Vector3 right = baseRotation * Vector3.right;
-        Vector3 up = baseRotation * Vector3.up;
-        Vector3 forward = baseRotation * Vector3.forward;
-
-        // 直接比较世界 X 坐标，明确判断目标位于攻击者左侧还是右侧。
-        float horizontalSign = Mathf.Sign(targetX - actorX);
-        if (Mathf.Approximately(horizontalSign, 0f))
-            horizontalSign = 1f;
-
+        float strength = isCritical ? criticalShakeStrength : hitShakeStrength;
         float multiplier = isCritical ? criticalFollowThroughMultiplier : 1f;
-        float rotationAngle = isCritical
-            ? criticalFollowThroughRotation
-            : hitFollowThroughRotation;
+        float tiltAngle = (isCritical ? criticalFollowThroughRotation : hitFollowThroughRotation) * multiplier;
 
-        // 最终保留的冲击姿态。位移方向跟随目标所在的左右方向。
-        Vector3 finalOffset =
-            right * (hitFollowThroughHorizontal * multiplier * horizontalSign) +
+        // 攻击方向：+1 表示目标在画面右侧，-1 表示在左侧；两者重合时按向右处理。
+        float attackDirection = Mathf.Sign(targetScreenX - actorScreenX);
+        if (Mathf.Approximately(attackDirection, 0f))
+            attackDirection = 1f;
+
+        // 默认朝攻击方向的反侧倾斜：目标在右则向左倾，目标在左则向右倾。
+        float tiltDirection = tiltAwayFromTarget ? -attackDirection : attackDirection;
+
+        Vector3 restPosition = transform.position;
+        Quaternion restRotation = transform.rotation;
+        Vector3 right = restRotation * Vector3.right;
+        Vector3 up = restRotation * Vector3.up;
+        Vector3 forward = restRotation * Vector3.forward;
+
+        // 最终冲击姿态：位置顺攻击方向平移，朝向绕镜头前向轴旋转。
+        Vector3 positionOffset =
+            right * (hitFollowThroughHorizontal * multiplier * attackDirection) +
             up * (hitFollowThroughVertical * multiplier) +
             forward * (hitFollowThroughDepth * multiplier);
-        float rotationSign = -horizontalSign;
-        Quaternion finalRotation = Quaternion.AngleAxis(
-            rotationAngle * rotationSign, forward) * baseRotation;
 
+        Vector3 impactPosition = restPosition + positionOffset;
+        Quaternion impactRotation = Quaternion.AngleAxis(tiltAngle * tiltDirection, forward) * restRotation;
+
+        // 从静止快速受力到峰值，再衰减到最终姿态。
         float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
 
-            // 从命中第一刻就启动主冲击：先快速受力到峰值，再自然衰减到最终姿态。
             float settle = t * t * (3f - 2f * t);
             float impulse = 4f * t * (1f - t);
-            Vector3 mainOffset = finalOffset * (settle + impulse * 0.65f);
-            float rotationProgress = settle + impulse * 0.30f;
-            Quaternion mainRotation = Quaternion.Slerp(
-                baseRotation, finalRotation, Mathf.Clamp01(rotationProgress));
+            float positionProgress = settle + impulse * 0.65f;
+            float rotationProgress = Mathf.Clamp01(settle + impulse * 0.30f);
 
-            // 叠加幅度较小、快速衰减的连续振动，不再逐帧随机跳方向。
+            // 振动同样跟随攻击方向，避免出现方向固定的偏置。
             float damping = (1f - t) * (1f - t);
-            float vibrationX = Mathf.Sin(elapsed * 92f) * strength * damping;
-            float vibrationY = Mathf.Sin(elapsed * 117f + 0.8f) * strength * damping * 0.65f;
+            Vector3 vibration =
+                right * (Mathf.Sin(elapsed * 92f) * strength * damping * attackDirection) +
+                up * (Mathf.Sin(elapsed * 117f + 0.8f) * strength * damping * 0.65f);
 
-            transform.position = basePosition + mainOffset +
-                right * vibrationX + up * vibrationY;
-            transform.rotation = mainRotation;
+            transform.position = restPosition + positionOffset * positionProgress + vibration;
+            transform.rotation = Quaternion.Slerp(restRotation, impactRotation, rotationProgress);
             yield return null;
         }
 
-        // 精确停在最终姿态，避免循环最后一帧留下细微误差。
-        transform.SetPositionAndRotation(basePosition + finalOffset, finalRotation);
+        HoldImpactPose(impactPosition, impactRotation);
     }
 
-    private void Awake()
+    /// <summary>锁定命中姿态，交给 LateUpdate 每帧维持。</summary>
+    private void HoldImpactPose(Vector3 position, Quaternion rotation)
     {
-        Initialize();
+        _impactPosition = position;
+        _impactRotation = rotation;
+        _impactHeld = true;
+        ApplyImpactPose();
     }
 
-    private void LateUpdate()
+    private void ApplyImpactPose()
     {
-        if (!_focusPushActive || !_initialized || focusPushSpeed <= 0f)
-            return;
+        Vector3 pushDirection = _impactRotation * Vector3.forward;
+        transform.SetPositionAndRotation(_impactPosition + pushDirection * _pushDistance, _impactRotation);
+    }
 
-        // 在其他镜头协程完成本帧位置更新后，再沿镜头朝向叠加微小推进。
-        transform.position += transform.forward * (focusPushSpeed * Time.unscaledDeltaTime);
+    private void ReleaseImpactPose()
+    {
+        _impactHeld = false;
     }
 
     /// <summary>特写构图完成后，开始持续向前缓慢推进。</summary>
     public void BeginFocusPush()
     {
-        if (_initialized && isActiveAndEnabled)
-            _focusPushActive = true;
+        if (!_initialized || !isActiveAndEnabled)
+            return;
+
+        _pushActive = true;
+        _pushDistance = 0f;
     }
 
-    /// <summary>停止持续推进，随后即可安全执行镜头复位。</summary>
+    /// <summary>停止持续推进并释放命中姿态，随后即可安全执行镜头复位。</summary>
     public void EndFocusPush()
     {
-        _focusPushActive = false;
-    }
-
-    private void OnDisable()
-    {
-        RestoreImmediately();
+        _pushActive = false;
+        ReleaseImpactPose();
     }
 
     private void Initialize()
@@ -187,6 +236,10 @@ public sealed class BattleActionCamera : MonoBehaviour
 
         if (!_initialized || !TryBuildVisualBounds(actor, targets, out Bounds bounds))
             yield break;
+
+        // 新一次特写开始前，先释放上一次可能残留的命中姿态。
+        ReleaseImpactPose();
+        _pushDistance = 0f;
 
         Vector3 forward = _battleRotation * Vector3.forward;
         float distance = CalculateFocusDistance(bounds);
@@ -323,7 +376,10 @@ public sealed class BattleActionCamera : MonoBehaviour
 
     private void RestoreImmediately()
     {
-        EndFocusPush();
+        _pushActive = false;
+        _pushDistance = 0f;
+        ReleaseImpactPose();
+
         if (!_initialized)
             return;
 

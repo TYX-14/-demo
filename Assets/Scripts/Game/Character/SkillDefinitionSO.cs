@@ -38,6 +38,10 @@ public class SkillDefinitionSO : ScriptableObject
     [SerializeField] private Sprite skillIcon;
     [Tooltip("角色使用该技能时展示的攻击姿势图片，与技能 UI 图标分开配置。")]
     [SerializeField] private Sprite attackSprite;
+
+    [Header("攻击特写滑动")]
+    [Tooltip("特写中攻击者与被攻击者沿攻击方向的滑动表现。两项都为 None 表示不滑动。")]
+    [SerializeField] private SkillSlideConfig slide = new();
     [Tooltip("尚未配置等级效果时使用的备用说明。配置效果后，技能说明会根据等级效果自动生成。")]
     [TextArea(2, 5)]
     [SerializeField] private string description;
@@ -74,6 +78,7 @@ public class SkillDefinitionSO : ScriptableObject
     public string SkillName => skillName;
     public Sprite SkillIcon => skillIcon;
     public Sprite AttackSprite => attackSprite;
+    public SkillSlideConfig Slide => slide;
     public string Description => description;
     public int SpCost => spCost;
     public DamageType DamageType => damageType;
@@ -157,4 +162,19 @@ public class SkillDefinitionSO : ScriptableObject
 
         return builder.Length > 0 ? builder.ToString() : description;
     }
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// 编辑期提示：滑动只在进入交战摆位时生效，没有攻击图片就不会摆位。
+    /// 只警告，不修改配置。
+    /// </summary>
+    private void OnValidate()
+    {
+        if (slide == null || !slide.HasAnySlide || attackSprite != null)
+            return;
+
+        Debug.LogWarning(
+            $"技能「{skillName}」配置了特写滑动，但没有攻击图片，滑动不会生效。", this);
+    }
+#endif
 }

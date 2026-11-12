@@ -166,6 +166,8 @@ MonoBehaviour:
   hitPoint: {fileID: 5682452667192819058}
   targetCursorRenderer: {fileID: 3829843980078710185}
   targetCursorGap: 0.15
+  targetCursorCandidateAlpha: 0.3
+  targetCursorCameraZOffset: 0.1
   targetCursorBobAmplitude: 0.05
   targetCursorBobFrequency: 1.1
   targetHighlight: {fileID: 0}

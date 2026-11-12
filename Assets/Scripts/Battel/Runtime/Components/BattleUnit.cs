@@ -40,6 +40,23 @@ public class BattleUnit : MonoBehaviour
     [SerializeField, Min(0f)] private float targetCursorGap = 0.15f;
 
     /// <summary>
+    /// 候选目标状态下小手的透明度。悬停时恢复到完全不透明。
+    /// </summary>
+    [SerializeField, Range(0f, 1f)] private float targetCursorCandidateAlpha = 0.55f;
+
+    /// <summary>
+    /// 小手沿世界 Z 轴朝镜头方向的偏移，避免与角色精灵图完全重叠。
+    /// </summary>
+    [SerializeField, Min(0f)] private float targetCursorCameraZOffset = 0.1f;
+
+    /// <summary>
+    /// 小手的渲染图层。该图层由 BattleMarkerRenderFeature 在后处理之后重绘，
+    /// 因此不会受景深虚化影响。
+    /// </summary>
+    [SerializeField, Tooltip("小手的渲染图层，需与 BattleMarkerRenderFeature 中配置的图层一致。")]
+    private string markerLayerName = "BattleMarker";
+
+    /// <summary>
     /// 小手上下浮动的幅度（世界单位）。设为 0 可关闭浮动。
     /// </summary>
     [SerializeField, Min(0f)] private float targetCursorBobAmplitude = 0.05f;
@@ -54,9 +71,25 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     private Vector3 targetCursorBaseLocalPosition;
 
+    /// <summary>
+    /// 小手的显示强度。
+    /// 候选目标用半透明常驻标记全部可选中单位，鼠标悬停时才换成完全不透明并浮动。
+    /// </summary>
+    public enum TargetCursorMode
+    {
+        Hidden,
+        Candidate,
+        Hovered
+    }
+
+    private TargetCursorMode targetCursorMode = TargetCursorMode.Hidden;
+    private Color targetCursorBaseColor = Color.white;
+
     // 技能攻击特写期间暂存视觉状态，不改动实体的逻辑站位数据。
     private Sprite actionOriginalSprite;
     private Vector3 actionOriginalPosition;
+    private Vector3 actionPresentationBasePosition;
+    private int actionPresentationStartLogicalPosition;
     private bool actionOriginalAnimatorEnabled;
     private bool actionPresentationActive;
 
@@ -79,7 +112,12 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        targetCursorRenderer.enabled = false;
+        if (targetCursorRenderer != null)
+        {
+            targetCursorBaseColor = targetCursorRenderer.color;
+            targetCursorRenderer.enabled = false;
+            ApplyMarkerLayer(targetCursorRenderer.gameObject);
+        }
         if (star != null)
             star.SetActive(false);
 
@@ -121,12 +159,18 @@ public class BattleUnit : MonoBehaviour
         if (targetHighlight != null && targetHighlight.activeSelf)
             UpdateTargetHighlightTransform();
 
+        // 单位在战斗中被位移、或精灵换帧改变边界时，光标需要持续贴合头顶。
+        // 这里每帧重算一次基准点，下面的浮动逻辑再在这个基准上叠加偏移。
+        if (targetCursorMode != TargetCursorMode.Hidden && targetCursorRenderer != null)
+            UpdateTargetCursorPosition();
+
         // 在位置同步之后叠加轻柔的上下浮动，避免目标选择状态每帧刷新位置时覆盖动画。
         if (targetCursorRenderer != null &&
             targetCursorRenderer.enabled &&
             targetCursorRenderer.gameObject.activeInHierarchy &&
             targetCursorBobAmplitude > 0f &&
-            targetCursorBobFrequency > 0f)
+            targetCursorBobFrequency > 0f &&
+            targetCursorMode == TargetCursorMode.Hovered)
         {
             Vector3 localPosition = targetCursorBaseLocalPosition;
             localPosition.y += Mathf.Sin(Time.time * targetCursorBobFrequency * Mathf.PI * 2f)
@@ -179,6 +223,26 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
+    /// 把小手切到专用标记图层。相机不会直接渲染该图层，
+    /// 而是在后处理结束后由 BattleMarkerRenderFeature 重绘，从而绕开景深。
+    /// </summary>
+    private void ApplyMarkerLayer(GameObject markerObject)
+    {
+        if (markerObject == null || string.IsNullOrEmpty(markerLayerName))
+            return;
+
+        int layer = LayerMask.NameToLayer(markerLayerName);
+        if (layer < 0)
+        {
+            Debug.LogWarning(
+                $"BattleUnit：未找到图层「{markerLayerName}」，小手仍会被景深虚化。", this);
+            return;
+        }
+
+        markerObject.layer = layer;
+    }
+
+    /// <summary>
     /// 更新目标光标和命中点的位置。
     /// 计算单位为本地坐标系下的中心Y轴高度，并同步应用到光标和挂载点上。
     /// </summary>
@@ -196,6 +260,14 @@ public class BattleUnit : MonoBehaviour
             bounds.center.z
         );
 
+        // 沿世界 Z 轴朝镜头方向挪一点，避免小手和角色精灵图完全重叠互相遮挡。
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null && targetCursorCameraZOffset > 0f)
+        {
+            float directionZ = mainCamera.transform.position.z - worldTop.z;
+            worldTop.z += (directionZ >= 0f ? 1f : -1f) * targetCursorCameraZOffset;
+        }
+
         // 光标和 hitPoint 仍使用单位的本地坐标，保持原有挂点同步方式。
         Vector3 localTop = transform.InverseTransformPoint(worldTop);
         Vector3 localPos = targetCursorRenderer.transform.localPosition;
@@ -210,22 +282,49 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
-    /// 设置目标选择光标的显隐状态。
+    /// 兼容旧调用：true 等价于悬停态，false 等价于隐藏。
     /// </summary>
-    /// <param name="visible">True 表示显示并刷新位置，False 表示隐藏。</param>
     public void SetTargetSelection(bool visible)
+    {
+        SetTargetCursorMode(visible ? TargetCursorMode.Hovered : TargetCursorMode.Hidden);
+    }
+
+    /// <summary>
+    /// 设置小手显示强度。
+    /// Hidden 关闭；Candidate 半透明且不浮动，用于标出所有可被选中的单位；
+    /// Hovered 完全不透明并恢复浮动，用于鼠标悬停。
+    /// </summary>
+    public void SetTargetCursorMode(TargetCursorMode mode)
     {
         if (targetCursorRenderer == null)
             return;
 
-        if (visible)
-            UpdateTargetCursorPosition();
+        targetCursorMode = mode;
 
-        // 目标光标在 Prefab 中可能默认处于 inactive 状态。
-        // 仅切换 SpriteRenderer.enabled 无法显示 inactive 的 GameObject，因此同步控制两者。
-        targetCursorRenderer.enabled = visible;
-        if (targetCursorRenderer.gameObject.activeSelf != visible)
-            targetCursorRenderer.gameObject.SetActive(visible);
+        if (mode == TargetCursorMode.Hidden)
+        {
+            // 目标光标在 Prefab 中可能默认处于 inactive 状态。
+            // 仅切换 SpriteRenderer.enabled 无法隐藏 inactive 的 GameObject，因此同步控制两者。
+            targetCursorRenderer.enabled = false;
+            if (targetCursorRenderer.gameObject.activeSelf)
+                targetCursorRenderer.gameObject.SetActive(false);
+            return;
+        }
+
+        // 两种可见状态都需要贴合角色头顶，避免单位位移后小手留在原地。
+        UpdateTargetCursorPosition();
+
+        Color color = targetCursorBaseColor;
+        color.a *= mode == TargetCursorMode.Candidate ? targetCursorCandidateAlpha : 1f;
+        targetCursorRenderer.color = color;
+
+        targetCursorRenderer.enabled = true;
+        if (!targetCursorRenderer.gameObject.activeSelf)
+            targetCursorRenderer.gameObject.SetActive(true);
+
+        // 半透明候选态不浮动：一排小手同时上下晃动会抢视线。
+        // 这里同时复位上一帧遗留的浮动偏移，避免切回候选态时残留位置。
+        targetCursorRenderer.transform.localPosition = targetCursorBaseLocalPosition;
     }
 
     /// <summary>
@@ -244,6 +343,8 @@ public class BattleUnit : MonoBehaviour
         actionOriginalPosition = transform.position;
         actionOriginalAnimatorEnabled = animator != null && animator.enabled;
         actionPresentationActive = true;
+        actionPresentationStartLogicalPosition =
+            Entity != null && Entity.RuntimeData != null ? Entity.RuntimeData.Position : 0;
 
         if (animator != null)
             animator.enabled = false;
@@ -251,8 +352,21 @@ public class BattleUnit : MonoBehaviour
         // attackSprite 允许为空：被攻击者只需要临时移动并冻结当前姿势，不替换图片。
         if (attackSprite != null)
             spriteRenderer.sprite = attackSprite;
+        actionPresentationBasePosition = presentationPosition;
         transform.position = presentationPosition;
         return true;
+    }
+
+    /// <summary>
+    /// 按世界偏移把单位摆到“演出基准位置 + 偏移”。
+    /// 只影响视觉 Transform，不改逻辑站位；偏移由演出编排逐帧驱动，特写结束时统一还原。
+    /// </summary>
+    public void SetActionSlideOffset(Vector3 worldOffset)
+    {
+        if (!actionPresentationActive)
+            return;
+
+        transform.position = actionPresentationBasePosition + worldOffset;
     }
 
     /// <summary>结束技能攻击图片演出，恢复原始位置、图片和 Animator 状态。</summary>
@@ -266,6 +380,19 @@ public class BattleUnit : MonoBehaviour
             spriteRenderer.sprite = actionOriginalSprite;
         if (animator != null)
             animator.enabled = actionOriginalAnimatorEnabled;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // 特写期间逻辑站位不允许变化：否则这里的还原会覆盖掉那次变更，
+        // 表现为角色先弹回原位、再被后置位移挪一次。
+        int endLogicalPosition =
+            Entity != null && Entity.RuntimeData != null ? Entity.RuntimeData.Position : 0;
+        if (endLogicalPosition != actionPresentationStartLogicalPosition)
+        {
+            Debug.LogWarning(
+                $"BattleUnit：特写期间逻辑站位从 {actionPresentationStartLogicalPosition} 变为 {endLogicalPosition}，" +
+                "位置还原会覆盖这次变更。", this);
+        }
+#endif
 
         actionPresentationActive = false;
     }

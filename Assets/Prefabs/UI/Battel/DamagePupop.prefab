@@ -191,9 +191,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: {fileID: 2230159676858493170}
   animationDuration: 0.85
-  driftDistance: 0.1
+  driftDistance: 0.2
   upwardDriftRatio: 0.05
-  horizontalDriftRatio: 0.1
+  horizontalDriftRatio: 0.2
   fadeStartRatio: 0.664
   criticalScaleMultiplier: 1.3
   textScaleRoot: {fileID: 0}

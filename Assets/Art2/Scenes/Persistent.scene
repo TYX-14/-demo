@@ -5564,7 +5564,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 35
+  field of view: 33
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -5694,6 +5694,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   followCamera: {fileID: 537163270}
   battleCamera: {fileID: 1360190922}
+  transitionSnapshotCamera: {fileID: 0}
+  logTransition: 1
 --- !u!1 &331430890
 GameObject:
   m_ObjectHideFlags: 0
@@ -13558,12 +13560,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a679705520d285458caa264289611b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  redLegalTargetPrefab: {fileID: 5438288598739070507, guid: af0d06ad2f476cc43be23ac0f464a510,
+  blueCurrentActorPrefab: {fileID: 4823518202205099634, guid: f55126b3202e2b4488c0acca7699c4c1,
     type: 3}
-  blueCurrentActorPrefab: {fileID: 4823518202205099634, guid: cdc919a43bba95b4a8b6916b6aa5321d,
+  enemyCurrentActorPrefab: {fileID: 4823518202205099634, guid: 3658b669818c0c24fb50782694c9c211,
     type: 3}
   baseScale: 0.2
-  worldPositionOffset: {x: 0, y: 0, z: 0.01}
+  worldPositionOffset: {x: 0, y: 0.01, z: 0.01}
+  enableActionLight: 1
+  overridePrefabLightSettings: 0
+  actionLightColor: {r: 1, g: 0.95, b: 0.85, a: 1}
+  actionLightIntensity: 1.5
+  actionLightRange: 2.5
+  actionLightTopGap: 0.3
+  actionLightCameraZOffset: 0.3
+  actionLightCastShadows: 0
+  actionLightFallbackHeight: 1.6
+  enableGroundLight: 1
+  groundLightColor: {r: 1, g: 0.92, b: 0.8, a: 1}
+  groundLightIntensity: 1
+  groundLightRange: 2
+  groundLightOffsetY: -0.25
+  groundLightCastShadows: 0
 --- !u!4 &804809422
 Transform:
   m_ObjectHideFlags: 0
@@ -21852,7 +21869,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 35
+    FieldOfView: 33
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -21910,8 +21927,8 @@ MonoBehaviour:
   hitShakeDuration: 0.16
   criticalShakeStrength: 0.14
   criticalShakeDuration: 0.24
-  hitFollowThroughRotation: 1.78
-  criticalFollowThroughRotation: 3.4
+  hitFollowThroughRotation: 15
+  criticalFollowThroughRotation: 2.5
   hitFollowThroughHorizontal: 0.08
   hitFollowThroughVertical: 0.04
   hitFollowThroughDepth: 0.06
