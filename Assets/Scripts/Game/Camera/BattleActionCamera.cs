@@ -48,8 +48,6 @@ public sealed class BattleActionCamera : MonoBehaviour
     private float criticalFollowThroughMultiplier = 1.35f;
     [SerializeField, InspectorName("冲击姿态过渡时间"), Min(0f), Tooltip("镜头从震屏状态过渡到倾斜及偏移姿态所需的时间，单位为秒。目前由震屏时长驱动，保留字段用于兼容。")]
     private float hitFollowThroughDuration = 0.16f;
-    [SerializeField, InspectorName("朝目标反侧倾斜"), Tooltip("开启时镜头朝攻击方向的反侧倾斜（远离目标）；关闭则朝目标一侧倾斜。")]
-    private bool tiltAwayFromTarget = true;
 
     private Vector3 _battlePosition;
     private Quaternion _battleRotation;
@@ -110,7 +108,7 @@ public sealed class BattleActionCamera : MonoBehaviour
     }
 
     /// <summary>
-    /// 命中冲击：镜头沿攻击方向轻微平移，并朝攻击方向的反侧倾斜，最后定格在冲击姿态。
+    /// 命中冲击：镜头沿攻击方向轻微平移，并朝目标所在方向倾斜，最后定格在冲击姿态。
     /// 参数是两个单位在屏幕上的 X（不是世界坐标），因此左右方向与玩家看到的一致。
     /// </summary>
     public IEnumerator ShakeImpact(bool isCritical, float actorScreenX, float targetScreenX)
@@ -131,8 +129,9 @@ public sealed class BattleActionCamera : MonoBehaviour
         if (Mathf.Approximately(attackDirection, 0f))
             attackDirection = 1f;
 
-        // 默认朝攻击方向的反侧倾斜：目标在右则向左倾，目标在左则向右倾。
-        float tiltDirection = tiltAwayFromTarget ? -attackDirection : attackDirection;
+        // 倾斜方向与攻击方向一致：目标在左则向左倾，目标在右则向右倾。
+        // 不再通过 Inspector 开关反转方向，避免配置遗留导致镜头始终朝反方向倾斜。
+        float tiltDirection = attackDirection;
 
         Vector3 restPosition = transform.position;
         Quaternion restRotation = transform.rotation;
