@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u9B54\u6CD5\u98DE\u5F39"
   skillIcon: {fileID: 21300000, guid: 42d4ee87e76b44f8ea234ed2f2a77134, type: 3}
+  attackSprite: {fileID: 0}
   description: "\u7CBE\u51C6\u4FEE\u6B63+20%\n\u4F24\u5BB3\u4FEE\u6B63-12%"
   spCost: 20
-  damageType: 0
+  damageType: 1
   targetRelation: 0
   targetType: 0
   targetSelectionMode: 0

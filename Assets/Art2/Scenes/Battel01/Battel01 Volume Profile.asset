@@ -18,13 +18,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.15
+    m_Value: 0.54
   intensity:
     m_OverrideState: 1
-    m_Value: 0.34
+    m_Value: 1.68
   scatter:
     m_OverrideState: 1
-    m_Value: 0.35
+    m_Value: 0.349
   clamp:
     m_OverrideState: 0
     m_Value: 65472
@@ -46,7 +46,7 @@ MonoBehaviour:
     dimension: 1
   dirtIntensity:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: 3.27
 --- !u!114 &-3888151285345342002
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -108,10 +108,10 @@ MonoBehaviour:
     m_Value: {x: 0.5, y: 0.5}
   intensity:
     m_OverrideState: 1
-    m_Value: 0.376
+    m_Value: 0.409
   smoothness:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.6
   rounded:
     m_OverrideState: 0
     m_Value: 0
@@ -168,7 +168,7 @@ MonoBehaviour:
     m_Value: 6.6
   focalLength:
     m_OverrideState: 1
-    m_Value: 114
+    m_Value: 131
   bladeCount:
     m_OverrideState: 1
     m_Value: 7
@@ -177,4 +177,4 @@ MonoBehaviour:
     m_Value: 1
   bladeRotation:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: -180
