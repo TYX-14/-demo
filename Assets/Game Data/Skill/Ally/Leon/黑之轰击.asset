@@ -19,7 +19,7 @@ MonoBehaviour:
     attacker: 2
     targets: 1
     distance: 0.1
-    outDuration: 0.6
+    outDuration: 0.8
   description: "\u4F24\u5BB3\u4FEE\u6B63-20%\uFF0C\u7CBE\u51C6\u4FEE\u6B63-10%\n\u540E\u90001"
   spCost: 50
   damageType: 1

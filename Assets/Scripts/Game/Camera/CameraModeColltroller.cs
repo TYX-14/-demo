@@ -29,6 +29,16 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
     private CinemachineCamera _runtimeSnapshot;
     private bool _switching;
 
+    /// <summary>切换淡出开始时记下的视角。过渡期间相机会乱跑，只能用这个干净时刻的位姿。</summary>
+    private bool _anchorValid;
+    private Vector3 _anchorPosition;
+    private Quaternion _anchorRotation;
+    private LensSettings _anchorLens;
+    private float _anchorTime;
+
+    /// <summary>锚点有效期。超过这个时间说明不是同一次场景过渡，退回实时采样。</summary>
+    private const float AnchorLifetime = 20f;
+
     private void OnEnable()
     {
         EventBus.Subscribe<GameModeChangedEvent>(this);
@@ -55,6 +65,12 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
     {
         switch (evt.newMode)
         {
+            // 场景过渡的第一步就是切到 Pause，此刻画面还是干净的探索/战斗视角。
+            // 之后会淡出、卸载旧场景，相机可能在黑屏期间跟着掉下去的玩家一起沉到地下，
+            // 所以起点必须在这里就固定下来。
+            case GameMode.Pause:
+                CaptureTransitionAnchor();
+                break;
             case GameMode.Explore:
                 SetCamerView(CameraView.Explore);
                 break;
@@ -62,6 +78,29 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
                 SetCamerView(CameraView.Battle);
                 break;
         }
+    }
+
+    /// <summary>记录淡出瞬间真正渲染的视角，作为下一次切换的过渡起点。</summary>
+    private void CaptureTransitionAnchor()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            _anchorValid = false;
+            return;
+        }
+
+        _anchorPosition = mainCamera.transform.position;
+        _anchorRotation = mainCamera.transform.rotation;
+
+        CinemachineCamera runningCamera = FindRunningCamera();
+        _anchorLens = runningCamera != null ? runningCamera.Lens : LensSettings.Default;
+
+        _anchorTime = Time.unscaledTime;
+        _anchorValid = true;
+
+        if (logTransition)
+            Debug.Log($"[相机过渡] 已在淡出时刻记录起点 {_anchorPosition}", this);
     }
 
     private void SetCamerView(CameraView view)
@@ -96,7 +135,7 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
         _switching = true;
 
         if (!TryCaptureCurrentView(out CinemachineCamera snapshot, out Vector3 capturedPosition,
-                out float capturedFov))
+                out float capturedFov, out bool fromAnchor))
         {
             // 兜底：拿不到快照就退回原来的直接切换，至少不会卡住流程。
             outgoing.SetActive(false);
@@ -108,7 +147,8 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
         if (logTransition)
         {
             Debug.Log($"[相机切换] {outgoing.name} → {incoming.name}；" +
-                      $"起点钉在 {capturedPosition}，FOV {capturedFov:F1}", this);
+                      $"起点 {capturedPosition}（{(fromAnchor ? "淡出锚点" : "实时采样")}），" +
+                      $"FOV {capturedFov:F1}", this);
         }
 
         outgoing.SetActive(false);
@@ -124,12 +164,20 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
         _switching = false;
     }
 
-    /// <summary>把上一帧真正渲染的位姿与镜头参数写进快照相机。</summary>
-    private bool TryCaptureCurrentView(out CinemachineCamera snapshot, out Vector3 position, out float fieldOfView)
+    /// <summary>
+    /// 把过渡起点写进快照相机。
+    /// 优先使用淡出时刻记录的锚点；没有锚点（例如开局第一次切相机）才实时采样。
+    /// </summary>
+    private bool TryCaptureCurrentView(
+        out CinemachineCamera snapshot,
+        out Vector3 position,
+        out float fieldOfView,
+        out bool fromAnchor)
     {
         snapshot = null;
         position = Vector3.zero;
         fieldOfView = 0f;
+        fromAnchor = false;
 
         Camera mainCamera = Camera.main;
         if (mainCamera == null)
@@ -139,13 +187,24 @@ public class CameraModeColltroller : MonoBehaviour, IEventReceiver<GameModeChang
         if (snapshot == null)
             return false;
 
-        position = mainCamera.transform.position;
-        snapshot.transform.SetPositionAndRotation(position, mainCamera.transform.rotation);
+        fromAnchor = _anchorValid && Time.unscaledTime - _anchorTime <= AnchorLifetime;
 
-        // 同步镜头参数，避免接管的那一帧出现视野跳变。
-        CinemachineCamera runningCamera = FindRunningCamera();
-        if (runningCamera != null)
-            snapshot.Lens = runningCamera.Lens;
+        if (fromAnchor)
+        {
+            position = _anchorPosition;
+            snapshot.transform.SetPositionAndRotation(_anchorPosition, _anchorRotation);
+            // 镜头参数同样取淡出时刻的，避免黑屏期间虚拟相机被改动导致视野跳变。
+            snapshot.Lens = _anchorLens;
+        }
+        else
+        {
+            position = mainCamera.transform.position;
+            snapshot.transform.SetPositionAndRotation(position, mainCamera.transform.rotation);
+
+            CinemachineCamera runningCamera = FindRunningCamera();
+            if (runningCamera != null)
+                snapshot.Lens = runningCamera.Lens;
+        }
 
         fieldOfView = snapshot.Lens.FieldOfView;
 

@@ -74,6 +74,11 @@ public sealed class TimelineIconController : MonoBehaviour
         BattleEntity entity = node.Entity;
         _boundEntity = entity;
 
+        // 精灵长宽比各不相同（怪物尤其明显），必须关闭拉伸，
+        // 否则图片会被填满整个头像框而变形。
+        if (portraitImage != null)
+            portraitImage.preserveAspect = true;
+
         if (entity == null)
         {
             if (portraitImage != null)

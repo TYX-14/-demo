@@ -54,9 +54,15 @@ public static class BattleTargeting
                     return false;
                 break;
             case SkillTargetRelation.Ally:
-                // Ally 表示同阵营实体，包含行动者自身；是否允许自身成为目标由 TargetPositions 等技能配置决定。
+                // Ally 表示同阵营实体，包含行动者自身。
                 if (candidate.IsPlayer != actor.IsPlayer)
                     return false;
+
+                // 友方 AoE 覆盖整条阵线，施法者一定在范围内，不参与 TargetPositions 过滤。
+                // 否则把某个友方 AoE 的 targetPositions 改成不含施法者位置时，
+                // 单人队伍会出现“技能选中了自己却解析不出目标”的空转。
+                if (candidate == actor && skill.TargetType == SkillTargetType.AoE)
+                    return true;
                 break;
             case SkillTargetRelation.Self:
                 return candidate == actor;

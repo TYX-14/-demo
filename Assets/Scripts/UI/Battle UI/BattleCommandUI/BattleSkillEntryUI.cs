@@ -20,6 +20,10 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
     [Header("站位图案")]
     [SerializeField] private SkillPositionDiagram positionDiagram;
 
+    [Header("不可用表现")]
+    [SerializeField, Range(0f, 1f), Tooltip("站位不合法时的整体透明度，用于提示玩家该技能当前无法使用。")]
+    private float unavailableAlpha = 0.45f;
+
     private GameObject skillTip;
     private TMP_Text skillTipDescription;
 
@@ -27,12 +31,19 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
     private SkillDefinitionSO currentSkill;
     private int currentSkillLevel = 1;
     private Action<SkillDefinitionSO> onSkillSelected;
+    private Action onUnavailableClicked;
+    private CanvasGroup entryCanvasGroup;
+    private bool isUsable = true;
 
     private void Awake()
     {
         skillButton = GetComponent<Button>();
         if (skillButton != null)
             skillButton.onClick.AddListener(HandleSkillClicked);
+
+        entryCanvasGroup = GetComponent<CanvasGroup>();
+        if (entryCanvasGroup == null)
+            entryCanvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         if (positionDiagram == null)
             positionDiagram = GetComponentInChildren<SkillPositionDiagram>(true);
@@ -60,20 +71,26 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     /// <summary>用角色当前拥有的技能等级刷新条目说明。</summary>
     public void Setup(SkillDefinitionSO skill, int skillLevel,
-        Action<SkillDefinitionSO> onSelected = null, bool interactable = true)
+        Action<SkillDefinitionSO> onSelected = null, bool interactable = true,
+        Action onUnavailableSelected = null)
     {
         currentSkillLevel = Mathf.Max(1, skillLevel);
         currentSkill = skill;
         onSkillSelected = onSelected;
+        onUnavailableClicked = onUnavailableSelected;
+        isUsable = interactable;
         if (skill == null)
         {
             Clear();
             return;
         }
 
-        // 站位不允许使用时禁用按钮，避免玩家点击后才收到拒绝反馈。
+        // 站位不合法时仍然保持可点击：玩家点它应当取消上一次技能的目标选择，
+        // 只是不会进入这个技能。可点击性与可用性分开，视觉上用透明度提示。
         if (skillButton != null)
-            skillButton.interactable = interactable;
+            skillButton.interactable = true;
+
+        ApplyAvailabilityVisual();
 
         if (skillIcon != null)
         {
@@ -103,8 +120,24 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void HandleSkillClicked()
     {
-        if (currentSkill != null && skillButton != null && skillButton.interactable)
+        if (currentSkill == null)
+            return;
+
+        if (isUsable)
+        {
             onSkillSelected?.Invoke(currentSkill);
+            return;
+        }
+
+        // 站位不允许使用：不进入该技能，但要让上层取消上一次技能的目标选择。
+        onUnavailableClicked?.Invoke();
+    }
+
+    /// <summary>按可用性调整条目整体透明度，给玩家一个“现在不能用”的视觉提示。</summary>
+    private void ApplyAvailabilityVisual()
+    {
+        if (entryCanvasGroup != null)
+            entryCanvasGroup.alpha = isUsable ? 1f : unavailableAlpha;
     }
 
     private void OnDestroy()
@@ -157,6 +190,9 @@ public class BattleSkillEntryUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         currentSkill = null;
         currentSkillLevel = 1;
         onSkillSelected = null;
+        onUnavailableClicked = null;
+        isUsable = true;
+        ApplyAvailabilityVisual();
         if (skillIcon != null)
         {
             skillIcon.sprite = null;

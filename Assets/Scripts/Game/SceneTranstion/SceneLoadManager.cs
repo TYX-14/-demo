@@ -65,12 +65,37 @@ public class SceneLoadManager : singleton<SceneLoadManager>
     /// <summary>
     /// 场景加载核心流程（包含淡入淡出 / 卸载 / 切换 / 恢复）
     /// </summary>
+    /// <summary>过渡期间冻结的玩家。缓存下来，避免玩家被隐藏后找不到。</summary>
+    private PlayerController _frozenPlayer;
+
+    /// <summary>
+    /// 过渡期间冻结 / 解冻玩家。
+    /// 旧场景卸载后地面上没有碰撞体，玩家会持续自由落体，跟随相机会跟着沉到地下，
+    /// 导致镜头切换从一个错误的低点开始。
+    /// </summary>
+    private void SetPlayerFrozen(bool frozen)
+    {
+        if (frozen)
+        {
+            if (_frozenPlayer == null)
+                _frozenPlayer = FindAnyObjectByType<PlayerController>(FindObjectsInactive.Include);
+            if (_frozenPlayer != null)
+                _frozenPlayer.SetFrozen(true);
+            return;
+        }
+
+        if (_frozenPlayer != null)
+            _frozenPlayer.SetFrozen(false);
+        _frozenPlayer = null;
+    }
+
     private IEnumerator LoadFlow(SceneLoadRequest request)
     {
         try
         {
             // 1. 切换到交互菜单模式（锁输入）
             GameModeManager.Instance.RequestChangeMode(GameMode.Pause);
+            SetPlayerFrozen(true);
 
             // 2. 配置淡入淡出样式与时长
             FadeController.Instance.SetStyle(request.FadeStyle);
@@ -149,6 +174,7 @@ public class SceneLoadManager : singleton<SceneLoadManager>
         {
             // 结束加载状态
             isLoading = false;
+            SetPlayerFrozen(false);
         }
     }
 }

@@ -186,7 +186,7 @@ public class BattleController : MonoBehaviour,
         {
             Debug.LogWarning(
                 $"当前角色站位 {actorPosition} 不允许使用技能「{skill.SkillName}」。", this);
-            CancelTargetSelectionAfterRejectedSkill();
+            CancelPendingSkillSelection();
             return false;
         }
 
@@ -206,7 +206,7 @@ public class BattleController : MonoBehaviour,
                 out List<BattleEntity> resolvedTargets))
         {
             Debug.LogWarning($"技能「{skill.SkillName}」没有符合规则的目标。", this);
-            CancelTargetSelectionAfterRejectedSkill();
+            CancelPendingSkillSelection();
             return false;
         }
 
@@ -219,9 +219,11 @@ public class BattleController : MonoBehaviour,
     }
 
     /// <summary>
-    /// 玩家在目标选择期间尝试切换到不合法技能时，立即清除旧技能的视觉提示并退出旧选择状态。
+    /// 取消当前的目标选择，回到指令输入。
+    /// 玩家在目标选择期间点了站位不合法（不可用）的技能时也走这里：
+    /// 不进入新技能，但要清掉上一个技能的待施法状态与提示。
     /// </summary>
-    private void CancelTargetSelectionAfterRejectedSkill()
+    public void CancelPendingSkillSelection()
     {
         if (CurrentState is not TargetSelectionState targetSelectionState)
             return;

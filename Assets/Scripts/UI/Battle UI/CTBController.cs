@@ -53,6 +53,14 @@ public sealed class CTBController : MonoBehaviour,
 
     private void Awake()
     {
+        // 不同角色的精灵长宽比差异很大（例如怪物），
+        // 关闭拉伸、按原始比例缩放到头像框内，避免图片被横向或纵向压扁。
+        if (currentActingPortraitImage != null)
+        {
+            currentActingPortraitImage.preserveAspect = true;
+            currentActingPortraitImage.type = Image.Type.Simple;
+        }
+
         CachePortraitRestingPosition();
         iconPool = GetComponent<TimelineIconPool>();
         if (iconPool == null)

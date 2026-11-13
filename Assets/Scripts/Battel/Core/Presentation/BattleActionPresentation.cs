@@ -133,9 +133,14 @@ public sealed class BattleActionPresentation
 
         // 以第一个有效且非自身的目标确定交战方向；其余 AoE 目标沿用同一位移量，
         // 这样既能一起前移，也能保留原本的相对阵型，不会全部挤到同一个点。
-        BattleUnit presentationTarget = _actionContext.ResolvedTargets
+        // 单体自选技能（例如队伍只有一人时对自己使用协同开火）没有其他目标，
+        // 此时退化为以自身为目标，否则整段攻击演出会被下面的守卫直接跳过。
+        BattleUnit otherTarget = _actionContext.ResolvedTargets
             .Select(target => target != null ? target.Unit : null)
             .FirstOrDefault(unit => unit != null && unit != _presentationActor);
+
+        bool isSelfPresentation = otherTarget == null;
+        BattleUnit presentationTarget = isSelfPresentation ? _presentationActor : otherTarget;
 
         // 命中方向用“屏幕左右”而不是世界 X：镜头如果带偏航，世界 X 和画面左右会不一致。
         // ShakeImpact 只用这两个值判断符号，因此传屏幕 X 是安全的。
@@ -153,6 +158,8 @@ public sealed class BattleActionPresentation
                 : _impactActorScreenX + 1f;
         }
 
+        // 攻击者与目标重合时（自选技能）没有水平方向，退回自身朝向，并压平到地面，
+        // 避免把角色沿 Y 轴推歪。
         _cameraImpactDirection = Vector3.zero;
         if (_presentationActor != null && presentationTarget != null)
         {
@@ -160,13 +167,15 @@ public sealed class BattleActionPresentation
                 presentationTarget.transform.position - _presentationActor.transform.position,
                 Vector3.up);
             if (_cameraImpactDirection.sqrMagnitude < 0.0001f)
-                _cameraImpactDirection = _presentationActor.transform.forward;
+                _cameraImpactDirection = Vector3.ProjectOnPlane(
+                    _presentationActor.transform.forward, Vector3.up);
+            if (_cameraImpactDirection.sqrMagnitude < 0.0001f)
+                _cameraImpactDirection = Vector3.forward;
             _cameraImpactDirection.Normalize();
         }
 
         // 没有攻击图片时不进入交战摆位，单位留在原站位。
-        if (_actionContext.Skill.AttackSprite == null ||
-            _presentationActor == null || presentationTarget == null)
+        if (_actionContext.Skill.AttackSprite == null || _presentationActor == null)
             return;
 
         Vector3 actorPosition = _presentationActor.transform.position;

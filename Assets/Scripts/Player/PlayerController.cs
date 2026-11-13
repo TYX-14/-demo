@@ -19,6 +19,22 @@ public class PlayerController : MonoBehaviour
 
     private float verticalVelocity;
     private Vector2 movementInpunt;
+    /// <summary>场景过渡期间冻结玩家，避免旧场景卸载后因缺少地面而自由落体。</summary>
+    private bool _frozen;
+
+    /// <summary>冻结 / 解冻玩家。冻结时停止输入、重力与动画状态更新。</summary>
+    public void SetFrozen(bool frozen)
+    {
+        _frozen = frozen;
+        if (!frozen)
+            return;
+
+        verticalVelocity = 0f;
+        movementInpunt = Vector2.zero;
+        if (animator != null)
+            animator.SetBool("isMoving", false);
+    }
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
@@ -26,6 +42,9 @@ public class PlayerController : MonoBehaviour
     }
     private void Update()
     {
+        if (_frozen)
+            return;
+
         Movement();
         SetAnimaton();
     }

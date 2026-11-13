@@ -148,7 +148,8 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
                 ? battleController.GetLogicalPosition(currentEntity)
                 : 0;
             bool canUseFromPosition = BattleTargeting.CanUseFromPosition(skill, actorPosition);
-            entry.Setup(skill, currentEntity.RuntimeData.GetSkillLevel(skill), OnSkillSelected, canUseFromPosition);
+            entry.Setup(skill, currentEntity.RuntimeData.GetSkillLevel(skill),
+                OnSkillSelected, canUseFromPosition, OnUnavailableSkillClicked);
             spawnedEntries.Add(entry);
         }
 
@@ -167,6 +168,18 @@ public class BattleSkillPanelController : MonoBehaviour, IEventReceiver<CurrentE
         // 进入目标选择时保留技能面板。
         // 若玩家取消选择，原面板仍然打开；只有确认目标后才由目标选择状态关闭。 
         battleController.BeginSkillTargetSelection(skill);
+    }
+
+    /// <summary>
+    /// 玩家点击了当前站位不能使用的技能：不进入该技能，
+    /// 但要取消上一次技能已经进入的目标选择状态。
+    /// </summary>
+    private void OnUnavailableSkillClicked()
+    {
+        if (battleController == null)
+            return;
+
+        battleController.CancelPendingSkillSelection();
     }
 
     private void ClearEntries()
