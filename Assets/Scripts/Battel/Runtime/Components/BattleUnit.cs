@@ -22,6 +22,24 @@ public class BattleUnit : MonoBehaviour
     /// </summary>
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    [Header("队友气泡")]
+    /// <summary>
+    /// 单位头顶的说话气泡。做成预制体内的常驻子物体，需要时由 BattleBarkDirector 打开。
+    /// </summary>
+    [SerializeField] private BattleBarkBubble barkBubble;
+
+    /// <summary>该单位的说话气泡，可能为空。未手动指定时自动从子物体查找。</summary>
+    public BattleBarkBubble BarkBubble
+    {
+        get
+        {
+            if (barkBubble == null)
+                barkBubble = GetComponentInChildren<BattleBarkBubble>(true);
+
+            return barkBubble;
+        }
+    }
+
     [Header("目标选择光标")]
     /// <summary>
     /// 命中特效/光标的挂载点。

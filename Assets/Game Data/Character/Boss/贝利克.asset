@@ -17,21 +17,25 @@ MonoBehaviour:
   Portrait: {fileID: 21300000, guid: 81dd73ab8dbf145498172ba8b8b7743a, type: 3}
   LeftIdle: {fileID: 0}
   LeftBattleIdle: {fileID: 21300000, guid: 81dd73ab8dbf145498172ba8b8b7743a, type: 3}
+  BattleActionPortrait: {fileID: 0}
   BaseLevel: 1
   BaseStats:
     MaxHP: 100
     MaxSP: 100
-    PAtk: 5
+    PAtk: 8
     PDef: 8
     MAtk: 3
     MDef: 8
     Speed: 3
     Accuracy: 0
     Evasion: 0
+  BaseCritChance: 100
+  CritChancePerPromotion: 3
   BaseDeathblowResistance: 0
   maxSwapDistance: 1
   initialSkills:
   - {fileID: 11400000, guid: bb8ba49750b6f5447b9a61e239b798eb, type: 2}
+  barks: {fileID: 0}
   filedAnimator: {fileID: 0}
   battleAnimator: {fileID: 22100000, guid: 37cc258520fcaeb45a04119fe5523224, type: 2}
   occupiedSlotCount: 2

@@ -16,6 +16,11 @@ public class BattleController : MonoBehaviour,
     [SerializeField] private BattleFieldManager fieldManager;
     public BattleFieldManager FieldManager => fieldManager;
 
+    [Header("压力结算")]
+    [SerializeField, Tooltip("压力的全局数值配置。留空时使用代码默认值（受暴击 6~8、邻居 3~4、治疗暴击 -4）。")]
+    private BattleStressConfig stressConfig;
+    public BattleStressConfig StressConfig => stressConfig;
+
     [Header("伤害飘字")]
     [SerializeField, Tooltip("伤害事件发生时生成的世界空间飘字预制体。请指定 Assets/Prefabs/UI/Battel/DamagePupop.prefab。")]
     private BattleFloatingText damagePopupPrefab;
@@ -30,6 +35,22 @@ public class BattleController : MonoBehaviour,
     private float damagePopupDepthOffset = 0.05f;
 
     private readonly List<BattleFloatingText> _activeDamagePopups = new();
+
+    /// <summary>当前 CTB 回合号。未初始化时为 0。</summary>
+    public int CurrentRoundNumber => _roundScheduler != null ? _roundScheduler.RoundNumber : 0;
+
+    [Header("压力飘字")]
+    [SerializeField, Min(0f), Tooltip("压力飘字相对伤害飘字额外向上的偏移，避免两者叠在一起。")]
+    private float stressPopupVerticalOffset = 0.35f;
+
+    [SerializeField, Min(0f), Tooltip("第一颗压力飘字出现前的延迟，用于和伤害飘字错开。")]
+    private float stressPopupInitialDelay = 0.18f;
+
+    [SerializeField, Min(0f), Tooltip("相邻位置压力飘字的启动间隔。彼此并行播放，不等待上一个结束。")]
+    private float stressPopupStagger = 0.2f;
+
+    [SerializeField, Min(0f), Tooltip("最后一颗压力飘字出现后，继续等待多久再结束本次结算。")]
+    private float stressPopupTail = 0.3f;
 
     [Header("敌方行动节奏")]
     [SerializeField, Min(0f), Tooltip("CTB 大头像完成入场、蓝色行动圈亮起后，敌方 AI 开始选择技能和目标前的思考时间。")]
@@ -100,6 +121,88 @@ public class BattleController : MonoBehaviour,
         popup.Show(evt.Damage, floatingType, evt.IsCritical);
 
         popup.PlayAnimation(horizontalDirection);
+        _activeDamagePopups.Add(popup);
+    }
+
+    /// <summary>
+    /// 播放一次压力结算：在攻击特写结束、镜头回到全景之后进行，
+    /// 按位置顺序依次出现，每个之间错开 stressPopupStagger 但不等待前一个播完。
+    /// 返回 IEnumerator 供调用方等待整轮结算结束。
+    /// </summary>
+    public IEnumerator PlayStressSettlement(
+        List<BattleStressChange> changes,
+        float initialDelay = -1f,
+        float stagger = -1f,
+        float tail = -1f)
+    {
+        if (changes == null || changes.Count == 0)
+            yield break;
+
+        if (damagePopupPrefab == null || !isActiveAndEnabled)
+            yield break;
+
+        // 负数表示沿用 Inspector 上的默认节奏。
+        float delay = initialDelay >= 0f ? initialDelay : stressPopupInitialDelay;
+        float step = stagger >= 0f ? stagger : stressPopupStagger;
+        float tailWait = tail >= 0f ? tail : stressPopupTail;
+
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        for (int i = 0; i < changes.Count; i++)
+        {
+            // 先写入这一个角色的压力：ModifyStress 内部会通知 CharacterStressSystem，
+            // 压力条 UI 在这一刻刷新，和飘字同一瞬间。美德角色数值不变但仍会给出表现。
+            if (!BattleStressResolver.Apply(changes[i], out BattleStressOutcome outcome))
+                continue;
+
+            SpawnStressPopup(outcome.Entity, outcome.Display);
+
+            if (i < changes.Count - 1 && step > 0f)
+                yield return new WaitForSecondsRealtime(step);
+        }
+
+        if (tailWait > 0f)
+            yield return new WaitForSecondsRealtime(tailWait);
+    }
+
+    private void SpawnStressPopup(BattleEntity entity, int delta)
+    {
+        BattleUnit unit = entity != null ? entity.Unit : null;
+        if (unit == null)
+            return;
+
+        // 与我方/敌方的站位方向一致，飘字朝角色背后偏移。
+        Vector3 horizontalDirection = entity.IsPlayer ? Vector3.right : Vector3.left;
+
+        Vector3 popupPosition = unit.transform.position;
+        if (unit.TryGetVisualBounds(out Bounds visualBounds))
+            popupPosition = visualBounds.center;
+
+        // 比伤害飘字更高一点，避免同一次行动里两种数字重叠。
+        popupPosition += Vector3.up * (damagePopupVerticalOffset + stressPopupVerticalOffset);
+        popupPosition += horizontalDirection * damagePopupBehindOffset;
+
+        Camera mainCamera = Camera.main;
+        float towardCameraSign = mainCamera != null &&
+                                 mainCamera.transform.position.z > popupPosition.z
+            ? 1f
+            : -1f;
+        popupPosition.z += towardCameraSign * damagePopupDepthOffset;
+
+        BattleFloatingText popup = Instantiate(
+            damagePopupPrefab,
+            popupPosition,
+            Quaternion.identity);
+
+        // 正数为增压（白色），负数为减压（金色）。
+        FloatingTextType type = delta > 0
+            ? FloatingTextType.StressDamage
+            : FloatingTextType.StressRecovery;
+
+        popup.Show(delta, type, false);
+        popup.PlayAnimation(horizontalDirection);
+
         _activeDamagePopups.Add(popup);
     }
 

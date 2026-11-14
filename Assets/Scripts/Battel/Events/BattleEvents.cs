@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MFrameork.Event;
 
 /// <summary>
@@ -103,5 +104,29 @@ public readonly struct BattleDamageEvent : IEvent
         Damage = damage;
         DamageType = damageType;
         IsCritical = isCritical;
+    }
+}
+
+/// <summary>
+/// 行动者正式确认释放技能时发布。
+/// 只在行动真正开始时触发一次：玩家取消目标选择、技能被拒绝都不会发布。
+/// 供 UI 显示「谁用了什么技能」，不承载结算结果（结果见 BattleDamageEvent）。
+/// </summary>
+public readonly struct BattleSkillCastEvent : IEvent
+{
+    public BattleEntity Actor { get; }
+    public SkillDefinitionSO Skill { get; }
+    public IReadOnlyList<BattleEntity> Targets { get; }
+    public bool IsPlayerAction { get; }
+
+    public BattleSkillCastEvent(
+        BattleEntity actor,
+        SkillDefinitionSO skill,
+        IReadOnlyList<BattleEntity> targets)
+    {
+        Actor = actor;
+        Skill = skill;
+        Targets = targets ?? System.Array.Empty<BattleEntity>();
+        IsPlayerAction = actor != null && actor.IsPlayer;
     }
 }

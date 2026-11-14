@@ -23,6 +23,15 @@ public sealed class BattleActionPresentation
     private BattleActionCamera _actionCamera;
     private bool _cameraFocusStarted;
     private BattleUnit _presentationActor;
+
+    // 命中后惯性滑动的运行时状态。滑动自行计时推进，不阻塞特写的时间线。
+    private bool _slideActive;
+    private float _slideElapsed;
+    private float _slideDuration;
+    private float _slideDistance;
+    private Vector3 _slideDirection;
+    private float _slideActorSign;
+    private float _slideTargetSign;
     private bool _actionPresentationStarted;
     private Vector3 _cameraImpactDirection;
     private float _impactActorScreenX;
@@ -57,18 +66,12 @@ public sealed class BattleActionPresentation
 
         if (_cameraFocusStarted)
         {
-            // 角色正式进入攻击特写，行动已经开始；此时不再显示行动者光圈或目标小手。
-            if (BattleVFXManager.Instance != null)
-                BattleVFXManager.Instance.HideActionHighlights();
-
             if (_isEnemyAction)
                 SetEnemyTargetCursors(false);
 
-            yield return _actionCamera.FocusOnAction(_actionContext.Actor, _actionContext.ResolvedTargets);
+            // 统一特写入口：收起光圈与常驻 HUD、对准参战者、开始持续推进。
+            yield return BattleCloseup.Enter(_actionContext.Actor, _actionContext.ResolvedTargets);
         }
-
-        if (_cameraFocusStarted)
-            _actionCamera.BeginFocusPush();
 
         StageUnits();
     }
@@ -84,17 +87,30 @@ public sealed class BattleActionPresentation
         if (damageEventTriggered && _cameraFocusStarted && _actionCamera != null)
             shake = _actionCamera.ShakeImpact(criticalHit, _impactActorScreenX, _impactTargetScreenX, tiltDirection);
 
-        // 滑动是命中之后的惯性：与震屏同帧开始，不推迟命中帧。
-        yield return RunTogether(shake, PlaySlide());
+        // 滑动是命中之后的惯性：与震屏同帧开始，但绝不进入等待队列。
+        // 它自己按时间推进，震屏结束时可能还没滑完，由后面的停顿继续推进。
+        BeginSlide();
+
+        if (shake != null)
+        {
+            while (shake.MoveNext())
+            {
+                AdvanceSlide(Time.unscaledDeltaTime);
+                yield return null;
+            }
+        }
 
         // 命中后保留短暂停顿，但不提前恢复攻击者与目标的视觉状态。
         // 攻击图片和目标冻结姿势会一直维持到特写正式结束。
         if (_actionPresentationStarted || _presentedTargets.Count > 0)
-            yield return new WaitForSecondsRealtime(0.12f);
+            yield return WaitAdvancingSlide(0.12f);
 
         // 额外特写时间也属于攻击图片展示时间，结束特写前才恢复角色 Animator。
         if (_cameraFocusStarted && _actionCamera != null && _actionCamera.FocusHoldDuration > 0f)
-            yield return new WaitForSecondsRealtime(_actionCamera.FocusHoldDuration);
+            yield return WaitAdvancingSlide(_actionCamera.FocusHoldDuration);
+
+        // 特写比滑动短时，直接把滑动补到终点，避免还原位置时出现跳变。
+        FinishSlide();
 
         // 伤害飘字的生命周期不能越过攻击特写；镜头复位前统一清理。
         _controller.ClearDamagePopups();
@@ -105,12 +121,9 @@ public sealed class BattleActionPresentation
         foreach (BattleUnit presentedTarget in _presentedTargets)
             presentedTarget.EndActionPresentation();
 
-        // 先停止持续推进，再恢复战场全景，最后执行前进/后退等后置位移。
-        if (_cameraFocusStarted && _actionCamera != null)
-            _actionCamera.EndFocusPush();
-
-        if (_cameraFocusStarted && _actionCamera != null && _actionCamera.isActiveAndEnabled)
-            yield return _actionCamera.RestoreBattleView();
+        // 先停止持续推进，再恢复战场全景与 HUD，最后执行前进/后退等后置位移。
+        if (_cameraFocusStarted)
+            yield return BattleCloseup.Exit();
     }
 
     /// <summary>敌方行动的恢复延迟与目标提示收尾。</summary>
@@ -241,61 +254,73 @@ public sealed class BattleActionPresentation
     }
 
     /// <summary>
-    /// 同时推进两个 IEnumerator。两个子协程都只允许 yield return null，
-    /// 不接受嵌套的等待对象（本方法不会转发 Current）。
-    /// </summary>
-    private static IEnumerator RunTogether(IEnumerator first, IEnumerator second)
-    {
-        bool firstRunning = first != null;
-        bool secondRunning = second != null;
-
-        while (firstRunning || secondRunning)
-        {
-            if (firstRunning)
-                firstRunning = first.MoveNext();
-            if (secondRunning)
-                secondRunning = second.MoveNext();
-
-            if (firstRunning || secondRunning)
-                yield return null;
-        }
-    }
-
-    /// <summary>
-    /// 命中后的惯性滑动：让攻击者与被攻击者沿 ±攻击方向轻微移动，表现攻击产生的后坐与推挤。
-    /// 只改演出位置，特写结束由 EndActionPresentation 统一还原；
+    /// 开始命中后的惯性滑动：让攻击者与被攻击者沿 ±攻击方向轻微移动，表现攻击产生的后坐与推挤。
+    /// 只记录参数，不产生等待；真正的推进由 AdvanceSlide 每帧完成。
     /// 没有进入交战摆位的技能（没有攻击图片）不会滑动。
     /// </summary>
-    private IEnumerator PlaySlide()
+    private void BeginSlide()
     {
-        SkillSlideConfig slide = _actionContext.Skill.Slide;
+        _slideActive = false;
+        _slideElapsed = 0f;
+
+        SkillDefinitionSO skill = _actionContext.Skill;
+        SkillSlideConfig slide = skill != null ? skill.Slide : null;
         if (slide == null || !slide.HasAnySlide || !_actionPresentationStarted)
-            yield break;
+            return;
 
         if (_presentationActor == null || _cameraImpactDirection.sqrMagnitude < 0.0001f)
-            yield break;
+            return;
 
         float actorSign = ToSlideSign(slide.attacker);
         float targetSign = ToSlideSign(slide.targets);
         if (actorSign == 0f && targetSign == 0f)
-            yield break;
+            return;
 
-        Vector3 direction = _cameraImpactDirection;
-        float distance = Mathf.Max(0f, slide.distance);
-        float duration = Mathf.Max(0.01f, slide.outDuration);
+        _slideDirection = _cameraImpactDirection;
+        _slideDistance = Mathf.Max(0f, slide.distance);
+        _slideDuration = Mathf.Max(0.01f, slide.outDuration);
+        _slideActorSign = actorSign;
+        _slideTargetSign = targetSign;
+        _slideActive = true;
+    }
 
+    /// <summary>按时间推进滑动。不等待，调用方在自己的循环里喂 deltaTime。</summary>
+    private void AdvanceSlide(float deltaTime)
+    {
+        if (!_slideActive)
+            return;
+
+        _slideElapsed += deltaTime;
+        float t = Mathf.Clamp01(_slideElapsed / _slideDuration);
+        // 先快后慢：起手有冲劲，收尾稳下来。
+        float eased = 1f - (1f - t) * (1f - t);
+        ApplySlideOffset(_slideDirection, _slideDistance * eased, _slideActorSign, _slideTargetSign);
+
+        if (t >= 1f)
+            _slideActive = false;
+    }
+
+    /// <summary>特写结束时若滑动仍未走完，直接补到终点，避免还原位置时跳变。</summary>
+    private void FinishSlide()
+    {
+        if (!_slideActive)
+            return;
+
+        ApplySlideOffset(_slideDirection, _slideDistance, _slideActorSign, _slideTargetSign);
+        _slideActive = false;
+    }
+
+    /// <summary>等待指定时长，同时让滑动继续推进，不额外拉长演出。</summary>
+    private IEnumerator WaitAdvancingSlide(float duration)
+    {
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            // 先快后慢：起手有冲劲，收尾稳下来。
-            float eased = 1f - (1f - t) * (1f - t);
-            ApplySlideOffset(direction, distance * eased, actorSign, targetSign);
+            float deltaTime = Time.unscaledDeltaTime;
+            elapsed += deltaTime;
+            AdvanceSlide(deltaTime);
             yield return null;
         }
-
-        ApplySlideOffset(direction, distance, actorSign, targetSign);
     }
 
     private void ApplySlideOffset(Vector3 direction, float distance, float actorSign, float targetSign)

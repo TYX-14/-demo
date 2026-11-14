@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b9a7fe75e06104f920dfe5a2f82fe1, type: 3}
+  m_Name: "\u66B4\u51FB\u654C\u4EBA"
+  m_EditorClassIdentifier: 
+  Kind: 7
+  Texts:
+  - "\u610F\u6C14\u98CE\u53D1\uFF01"
+  - "\u7CBE\u6E5B\u7684\u6280\u827A\uFF01"
+  - "\u5F53\u5934\u4E00\u68D2\uFF01"
+  - "\u91CD\u521B\uFF01"
+  - "\u7206\u53D1\uFF01"
+  - "\u950B\u8292\u6BD5\u9732\uFF01"
+  Chance: 1
+  Cooldown: 15
+  Weight: 2

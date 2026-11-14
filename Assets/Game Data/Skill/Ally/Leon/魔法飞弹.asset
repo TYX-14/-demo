@@ -15,6 +15,11 @@ MonoBehaviour:
   skillName: "\u9B54\u6CD5\u98DE\u5F39"
   skillIcon: {fileID: 21300000, guid: 42d4ee87e76b44f8ea234ed2f2a77134, type: 3}
   attackSprite: {fileID: 0}
+  slide:
+    attacker: 0
+    targets: 0
+    distance: 0.2
+    outDuration: 0.6
   description: "\u7CBE\u51C6\u4FEE\u6B63+20%\n\u4F24\u5BB3\u4FEE\u6B63-12%"
   spCost: 20
   damageType: 1

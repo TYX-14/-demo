@@ -16,6 +16,8 @@ public sealed class BattleActionCamera : MonoBehaviour
 {
     [Header("战斗特写镜头")]
     [SerializeField, InspectorName("战斗虚拟相机"), Tooltip("引用 Persistent 场景中 Battle Camera 对象上的 CinemachineCamera。通常保持现有引用即可。")] private CinemachineCamera battleVirtualCamera;
+    [SerializeField, InspectorName("景深对焦"), Tooltip("可选：特写期间把景深对焦到参战单位。留空时自动在同一对象上查找。")]
+    private BattleDepthOfFieldFocus depthOfFieldFocus;
     [SerializeField, InspectorName("镜头推进时间"), Min(0.01f), Tooltip("从战场全景推进到攻击特写所需的时间，单位为秒。数值越小，推进越快。")] private float focusInDuration = 0.22f;
     [SerializeField, InspectorName("镜头复位时间"), Min(0.01f), Tooltip("攻击演出结束后，镜头恢复到战场全景所需的时间，单位为秒。")] private float focusOutDuration = 0.18f;
     [SerializeField, InspectorName("特写额外停留时间"), Min(0f), Tooltip("攻击演出流程结束前，额外保持特写的时间，单位为秒。设为 0 可关闭额外等待。")] private float focusHoldDuration = 0.3f;
@@ -236,7 +238,20 @@ public sealed class BattleActionCamera : MonoBehaviour
 
         _battlePosition = transform.position;
         _battleRotation = transform.rotation;
+
+        if (depthOfFieldFocus == null)
+            depthOfFieldFocus = GetComponent<BattleDepthOfFieldFocus>();
+
         _initialized = true;
+    }
+
+    /// <summary>
+    /// 通用特写入口：把镜头对准给定的一批单位。
+    /// 攻击特写、美德 / 折磨特写等都调用这个方法，保证镜头语言一致。
+    /// </summary>
+    public IEnumerator FocusOnParticipants(BattleEntity actor, IReadOnlyList<BattleEntity> targets)
+    {
+        return FocusOnAction(actor, targets);
     }
 
     /// <summary>根据行动者和本次行动的全部实际目标计算构图，并平滑推进镜头。</summary>
@@ -256,6 +271,10 @@ public sealed class BattleActionCamera : MonoBehaviour
         float distance = CalculateFocusDistance(bounds);
         Vector3 focusPosition = bounds.center - forward * distance;
 
+        // 把景深对焦点拉到本次行动的参战单位上：他们清晰，画面其余部分虚化。
+        if (depthOfFieldFocus != null)
+            depthOfFieldFocus.BeginFocus(bounds.center);
+
         yield return AnimatePosition(focusPosition, focusInDuration);
     }
 
@@ -267,6 +286,10 @@ public sealed class BattleActionCamera : MonoBehaviour
 
         EndFocusPush();
         yield return AnimatePose(_battlePosition, _battleRotation, focusOutDuration);
+
+        // 回到全景后恢复场景原本的对焦距离。
+        if (depthOfFieldFocus != null)
+            depthOfFieldFocus.EndFocus();
     }
 
     private bool TryBuildVisualBounds(
@@ -390,6 +413,10 @@ public sealed class BattleActionCamera : MonoBehaviour
         _pushActive = false;
         _pushDistance = 0f;
         ReleaseImpactPose();
+
+        // 特写途中被禁用时同样要恢复对焦，否则景深会停留在特写距离。
+        if (depthOfFieldFocus != null)
+            depthOfFieldFocus.EndFocus();
 
         if (!_initialized)
             return;

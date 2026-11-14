@@ -101,8 +101,38 @@ public class BattleHUDcontroller : MonoBehaviour,
             SetBattleUIVisible(false);
     }
 
+    /// <summary>特写期间是否强制隐藏 HUD。</summary>
+    private bool _closeupActive;
+
+    [Header("底部面板")]
+    [SerializeField, Tooltip("底部 UI 面板根节点。非战斗模式关闭，跑位完成后打开，特写期间关闭。")]
+    private GameObject bottomPanelRoot;
+
+    /// <summary>
+    /// 特写期间隐藏常驻 HUD（CTB、血条、指令面板）；结束时按战斗 HUD 的启动状态恢复。
+    /// 指令面板不在这里恢复：它由状态机驱动，回到玩家输入时会自动重新显示。
+    /// </summary>
+    public void SetCloseupActive(bool active)
+    {
+        if (_closeupActive == active)
+            return;
+
+        _closeupActive = active;
+        SetBattleUIVisible(!active && battleUIStarted);
+
+        if (!active && battleUIStarted)
+            RefreshActingHighlight();
+
+        if (active && BattleCommandUI.Instance != null)
+            BattleCommandUI.Instance.ClosePanel();
+    }
+
     private void SetBattleUIVisible(bool visible)
     {
+        // 特写期间强制隐藏，任何事件都不能把它重新显示出来。
+        if (_closeupActive && visible)
+            visible = false;
+
         ResolveHealthBarCanvasGroup();
 
         if (healthBarFadeCoroutine != null)
@@ -113,8 +143,17 @@ public class BattleHUDcontroller : MonoBehaviour,
 
         if (healthBarPanelRoot != null && healthBarPanelRoot.activeSelf != visible)
             healthBarPanelRoot.SetActive(visible);
-        if (ctbRoot != null && ctbRoot.activeSelf != visible)
-            ctbRoot.SetActive(visible);
+
+        // CTB 不能用 SetActive 隐藏：组件被禁用会丢失当前行动者与图标状态，
+        // 重新显示时大头像为空，下一位行动者会“移入空头像”而不是替换。
+        // 改用 CanvasGroup 只隐藏显示，状态与动画继续保留。
+        ResolveCtbCanvasGroup();
+        if (ctbCanvasGroup != null)
+        {
+            ctbCanvasGroup.alpha = visible ? 1f : 0f;
+            ctbCanvasGroup.interactable = visible;
+            ctbCanvasGroup.blocksRaycasts = visible;
+        }
 
         if (healthBarCanvasGroup != null)
         {
@@ -122,6 +161,94 @@ public class BattleHUDcontroller : MonoBehaviour,
             healthBarCanvasGroup.interactable = visible;
             healthBarCanvasGroup.blocksRaycasts = visible;
         }
+
+        // 底部面板（当前行动者立绘等）同样用 CanvasGroup 隐藏，
+        // 这样里面的动画不会因为节点被禁用而中断。
+        ApplyBottomPanelVisibility(visible);
+    }
+
+    [Header("底部面板节奏")]
+    [SerializeField, Min(0f), Tooltip("底部面板淡入时长。0 表示瞬时显示。")]
+    private float bottomPanelFadeInDuration = 0.12f;
+
+    [SerializeField, Min(0f), Tooltip("底部面板淡出时长。特写开始时希望它快速让位，通常比淡入短。")]
+    private float bottomPanelFadeOutDuration = 0.06f;
+
+    private Coroutine bottomPanelFadeCoroutine;
+
+    private void ApplyBottomPanelVisibility(bool visible)
+    {
+        ResolveBottomPanelCanvasGroup();
+        if (bottomPanelCanvasGroup == null)
+            return;
+
+        bottomPanelCanvasGroup.interactable = visible;
+        bottomPanelCanvasGroup.blocksRaycasts = visible;
+
+        if (bottomPanelFadeCoroutine != null)
+        {
+            StopCoroutine(bottomPanelFadeCoroutine);
+            bottomPanelFadeCoroutine = null;
+        }
+
+        float targetAlpha = visible ? 1f : 0f;
+        float duration = visible ? bottomPanelFadeInDuration : bottomPanelFadeOutDuration;
+
+        if (duration <= 0f || !isActiveAndEnabled)
+        {
+            bottomPanelCanvasGroup.alpha = targetAlpha;
+            return;
+        }
+
+        bottomPanelFadeCoroutine = StartCoroutine(FadeBottomPanel(targetAlpha, duration));
+    }
+
+    private IEnumerator FadeBottomPanel(float targetAlpha, float duration)
+    {
+        float startAlpha = bottomPanelCanvasGroup.alpha;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            bottomPanelCanvasGroup.alpha =
+                Mathf.Lerp(startAlpha, targetAlpha, Mathf.Clamp01(elapsed / duration));
+            yield return null;
+        }
+
+        bottomPanelCanvasGroup.alpha = targetAlpha;
+        bottomPanelFadeCoroutine = null;
+    }
+
+    /// <summary>底部 UI 面板根节点的 CanvasGroup。</summary>
+    private CanvasGroup bottomPanelCanvasGroup;
+
+    private void ResolveBottomPanelCanvasGroup()
+    {
+        if (bottomPanelRoot == null)
+            return;
+
+        if (bottomPanelCanvasGroup == null)
+            bottomPanelCanvasGroup = bottomPanelRoot.GetComponent<CanvasGroup>();
+
+        if (bottomPanelCanvasGroup == null)
+            bottomPanelCanvasGroup = bottomPanelRoot.AddComponent<CanvasGroup>();
+    }
+
+    /// <summary>CTB 根节点的 CanvasGroup，用于隐藏而不销毁其状态。</summary>
+    private CanvasGroup ctbCanvasGroup;
+
+    private void ResolveCtbCanvasGroup()
+    {
+        if (ctbRoot == null)
+            return;
+
+        if (ctbCanvasGroup == null)
+            ctbCanvasGroup = ctbRoot.GetComponent<CanvasGroup>();
+
+        // 运行时补上，避免额外的 Inspector 配置步骤。
+        if (ctbCanvasGroup == null)
+            ctbCanvasGroup = ctbRoot.AddComponent<CanvasGroup>();
     }
 
     private void ResolveHealthBarCanvasGroup()

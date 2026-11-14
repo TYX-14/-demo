@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using MFrameork.Event;
 using UnityEngine;
 
 /// <summary>
@@ -62,6 +64,13 @@ public class PerformActionState : BattleState
         Debug.Log($"[行动开始] {actorName} 使用技能「{_actionContext.Skill.SkillName}」；" +
                   $"输入位置：{_actionContext.SelectedInputPosition}；实际目标：{targetNames}。");
 
+        // 行动已经确认，广播本次技能供 UI 使用。
+        // 放在这里而不是选择技能时：取消选择、被拒绝的技能都不会走到这一步。
+        EventBus.Publish(new BattleSkillCastEvent(
+            _actionContext.Actor,
+            _actionContext.Skill,
+            _actionContext.ResolvedTargets));
+
         // 每个行动一个演出实例，行动结束即丢弃，避免跨行动遗留演出状态。
         BattleActionPresentation presentation = new(_controller, _actionContext);
 
@@ -80,11 +89,21 @@ public class PerformActionState : BattleState
             _actionContext.SelectedInputTarget,
             out movementTriggered,
             out criticalHit,
-            out damageEventTriggered);
+            out damageEventTriggered,
+            out List<BattleActionFact> facts);
 
         Debug.Log($"[技能结算] 技能等级：{skillLevel}；本次计算的伤害总值：{totalDamage}；暴击：{criticalHit}。");
 
+        // 命中帧：广播本次行动的完整事实。此刻特写仍在播放，旁白可以立刻接话。
+        if (facts.Count > 0)
+            EventBus.Publish(new BattleActionResolvedEvent(_actionContext.Actor, _actionContext.Skill, facts));
+
         yield return presentation.PlayImpactAndOutro(criticalHit, damageEventTriggered);
+
+        // 攻击特写已经结束、镜头回到全景，仍在当前行动者的回合内。
+        // 压力在这里做一次独立结算：合并所有来源后按位置依次跳出，等整轮结束再继续。
+        List<BattleStressChange> stressChanges = BattleStressResolver.FromFacts(_controller, facts);
+        yield return _controller.PlayStressSettlement(stressChanges);
 
         // 目前项目尚未建立技能动作播放/完成事件，因此镜头复位完成后再执行后置位移。
         bool postActionMovementTriggered = BattleSkillEffectExecutor.ExecutePostActionMovementEffects(
@@ -96,6 +115,15 @@ public class PerformActionState : BattleState
 
         if (movementTriggered)
             yield return new WaitForSecondsRealtime(0.9f);
+
+        // 位移之后再说话：否则角色会一边说话一边滑到新位置。
+        List<BattleMoment> moments = new();
+        if (BattleMomentResolver.ResolveAll(facts, moments))
+        {
+            BattleBarkDirector barkDirector = Object.FindAnyObjectByType<BattleBarkDirector>();
+            if (barkDirector != null)
+                yield return barkDirector.TryPlayBark(_controller, moments);
+        }
 
         yield return presentation.PlayRecovery();
 

@@ -15,11 +15,13 @@ public static class BattleSkillEffectExecutor
         BattleEntity selectedInputTarget,
         out bool movementTriggered,
         out bool criticalHit,
-        out bool damageEventTriggered)
+        out bool damageEventTriggered,
+        out List<BattleActionFact> facts)
     {
         movementTriggered = false;
         criticalHit = false;
         damageEventTriggered = false;
+        facts = new List<BattleActionFact>();
         if (controller == null || actor == null || actor.RuntimeData == null ||
             skill == null || targets == null || !actor.IsAlive)
             return 0;
@@ -59,32 +61,61 @@ public static class BattleSkillEffectExecutor
 
                 if (effect is DamageEffect)
                 {
+                    bool wasAlive = target.IsAlive;
+                    int hpBefore = target.CurrentHP;
+
+                    // 每个目标独立掷一次暴击。
+                    bool isCritical = RollCritical(actor, effects, target);
+                    criticalHit |= isCritical;
+
                     int damage = BattleDamageSystem.ApplyDamage(
                         actor,
                         target,
                         skill.DamageType,
                         out bool eventPublished,
                         damageModifier,
-                        criticalHit);
+                        isCritical);
 
                     totalCalculatedDamage += damage;
                     damageEventTriggered |= eventPublished;
+
+                    facts.Add(new BattleActionFact(
+                        actor, target, BattleFactKind.Damage, damage, isCritical,
+                        hpBefore, target.CurrentHP, wasAlive && !target.IsAlive));
 
                     if (!target.IsAlive)
                         break;
                 }
                 else if (effect is HealEffect heal)
                 {
-                    target.RuntimeData.ModifyHp(Mathf.Abs(Mathf.RoundToInt(heal.Value)));
+                    int hpBefore = target.CurrentHP;
+                    bool isCritical = RollCritical(actor, effects, target);
+
+                    int amount = Mathf.Abs(Mathf.RoundToInt(heal.Value));
+                    if (isCritical)
+                        amount *= 2;
+
+                    target.RuntimeData.ModifyHp(amount);
                     target.Unit?.UpdateVisuals();
+
+                    facts.Add(new BattleActionFact(
+                        actor, target, BattleFactKind.Heal, target.CurrentHP - hpBefore, isCritical,
+                        hpBefore, target.CurrentHP));
                 }
                 else if (effect is StressDamageEffect stressDamage)
                 {
-                    target.RuntimeData.ModifyStress(Mathf.Abs(Mathf.RoundToInt(stressDamage.Value)));
+                    int amount = Mathf.Abs(Mathf.RoundToInt(stressDamage.Value));
+                    // 只记录事实，实际写入交给 BattleStressResolver 统一合并。
+                    facts.Add(new BattleActionFact(
+                        actor, target, BattleFactKind.StressDamage, amount, false,
+                        target.CurrentHP, target.CurrentHP));
                 }
                 else if (effect is StressHealEffect stressHeal)
                 {
-                    target.RuntimeData.ModifyStress(-Mathf.Abs(Mathf.RoundToInt(stressHeal.Value)));
+                    int amount = Mathf.Abs(Mathf.RoundToInt(stressHeal.Value));
+                    facts.Add(new BattleActionFact(
+                        actor, target, BattleFactKind.StressHeal, amount, false,
+                        target.CurrentHP, target.CurrentHP));
                 }
                 else if (effect is MoveForwardEffect || effect is MoveBackwardEffect)
                 {
@@ -94,13 +125,23 @@ public static class BattleSkillEffectExecutor
                 {
                     if (controller.FieldManager != null &&
                         controller.FieldManager.TryMoveEntityBySlots(target, knockback.Distance, true))
+                    {
                         movementTriggered = true;
+
+                        facts.Add(new BattleActionFact(
+                            actor, target, BattleFactKind.Knockback, knockback.Distance, false,
+                            target.CurrentHP, target.CurrentHP));
+                    }
                 }
                 else if (effect is StunEffect stun)
                 {
                     target.RuntimeData.StunActionsRemaining = Mathf.Max(
                         target.RuntimeData.StunActionsRemaining, stun.Actions);
                     target.Unit?.RefreshStunVisual();
+
+                    facts.Add(new BattleActionFact(
+                        actor, target, BattleFactKind.Stun, stun.Actions, false,
+                        target.CurrentHP, target.CurrentHP));
                 }
                 // ApplyStatusEffect 与命中/暴击修正不在本阶段执行。
             }
@@ -147,6 +188,113 @@ public static class BattleSkillEffectExecutor
         }
 
         return movementTriggered;
+    }
+
+    /// <summary>
+    /// 为单个目标掷一次暴击：角色暴击率 + 技能上的暴击修正，百分比制。
+    /// 每个目标独立判定，所以 AoE 可能出现部分暴击。
+    /// </summary>
+    private static bool RollCritical(
+        BattleEntity actor,
+        IReadOnlyList<SkillEffectBase> effects,
+        BattleEntity target)
+    {
+        if (actor == null || actor.RuntimeData == null)
+            return false;
+
+        float chance = actor.RuntimeData.CritChancePercent + GetCritChanceModifier(effects, target);
+        if (chance <= 0f)
+            return false;
+
+        return Random.value * 100f < Mathf.Min(chance, 100f);
+    }
+
+    /// <summary>汇总本次技能里对目标生效的暴击修正（百分比）。</summary>
+    private static float GetCritChanceModifier(
+        IReadOnlyList<SkillEffectBase> effects,
+        BattleEntity target)
+    {
+        float modifier = 0f;
+
+        foreach (SkillEffectBase effect in effects)
+        {
+            if (effect is CriticalModifierEffect critical &&
+                MatchesCondition(critical.Condition, target))
+            {
+                modifier += critical.Percent;
+            }
+        }
+
+        return modifier;
+    }
+
+    /// <summary>
+    /// 预览技能对某个目标的伤害区间（不含暴击，含防御减免与 ±20% 浮动）。
+    /// 返回 false 表示这个技能没有伤害效果。
+    /// </summary>
+    public static bool TryGetDamageRange(
+        BattleEntity actor,
+        BattleEntity target,
+        SkillDefinitionSO skill,
+        int skillLevel,
+        out int minDamage,
+        out int maxDamage)
+    {
+        minDamage = 0;
+        maxDamage = 0;
+
+        if (actor?.RuntimeData == null || target?.RuntimeData == null || skill == null)
+            return false;
+
+        SkillLevelConfig levelConfig = skill.GetLevelConfig(skillLevel);
+        if (levelConfig?.Effects == null)
+            return false;
+
+        bool hasDamage = false;
+        foreach (SkillEffectBase effect in levelConfig.Effects)
+        {
+            if (effect is DamageEffect)
+            {
+                hasDamage = true;
+                break;
+            }
+        }
+
+        if (!hasDamage)
+            return false;
+
+        float modifier = GetDamageModifier(levelConfig.Effects, target);
+        StatBlock attackerStats = actor.RuntimeData.GetTotalStats();
+        StatBlock targetStats = target.RuntimeData.GetTotalStats();
+
+        minDamage = BattleDamageCalculator.CalculateDamageWithRoll(
+            attackerStats, targetStats, skill.DamageType,
+            1f - BattleDamageCalculator.DamageVariance, modifier, false);
+
+        maxDamage = BattleDamageCalculator.CalculateDamageWithRoll(
+            attackerStats, targetStats, skill.DamageType,
+            1f + BattleDamageCalculator.DamageVariance, modifier, false);
+
+        return true;
+    }
+
+    /// <summary>技能是否带有控制效果（当前只有眩晕）。</summary>
+    public static bool HasControlEffect(SkillDefinitionSO skill, int skillLevel)
+    {
+        if (skill == null)
+            return false;
+
+        SkillLevelConfig levelConfig = skill.GetLevelConfig(skillLevel);
+        if (levelConfig?.Effects == null)
+            return false;
+
+        foreach (SkillEffectBase effect in levelConfig.Effects)
+        {
+            if (effect is StunEffect)
+                return true;
+        }
+
+        return false;
     }
 
     private static float GetDamageModifier(IReadOnlyList<SkillEffectBase> effects, BattleEntity target)

@@ -15,9 +15,22 @@ public abstract class CharacterDefinitionSO : ScriptableObject
     [Tooltip("CTB 时间轴使用的战斗左侧待机图。当前行动者大头像与两个行动池头像统一使用此图片。")]
     public Sprite LeftBattleIdle;
 
+    [Tooltip("右下角当前我方行动者的战斗立绘。留空则右下角不显示。")]
+    public Sprite BattleActionPortrait;
+
+    /// <summary>右下角立绘，可能为空。</summary>
+    public Sprite BattlePortrait => BattleActionPortrait;
+
     [Header("属性")]
     public int BaseLevel = 1;
     public StatBlock BaseStats;
+
+    [Header("暴击")]
+    [Range(0f, 100f), Tooltip("0 级晋升时的基础暴击率，单位为百分比。")]
+    public float BaseCritChance = 5f;
+
+    [Range(0f, 100f), Tooltip("每级晋升增加的暴击率，单位为百分比。晋升不影响等级成长。")]
+    public float CritChancePerPromotion = 3f;
 
     [Header("死门")]
     [Range(0f, 1f)]
@@ -33,6 +46,13 @@ public abstract class CharacterDefinitionSO : ScriptableObject
     [Header("技能配置")]
     [Tooltip("角色初始拥有的技能。当前阶段用于技能面板展示，后续可扩展为运行时学习与升级。")]
     public List<SkillDefinitionSO> initialSkills = new();
+
+    [Header("队友台词")]
+    [Tooltip("这个角色的完整台词库。一份资产内含普通 / 美德 / 折磨三种状态。")]
+    public AllyBarkSO barks;
+
+    /// <summary>这个角色的台词库，可能为空。</summary>
+    public AllyBarkSO Barks => barks;
 
     [Header("动画机")]
     public AnimatorOverrideController filedAnimator;

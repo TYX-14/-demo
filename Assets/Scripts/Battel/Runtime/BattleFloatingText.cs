@@ -43,18 +43,28 @@ public sealed class BattleFloatingText : MonoBehaviour
     private float fadeStartRatio = 0.18f;
 
     [Header("暴击表现")]
-    [SerializeField, Min(1f), Tooltip("暴击飘字的放大倍率。颜色仍然沿用原伤害类型。")]
+    [SerializeField, InspectorName("暴击飘字放大"), Min(1f), Tooltip("暴击时数字的放大倍率。颜色仍然沿用原伤害类型。")]
     private float criticalScaleMultiplier = 1.3f;
 
-    [SerializeField, Tooltip("只缩放数字文本，不影响预制体根物体上的位移动画。留空时默认使用文本自身。")]
+    [SerializeField, InspectorName("缩放对象"), Tooltip("只缩放数字文本，不影响预制体根物体上的位移动画。留空时默认使用文本自身。")]
     private Transform textScaleRoot;
 
+    [SerializeField, InspectorName("暴击标签"), Tooltip("暴击时额外显示的节点（预制体里默认关闭）。非暴击时会被关掉。")]
+    private GameObject criticalLabel;
+
+    [SerializeField, InspectorName("暴击标签文本"), Tooltip("暴击标签的文本组件，用于跟随数字一起淡出。留空时自动从暴击标签上取。")]
+    private TMP_Text criticalLabelText;
+
     private Vector3 _originalTextScale;
+    private Color _criticalLabelColor;
 
     private void Awake()
     {
+        // 只取激活状态下的文本，避免把预制体里默认关闭的暴击标签误认成数字文本。
         if (text == null)
-            text = GetComponentInChildren<TMP_Text>(true);
+            text = GetComponent<TMP_Text>();
+        if (text == null)
+            text = GetComponentInChildren<TMP_Text>(false);
 
         if (text == null)
         {
@@ -67,6 +77,15 @@ public sealed class BattleFloatingText : MonoBehaviour
             textScaleRoot = text.transform;
 
         _originalTextScale = textScaleRoot.localScale;
+
+        if (criticalLabelText == null && criticalLabel != null)
+            criticalLabelText = criticalLabel.GetComponentInChildren<TMP_Text>(true);
+
+        if (criticalLabelText != null)
+            _criticalLabelColor = criticalLabelText.color;
+
+        if (criticalLabel != null)
+            criticalLabel.SetActive(false);
     }
 
     /// <summary>
@@ -95,6 +114,13 @@ public sealed class BattleFloatingText : MonoBehaviour
             float scale = isCritical ? Mathf.Max(1f, criticalScaleMultiplier) : 1f;
             textScaleRoot.localScale = _originalTextScale * scale;
         }
+
+        // 暴击时打开额外标签；非暴击（含普通命中）保持关闭。
+        if (criticalLabel != null)
+            criticalLabel.SetActive(isCritical);
+
+        if (isCritical && criticalLabelText != null)
+            criticalLabelText.color = _criticalLabelColor;
     }
 
     /// <summary>
@@ -148,6 +174,14 @@ public sealed class BattleFloatingText : MonoBehaviour
             Color currentColor = originalColor;
             currentColor.a = originalColor.a * (1f - fade);
             text.color = currentColor;
+
+            // 暴击标签跟数字用同一条淡出曲线，否则数字淡完标签还是实的。
+            if (criticalLabelText != null)
+            {
+                Color labelColor = _criticalLabelColor;
+                labelColor.a = _criticalLabelColor.a * (1f - fade);
+                criticalLabelText.color = labelColor;
+            }
 
             yield return null;
         }

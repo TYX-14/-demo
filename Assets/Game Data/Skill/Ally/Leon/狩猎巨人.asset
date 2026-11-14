@@ -18,8 +18,8 @@ MonoBehaviour:
   slide:
     attacker: 1
     targets: 1
-    distance: 0.1
-    outDuration: 0.6
+    distance: 0.2
+    outDuration: 1
   description: "\u4F24\u5BB3\u4FEE\u6B63+50%\uFF08\u4F53\u578B>1\uFF09\n\u524D\u8FDB1"
   spCost: 0
   damageType: 0

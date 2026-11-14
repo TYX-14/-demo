@@ -16,10 +16,10 @@ MonoBehaviour:
   skillIcon: {fileID: 0}
   attackSprite: {fileID: 1760165197, guid: d32ba9126eb77497caa10e2c9ab3d2ae, type: 3}
   slide:
-    attacker: 0
-    targets: 0
-    distance: 0.16
-    outDuration: 0.18
+    attacker: 1
+    targets: 1
+    distance: 0.1
+    outDuration: 0.8
   description: 
   spCost: 0
   damageType: 0

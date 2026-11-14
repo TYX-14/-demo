@@ -17,6 +17,8 @@ MonoBehaviour:
   Portrait: {fileID: -1365205660, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftIdle: {fileID: 463951968, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
   LeftBattleIdle: {fileID: -942445637, guid: 7df3e2e8a1fb24977b31196b82d158a3, type: 3}
+  BattleActionPortrait: {fileID: 21300000, guid: 6232612084227184b83838b08543495b,
+    type: 3}
   BaseLevel: 100
   BaseStats:
     MaxHP: 20
@@ -28,6 +30,8 @@ MonoBehaviour:
     Speed: 5
     Accuracy: 10
     Evasion: 5
+  BaseCritChance: 31.8
+  CritChancePerPromotion: 3
   BaseDeathblowResistance: 0.67
   maxSwapDistance: 2
   initialSkills:
@@ -36,6 +40,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 13d91478cad607c4093f6b616139c3fe, type: 2}
   - {fileID: 11400000, guid: 4b0ca8d24eee3a842b806356313dde78, type: 2}
   - {fileID: 11400000, guid: 95aad739e1d51094ea98a6bf5e91be89, type: 2}
+  barks: {fileID: 11400000, guid: 99124e4791d64a84887eb3dc5e6be4ab, type: 2}
   filedAnimator: {fileID: 22100000, guid: b2214d084f3ea414889ad9ea3ec9822b, type: 2}
   battleAnimator: {fileID: 22100000, guid: d356795a59ac3994095b69b86ae5bfbb, type: 2}
   job: 1

@@ -14,6 +14,37 @@ public class CharacterRuntimeData
     public int Position;
     [Min(0)] public int StunActionsRemaining;
 
+    /// <summary>晋升等级上限。</summary>
+    public const int MaxPromotionLevel = 5;
+
+    [Header("晋升")]
+    [Range(0, MaxPromotionLevel), Tooltip("英雄晋升等级。不随角色等级成长，由玩家主动晋升。")]
+    public int PromotionLevel;
+
+    /// <summary>
+    /// 当前暴击率（百分比）：基础值 + 晋升等级 × 每级成长，钳制在 0~100。
+    /// 刻意不放进 StatBlock，避免被等级成长和装备加成影响。
+    /// </summary>
+    public float CritChancePercent
+    {
+        get
+        {
+            if (Definition == null)
+                return 0f;
+
+            int promotion = Mathf.Clamp(PromotionLevel, 0, MaxPromotionLevel);
+            return Mathf.Clamp(
+                Definition.BaseCritChance + promotion * Definition.CritChancePerPromotion,
+                0f, 100f);
+        }
+    }
+
+    /// <summary>晋升一级，不超过上限。</summary>
+    public void Promote()
+    {
+        PromotionLevel = Mathf.Clamp(PromotionLevel + 1, 0, MaxPromotionLevel);
+    }
+
     [Header("远征精神状态")]
     [Range(0, 200)] public int CurrentStress;
     public CharacterSpiritState SpiritState = CharacterSpiritState.Normal;

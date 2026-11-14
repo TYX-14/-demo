@@ -1743,6 +1743,38 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 298095900}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &339977440
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 7
+  m_Component:
+  - component: {fileID: 339977441}
+  m_Layer: 0
+  m_HasEditorInfo: 1
+  m_Name: BattleVFXRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &339977441
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 339977440}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &348686472
 GameObject:
   m_ObjectHideFlags: 0
@@ -8020,5 +8052,6 @@ SceneRoots:
   - {fileID: 285657511}
   - {fileID: 424320471}
   - {fileID: 352318876}
+  - {fileID: 339977441}
   - {fileID: 1089914727}
   - {fileID: 2012327364}

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MFrameork.Event;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 统一管理战斗中的地面光圈（当前行动者标记）。
@@ -65,6 +66,16 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
     [SerializeField, Tooltip("地光是否投射阴影。")]
     private bool groundLightCastShadows = false;
 
+    [Header("场景归属")]
+    [SerializeField, Tooltip("战斗特效的挂载根。留空时会在战斗场景中按名字查找，找不到则自动创建在战斗场景里。")]
+    private Transform battleVfxRoot;
+
+    /// <summary>战斗场景里约定的特效根节点名称。</summary>
+    private const string VfxRootName = "BattleVFXRoot";
+
+    private Transform _resolvedVfxRoot;
+    private Scene _vfxRootScene;
+
     private readonly List<ParticleSystem> _playerRingPool = new();
     private readonly List<ParticleSystem> _enemyRingPool = new();
 
@@ -107,6 +118,8 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
             Camera.onPreCull += ExcludeMarkerLayerFromCamera;
         else
             Debug.LogWarning($"BattleVFXManager：未找到图层「{MarkerLayerName}」，战斗标记将仍受景深影响。", this);
+
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
     }
 
     private void OnDisable()
@@ -116,6 +129,8 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
 
         if (_markerLayer >= 0)
             Camera.onPreCull -= ExcludeMarkerLayerFromCamera;
+
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
 
         _displayedActor = null;
         HideCurrentActorRing();
@@ -280,6 +295,81 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
         return true;
     }
 
+    /// <summary>
+    /// 取得战斗场景里的特效根节点：
+    /// 优先用 Inspector 指定的；否则按名字在战斗场景根节点中查找；仍找不到就在战斗场景里创建。
+    /// 后续新增的战斗特效统一挂到这个节点下。
+    /// </summary>
+    public Transform ResolveVfxRoot()
+    {
+        if (_resolvedVfxRoot != null)
+            return _resolvedVfxRoot;
+
+        if (battleVfxRoot != null)
+        {
+            _resolvedVfxRoot = battleVfxRoot;
+            _vfxRootScene = battleVfxRoot.gameObject.scene;
+            return _resolvedVfxRoot;
+        }
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        if (activeScene.IsValid())
+        {
+            foreach (GameObject root in activeScene.GetRootGameObjects())
+            {
+                if (root != null && root.name == VfxRootName)
+                {
+                    _resolvedVfxRoot = root.transform;
+                    _vfxRootScene = activeScene;
+                    return _resolvedVfxRoot;
+                }
+            }
+
+            GameObject created = new GameObject(VfxRootName);
+            SceneManager.MoveGameObjectToScene(created, activeScene);
+            _resolvedVfxRoot = created.transform;
+            _vfxRootScene = activeScene;
+            return _resolvedVfxRoot;
+        }
+
+        // 兜底：拿不到有效场景信息时挂在管理器自身下面，行为与旧版本一致。
+        _resolvedVfxRoot = transform;
+        _vfxRootScene = default;
+        return _resolvedVfxRoot;
+    }
+
+    /// <summary>战斗场景卸载时清掉指向它的引用，避免留下已销毁的对象。</summary>
+    private void OnSceneUnloaded(Scene scene)
+    {
+        if (!_vfxRootScene.IsValid() || scene != _vfxRootScene)
+            return;
+
+        ReleaseSceneReferences();
+    }
+
+    /// <summary>
+    /// 清空对象池与全部运行时引用。场景卸载时这些实例已经随场景销毁，
+    /// 这里只负责别让管理器继续持有它们。
+    /// </summary>
+    private void ReleaseSceneReferences()
+    {
+        _playerRingPool.Clear();
+        _enemyRingPool.Clear();
+
+        _activeRing = null;
+        _activeRingEntity = null;
+        _displayedActor = null;
+        _topLight = null;
+        _groundLight = null;
+        _topLightCreatedByManager = false;
+
+        // BattleFieldLayout 位于战斗场景，卸载后同样失效，下次战斗重新查找。
+        _layout = null;
+
+        _resolvedVfxRoot = null;
+        _vfxRootScene = default;
+    }
+
     private ParticleSystem GetEffect(List<ParticleSystem> pool, ParticleSystem prefab)
     {
         for (int i = 0; i < pool.Count; i++)
@@ -288,7 +378,9 @@ public sealed class BattleVFXManager : MonoBehaviour, IEventReceiver<CTBDisplaye
                 return pool[i];
         }
 
-        ParticleSystem instance = Instantiate(prefab, transform);
+        // 光圈实例挂在战斗场景的 BattleVFXRoot 下：随场景一起卸载，
+        // 也不会长期堆积在 Persistent 场景里跨战斗累积。
+        ParticleSystem instance = Instantiate(prefab, ResolveVfxRoot());
         instance.gameObject.name = prefab.name + " (Pooled)";
         instance.gameObject.SetActive(false);
         pool.Add(instance);
